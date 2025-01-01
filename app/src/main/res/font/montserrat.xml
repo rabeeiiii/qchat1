@@ -3,9 +3,6 @@
     <font
         app:fontStyle="normal"
         app:fontWeight="400"
-        app:font="@font/MontserratR" />
-    <font
-        app:fontStyle="bold"
-        app:fontWeight="700"
-        app:font="@font/MontserratB" />
+        app:font="@font/montserratr" />
+
 </font-family>
