@@ -6,4 +6,12 @@
     </style>
 
     <style name="Theme.Qchat" parent="Base.Theme.Qchat" />
+    <style name="round" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">50%</item> <!-- Adjust size for the rounding -->
+    </style>
+    <style name="rounded" parent="">
+        <item name="cornerFamily">rounded</item>
+        <item name="cornerSize">160dp</item> <!-- Adjust the corner radius as needed -->
+    </style>
 </resources>
