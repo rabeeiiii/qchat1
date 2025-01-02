@@ -2,13 +2,9 @@ package com.example.qchat
 
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
-import androidx.core.view.ViewCompat
-import androidx.core.view.WindowInsetsCompat
-import com.example.qchat.databinding.ActivityMainBinding
-import com.example.qchat.R
 import androidx.fragment.app.Fragment
 import com.google.android.material.bottomnavigation.BottomNavigationView
-import fragments.MessageFragment
+import fragments.ChatFragment
 import fragments.CallsFragment
 import fragments.ContactsFragment
 import fragments.SettingsFragment
@@ -24,8 +20,8 @@ class SettingsActivity : AppCompatActivity() {
 
         bottomNav.setOnItemSelectedListener { menuItem ->
             when (menuItem.itemId) {
-                R.id.nav_messages -> {
-                    loadFragment(MessageFragment())
+                R.id.nav_chat -> {
+                    loadFragment(ChatFragment())
                     true
                 }
                 R.id.nav_calls -> {

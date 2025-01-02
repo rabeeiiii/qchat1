@@ -200,18 +200,19 @@
 
         </LinearLayout>
     </HorizontalScrollView>
-    <FrameLayout
+    <com.google.android.material.card.MaterialCardView
         android:id="@+id/chat_list_container"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         android:layout_marginTop="16dp"
-        android:layout_marginBottom="80dp"
-        android:background="@drawable/card_background"
-        android:elevation="0dp"
+        android:layout_marginBottom="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/status_bar">
+        app:layout_constraintTop_toBottomOf="@id/status_bar"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardElevation="0dp"
+        app:shapeAppearanceOverlay="@style/TopRoundedCard">
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -235,29 +236,10 @@
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content" />
         </LinearLayout>
-    </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+
 
     <!-- Line above BottomNavigationView -->
-    <View
-        android:id="@+id/top_border"
-        android:layout_width="match_parent"
-        android:layout_height="1dp"
-        android:background="@color/grey"
-        app:layout_constraintBottom_toTopOf="@id/bottom_navigation" />
-
-    <com.google.android.material.bottomnavigation.BottomNavigationView
-        android:id="@+id/bottom_navigation"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginBottom="0dp"
-        android:background="@color/white"
-        android:elevation="8dp"
-        app:itemIconTint="@color/bottom_nav_color"
-        app:itemTextColor="@color/bottom_nav_color"
-        app:labelVisibilityMode="labeled"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:menu="@menu/bottom_nav_menu" />
-
-
 
 </androidx.constraintlayout.widget.ConstraintLayout>
