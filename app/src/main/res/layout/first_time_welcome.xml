@@ -14,21 +14,12 @@
         <!-- App Logo -->
         <ImageView
             android:id="@+id/logo_icon"
-            android:layout_width="150dp"
-            android:layout_height="150dp"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
             android:src="@drawable/ic_logo_white"
             android:contentDescription="App Logo"
             android:layout_marginTop="32dp" />
 
-        <!-- App Name -->
-        <TextView
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:layout_marginTop="8dp"
-            android:fontFamily="@font/montserrat_regular"
-            android:text="Chatbox"
-            android:textColor="#FFFFFF"
-            android:textSize="16sp" />
 
         <!-- Heading -->
 
