@@ -4,7 +4,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.fragment.app.Fragment
-import com.example.settingsuipage.R
+import com.example.qchat.R
 
 class CallsFragment : Fragment() {
     override fun onCreateView(

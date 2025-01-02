@@ -1,4 +1,4 @@
-package com.example.settingsuipage.model
+package com.example.qchat.model
 
 data class SettingItem(
     val icon: Int,

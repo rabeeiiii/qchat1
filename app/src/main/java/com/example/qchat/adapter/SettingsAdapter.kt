@@ -1,4 +1,4 @@
-package com.example.settingsuipage.adapter
+package com.example.qchat.adapter
 
 import android.view.LayoutInflater
 import android.view.View
@@ -6,8 +6,8 @@ import android.view.ViewGroup
 import android.widget.ImageView
 import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
-import com.example.settingsuipage.R
-import com.example.settingsuipage.model.SettingItem
+import com.example.qchat.R
+import com.example.qchat.model.SettingItem
 
 class SettingsAdapter(private val items: List<SettingItem>) : 
     RecyclerView.Adapter<SettingsAdapter.SettingViewHolder>() {

@@ -7,9 +7,9 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
-import com.example.settingsuipage.R
-import com.example.settingsuipage.adapter.SettingsAdapter
-import com.example.settingsuipage.model.SettingItem
+import com.example.qchat.R
+import com.example.qchat.adapter.SettingsAdapter
+import com.example.qchat.model.SettingItem
 import com.google.android.material.appbar.MaterialToolbar
 
 class SettingsFragment : Fragment() {
