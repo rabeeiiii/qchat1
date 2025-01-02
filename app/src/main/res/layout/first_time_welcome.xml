@@ -14,8 +14,8 @@
         <!-- App Logo -->
         <ImageView
             android:id="@+id/logo_icon"
-            android:layout_width="48dp"
-            android:layout_height="48dp"
+            android:layout_width="150dp"
+            android:layout_height="150dp"
             android:src="@drawable/ic_logo_white"
             android:contentDescription="App Logo"
             android:layout_marginTop="32dp" />
@@ -42,7 +42,7 @@
             android:fontFamily="@font/montserrat_bold"
             android:gravity="center"
             android:lineSpacingExtra="8dp"
-            android:text="Connect friends\neasily & quickly"
+            android:text="Connect friends\n easily &amp; quickly"
             android:textColor="#FFFFFF"
             android:textSize="32sp" />
 
