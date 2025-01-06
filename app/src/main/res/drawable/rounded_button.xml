@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Shadow -->
+    <item>
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" /> <!-- Reduced corner radius -->
+            <solid android:color="#D1C4E9" /> <!-- Lighter shadow color -->
+        </shape>
+    </item>
+
+    <!-- Main Button -->
+    <item android:top="2dp" android:left="2dp" android:right="2dp">
+        <shape android:shape="rectangle">
+            <corners android:radius="12dp" /> <!-- Match reduced radius -->
+            <solid android:color="#6C63FF" /> <!-- Button Purple Color -->
+        </shape>
+    </item>
+</layer-list>
