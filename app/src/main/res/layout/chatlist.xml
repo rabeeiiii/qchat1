@@ -234,8 +234,8 @@
             <View
                 android:layout_width="250dp"
             android:layout_height="1dp"
-            android:background="@android:color/lighter_gray"
-            android:layout_gravity="center_horizontal"
+                android:background="@color/lighter_gray"
+                android:layout_gravity="center_horizontal"
             android:layout_marginVertical="4dp" />
 
             <!-- Chat Item 2 -->
@@ -248,7 +248,7 @@
             <View
                 android:layout_width="250dp"
                 android:layout_height="1dp"
-                android:background="@android:color/lighter_gray"
+                android:background="@color/lighter_gray"
                 android:layout_gravity="center_horizontal"
                 android:layout_marginVertical="4dp" />
 
