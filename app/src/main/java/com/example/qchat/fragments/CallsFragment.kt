@@ -8,10 +8,10 @@ import com.example.qchat.R
 
 class CallsFragment : Fragment() {
     override fun onCreateView(
-        inflater: LayoutInflater,
-        container: ViewGroup?,
+        inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        return inflater.inflate(R.layout.fragment_calls, container, false)
+        // Inflate the layout for this fragment
+        return inflater.inflate(R.layout.call_list, container, false)
     }
 }

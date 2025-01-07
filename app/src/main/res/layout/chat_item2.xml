@@ -13,7 +13,7 @@
         android:layout_height="48dp"
         android:background="@drawable/circle_shape"
         android:contentDescription="Profile Picture"
-        android:src="@drawable/ic_status_placeholder3"
+        android:src="@drawable/ic_mariam"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="parent" />

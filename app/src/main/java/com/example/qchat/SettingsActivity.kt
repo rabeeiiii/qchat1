@@ -41,7 +41,7 @@ class SettingsActivity : AppCompatActivity() {
         }
 
         // Set settings as selected
-        bottomNav.selectedItemId = R.id.nav_settings
+        bottomNav.selectedItemId = R.id.nav_chat
     }
 
     private fun loadFragment(fragment: Fragment) {

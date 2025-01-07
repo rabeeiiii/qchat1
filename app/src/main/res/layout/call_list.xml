@@ -6,42 +6,45 @@
     android:layout_height="match_parent"
     android:background="@android:color/black">
 
-    <!-- Header Section -->
+    <!-- Search Icon -->
     <ImageView
         android:id="@+id/iv_search_icon"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginStart="16dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginStart="26dp"
+        android:layout_marginTop="20dp"
         android:contentDescription="Search Icon"
         android:src="@drawable/ic_search_icon"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Home Title -->
     <TextView
-        android:id="@+id/tv_calls_title"
+        android:id="@+id/tv_home_title"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="20dp"
         android:text="Calls"
         android:textColor="@android:color/white"
         android:textSize="20sp"
         android:textStyle="bold"
-        app:layout_constraintEnd_toStartOf="@id/iv_add_call_icon"
+        app:layout_constraintEnd_toStartOf="@id/iv_profile_icon"
         app:layout_constraintHorizontal_bias="0.5"
         app:layout_constraintStart_toEndOf="@id/iv_search_icon"
         app:layout_constraintTop_toTopOf="parent" />
 
+    <!-- Profile Icon -->
     <ImageView
-        android:id="@+id/iv_add_call_icon"
+        android:id="@+id/iv_profile_icon"
         android:layout_width="36dp"
         android:layout_height="36dp"
-        android:layout_marginEnd="16dp"
-        android:layout_marginTop="16dp"
-        android:contentDescription="Add Call Icon"
-        android:src="@drawable/add_call"
+        android:layout_marginEnd="26dp"
+        android:layout_marginTop="20dp"
+        android:contentDescription="Profile Icon"
+        android:src="@drawable/ic_add_call"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@android:color/white" />
 
     <!-- Call List Section -->
     <com.google.android.material.card.MaterialCardView
@@ -52,7 +55,7 @@
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/tv_calls_title"
+        app:layout_constraintTop_toBottomOf="@id/tv_home_title"
         app:cardBackgroundColor="@android:color/white"
         app:cardElevation="0dp"
         app:shapeAppearanceOverlay="@style/TopRoundedCard">
