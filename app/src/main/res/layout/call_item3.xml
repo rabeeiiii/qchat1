@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="8dp">
+
+    <!-- Profile Picture -->
+    <ImageView
+        android:id="@+id/iv_call_profile_picture"
+        android:layout_width="48dp"
+        android:layout_height="48dp"
+        android:layout_marginStart="8dp"
+        android:background="@drawable/circle_shape"
+        android:contentDescription="Profile Picture"
+        android:src="@drawable/ic_status_placeholder5"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Contact Name -->
+    <TextView
+        android:id="@+id/tv_call_name"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginStart="16dp"
+        android:text="Amo Ehab"
+        android:textColor="@android:color/black"
+        android:textSize="16sp"
+        android:textStyle="bold"
+        app:layout_constraintStart_toEndOf="@id/iv_call_profile_picture"
+        app:layout_constraintTop_toTopOf="@id/iv_call_profile_picture"
+        app:layout_constraintEnd_toStartOf="@id/iv_call_icon" />
+
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        app:layout_constraintStart_toStartOf="@id/tv_call_name"
+        app:layout_constraintEnd_toEndOf="@id/iv_call_icon"
+        app:layout_constraintTop_toBottomOf="@id/tv_call_name">
+
+        <!-- Call Type Icon (Missed/Outgoing/Incoming) -->
+        <ImageView
+            android:id="@+id/iv_call_type_icon"
+            android:layout_width="16dp"
+            android:layout_height="16dp"
+            android:src="@drawable/incoming_call"
+            android:layout_marginEnd="12dp"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+
+        <!-- Call Date and Time -->
+        <TextView
+            android:id="@+id/tv_call_date_time"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:text=" Monday, 07:30 PM"
+            android:textColor="@android:color/darker_gray"
+            android:textSize="14sp"
+            app:layout_constraintStart_toEndOf="@id/iv_call_type_icon"
+            app:layout_constraintTop_toTopOf="@id/iv_call_type_icon"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+    <!-- Call Icon -->
+    <ImageView
+        android:id="@+id/iv_call_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="Call Icon"
+        android:src="@drawable/call_back"
+        app:layout_constraintEnd_toStartOf="@id/iv_video_call_icon"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+    <!-- Video Call Icon -->
+    <ImageView
+        android:id="@+id/iv_video_call_icon"
+        android:layout_width="32dp"
+        android:layout_height="32dp"
+        android:layout_marginEnd="8dp"
+        android:contentDescription="Video Call Icon"
+        android:src="@drawable/video_call"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>
