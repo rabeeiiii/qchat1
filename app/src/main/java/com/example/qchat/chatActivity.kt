@@ -13,9 +13,9 @@ class chatActivity : AppCompatActivity() {
 
         val chatList = listOf(
             ChatMessage("Hi", "2:31 PM", true),
-            ChatMessage("I like the UI", "2:31 PM", true),
-            ChatMessage("Ah gameel awy", "2:31 PM", false),
-            ChatMessage("Eh ya joe?", "3:01 PM", false)
+            ChatMessage("Eh ya joe?", "2:31 PM", false),
+            ChatMessage("i Like the UI", "2:31 PM", true),
+            ChatMessage("Ah gameel awy", "3:01 PM", false)
         )
 
         val recyclerView = findViewById<RecyclerView>(R.id.recyclerView_chat)

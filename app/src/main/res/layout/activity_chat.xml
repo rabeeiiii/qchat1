@@ -52,7 +52,7 @@
         app:layout_constraintBottom_toTopOf="@id/input_field_layout"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        android:background="#EEEEEE" /> <!-- Added a background for visibility -->
+        android:background="#EEEEEE" />
 
     <LinearLayout
         android:id="@+id/input_field_layout"
@@ -64,11 +64,11 @@
         app:layout_constraintBottom_toBottomOf="parent">
 
         <ImageView
-            android:layout_width="24dp"
-            android:layout_height="24dp"
-            android:src="@drawable/ic_add"
+            android:layout_width="28dp"
+            android:layout_height="28dp"
+            android:layout_marginEnd="8dp"
             android:contentDescription="Add"
-            android:layout_marginEnd="8dp" />
+            android:src="@drawable/ic_add" />
 
         <EditText
             android:id="@+id/editText_message"
