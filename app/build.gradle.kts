@@ -99,4 +99,7 @@ dependencies {
     //splash screen
     implementation("androidx.core:core-splashscreen:1.0.0")
 
+    implementation ("androidx.recyclerview:recyclerview:1.3.0")
+
+
 }

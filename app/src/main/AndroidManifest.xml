@@ -19,9 +19,12 @@
         android:theme="@style/Theme.Qchat"
         tools:targetApi="31">
         <activity
+            android:name=".chatActivity"
+            android:exported="false" />
+        <activity
             android:name=".SignInActivity"
-            android:theme="@style/Theme.App.SplashScreen"
-            android:exported="true">
+            android:exported="true"
+            android:theme="@style/Theme.App.SplashScreen">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
