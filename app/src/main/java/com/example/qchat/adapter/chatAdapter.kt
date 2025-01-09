@@ -6,6 +6,7 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
+import androidx.constraintlayout.widget.ConstraintLayout
 import androidx.recyclerview.widget.RecyclerView
 import com.example.qchat.model.ChatMessage
 
@@ -32,13 +33,31 @@ class ChatAdapter(
         holder.messageText.text = message.text
         holder.timestampText.text = message.timestamp
 
-        // Handle clicks for each chat item
-        holder.chatItemLayout.setOnClickListener {
-            val intent = Intent(context, chatActivity::class.java)
-            intent.putExtra("CHAT_NAME", "Moaz Mohamed")
-            context.startActivity(intent)
+        val params = holder.chatItemLayout.layoutParams as ViewGroup.MarginLayoutParams
+        val constraintLayout = holder.chatItemLayout as androidx.constraintlayout.widget.ConstraintLayout
+        val messageTextLayoutParams = holder.messageText.layoutParams as ConstraintLayout.LayoutParams
+        val timestampTextLayoutParams = holder.timestampText.layoutParams as ConstraintLayout.LayoutParams
+
+        if (message.isSent) {
+            // right
+            messageTextLayoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET
+            messageTextLayoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+            timestampTextLayoutParams.startToStart = ConstraintLayout.LayoutParams.UNSET
+            timestampTextLayoutParams.endToEnd = ConstraintLayout.LayoutParams.PARENT_ID
+            holder.messageText.setBackgroundResource(R.drawable.bg_chat_bubble_sent)
+        } else {
+            // left
+            messageTextLayoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            messageTextLayoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET
+            timestampTextLayoutParams.startToStart = ConstraintLayout.LayoutParams.PARENT_ID
+            timestampTextLayoutParams.endToEnd = ConstraintLayout.LayoutParams.UNSET
+            holder.messageText.setBackgroundResource(R.drawable.bg_chat_bubble_received)
         }
+
+        holder.messageText.layoutParams = messageTextLayoutParams
+        holder.timestampText.layoutParams = timestampTextLayoutParams
     }
+
 
     override fun getItemCount(): Int = chatList.size
 }
