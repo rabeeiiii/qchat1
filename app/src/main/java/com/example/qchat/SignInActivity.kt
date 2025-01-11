@@ -32,11 +32,11 @@ class SignInActivity : AppCompatActivity() {
 
         auth = FirebaseAuth.getInstance()
 
-//        if (auth.currentUser!=null){
-//
-//            startActivity(Intent(this, MainActivity::class.java))
-//
-//        }
+        if (auth.currentUser!=null){
+
+            startActivity(Intent(this, MainActivity::class.java))
+
+        }
 
         progressDialogSignIn = ProgressDialog(this)
 
@@ -53,18 +53,18 @@ class SignInActivity : AppCompatActivity() {
             email = signInbinding.loginetemail.text.toString()
             password = signInbinding.loginetpassword.text.toString()
 
-            if (signInbinding.loginetemail.text.isEmpty()){
+            if (signInbinding.loginetemail.text.isEmpty()) {
 
                 Toast.makeText(this, "Enter Email", Toast.LENGTH_SHORT).show()
             }
-            if (signInbinding.loginetpassword.text.isEmpty()){
+            if (signInbinding.loginetpassword.text.isEmpty()) {
 
                 Toast.makeText(this, "Enter Password", Toast.LENGTH_SHORT).show()
 
             }
 
 
-            if (signInbinding.loginetemail.text.isNotEmpty() && signInbinding.loginetpassword.text.isNotEmpty()){
+            if (signInbinding.loginetemail.text.isNotEmpty() && signInbinding.loginetpassword.text.isNotEmpty()) {
                 signIn(password, email)
             }
 
@@ -78,7 +78,7 @@ class SignInActivity : AppCompatActivity() {
         auth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
 
 
-            if (it.isSuccessful){
+            if (it.isSuccessful) {
 
                 progressDialogSignIn.dismiss()
                 startActivity(Intent(this, MainActivity::class.java))
@@ -91,19 +91,20 @@ class SignInActivity : AppCompatActivity() {
             }
 
 
-        }.addOnFailureListener {exception->
+        }.addOnFailureListener { exception ->
 
 
-            when (exception){
+            when (exception) {
 
-                is FirebaseAuthInvalidCredentialsException ->{
+                is FirebaseAuthInvalidCredentialsException -> {
 
-                    Toast.makeText(applicationContext, "Invalid Credentials", Toast.LENGTH_SHORT).show()
+                    Toast.makeText(applicationContext, "Invalid Credentials", Toast.LENGTH_SHORT)
+                        .show()
 
 
                 }
 
-                else-> {
+                else -> {
 
                     // other exceptions
                     Toast.makeText(applicationContext, "Auth Failed", Toast.LENGTH_SHORT).show()

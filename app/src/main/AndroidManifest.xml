@@ -22,30 +22,31 @@
         <!--            android:name=".chatActivity"-->
         <!--            android:exported="false" />-->
         <activity
-            android:name=".chatActivity"
+            android:name=".SignInActivity"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity
-            android:name=".SignInActivity"
-            android:exported="true"
-            android:theme="@style/Theme.App.SplashScreen">
-            <intent-filter>
-                <action android:name="android.intent.action.MAIN" />
+<!--        <activity-->
+<!--            android:name=".SignInActivity"-->
+<!--            android:exported="true"-->
+<!--            android:theme="@style/Theme.App.SplashScreen">-->
+<!--            <intent-filter>-->
+<!--                <action android:name="android.intent.action.MAIN" />-->
 
-                <category android:name="android.intent.category.LAUNCHER" />
-            </intent-filter>
-        </activity>
+<!--                <category android:name="android.intent.category.LAUNCHER" />-->
+<!--            </intent-filter>-->
+<!--        </activity>-->
         <activity
             android:name=".SignUpActivity"
             android:exported="false" />
-        <activity
-            android:name=".SettingsActivity"
-            android:exported="false" />
+<!--        <activity-->
+<!--            android:name=".SettingsActivity"-->
+<!--            android:exported="false" />-->
+        <activity android:name=".SignOutActivity" />
+
         <activity
             android:name=".MainActivity"
             android:exported="false" />

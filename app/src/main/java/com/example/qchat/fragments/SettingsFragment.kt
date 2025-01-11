@@ -1,4 +1,6 @@
 package fragments
+
+import android.content.Intent
 import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
@@ -11,6 +13,7 @@ import com.example.qchat.R
 import com.example.qchat.adapter.SettingsAdapter
 import com.example.qchat.model.SettingItem
 import com.google.android.material.appbar.MaterialToolbar
+import com.example.qchat.SignOutActivity
 
 class SettingsFragment : Fragment() {
 
@@ -44,7 +47,12 @@ class SettingsFragment : Fragment() {
             R.drawable.ic_invite,
             "Invite a friend",
             "Share this app with friends"
-        )
+        ),
+        SettingItem(
+            R.drawable.ic_signout,
+            "Sign Out",
+            " "
+        ),
     )
 
     override fun onCreateView(
@@ -65,7 +73,10 @@ class SettingsFragment : Fragment() {
         val recyclerView = view.findViewById<RecyclerView>(R.id.settingsRecyclerView)
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
-            adapter = SettingsAdapter(settingsItems)
+            adapter = SettingsAdapter(settingsItems) { settingItem ->
+                // Handle the click event here
+                onSettingItemClick(settingItem)
+            }
         }
     }
 
@@ -75,6 +86,35 @@ class SettingsFragment : Fragment() {
             setSupportActionBar(toolbar)
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
             supportActionBar?.title = "Settings"
+        }
+    }
+
+    private fun onSettingItemClick(settingItem: SettingItem) {
+        when (settingItem.title) {
+            "Account" -> {
+                // Handle Account settings click
+            }
+            "Chat" -> {
+                // Handle Chat settings click
+            }
+            "Notifications" -> {
+                // Handle Notifications settings click
+            }
+            "Help" -> {
+                // Handle Help settings click
+            }
+            "Storage and data" -> {
+                // Handle Storage and Data settings click
+            }
+            "Invite a friend" -> {
+                // Handle Invite Friend click
+            }
+            "Sign Out" -> {
+                // Navigate to SignOutActivity with flags to clear the back stack
+                val intent = Intent(requireContext(), SignOutActivity::class.java)
+                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
+                startActivity(intent)
+            }
         }
     }
 }
