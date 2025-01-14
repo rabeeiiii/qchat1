@@ -1,10 +1,12 @@
 plugins {
     id("com.android.application")
     id("org.jetbrains.kotlin.android")
-    id("com.google.gms.google-services")
     id("kotlin-parcelize")
     id("kotlin-kapt")
     id("androidx.navigation.safeargs.kotlin")
+    id("dagger.hilt.android.plugin")
+    id("com.google.gms.google-services")
+
 }
 
 android {
@@ -101,5 +103,10 @@ dependencies {
 
     implementation ("androidx.recyclerview:recyclerview:1.3.0")
 
+    //makeramen
+    implementation ("com.makeramen:roundedimageview:2.3.0")
 
+    //dagger
+    implementation ("com.google.dagger:hilt-android:2.47")
+    kapt("com.google.dagger:hilt-android-compiler:2.47")
 }
