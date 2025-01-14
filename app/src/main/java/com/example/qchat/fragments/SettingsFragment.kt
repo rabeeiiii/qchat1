@@ -13,7 +13,19 @@ import com.example.qchat.R
 import com.example.qchat.adapter.SettingsAdapter
 import com.example.qchat.model.SettingItem
 import com.google.android.material.appbar.MaterialToolbar
-import com.example.qchat.SignOutActivity
+import android.view.MenuItem
+import android.widget.PopupMenu
+import androidx.fragment.app.viewModels
+import androidx.navigation.fragment.findNavController
+import com.example.qchat.adapter.RecentConversationsAdapter
+import com.example.qchat.databinding.MainFragmentBinding
+import com.example.qchat.ui.registration.RegistrationActivity
+import com.example.qchat.utils.Constant
+import com.example.qchat.utils.decodeToBitmap
+import com.example.qchat.utils.toast
+import dagger.hilt.android.AndroidEntryPoint
+import javax.inject.Inject
+
 
 class SettingsFragment : Fragment() {
 
@@ -110,10 +122,7 @@ class SettingsFragment : Fragment() {
                 // Handle Invite Friend click
             }
             "Sign Out" -> {
-                // Navigate to SignOutActivity with flags to clear the back stack
-                val intent = Intent(requireContext(), SignOutActivity::class.java)
-                intent.flags = Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK
-                startActivity(intent)
+
             }
         }
     }
