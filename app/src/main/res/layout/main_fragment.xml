@@ -32,7 +32,7 @@
         android:layout_width="36dp"
         android:layout_height="36dp"
         android:layout_marginStart="26dp"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="5dp"
         android:contentDescription="Search Icon"
         android:src="@drawable/ic_search_icon"
         app:layout_constraintStart_toStartOf="parent"
@@ -44,20 +44,20 @@
         android:layout_height="wrap_content"
         android:textColor="@color/white"
         android:fontFamily="@font/nimbus_san_bolt"
-        app:layout_constraintEnd_toStartOf="@id/ivMore"
-        app:layout_constraintHorizontal_bias="0.5"
-        app:layout_constraintStart_toEndOf="@id/ivSearch"
-        app:layout_constraintTop_toTopOf="parent"
-        android:layout_marginTop="22dp"
+        android:text="Home"
         android:textSize="18sp"
-        android:text="Home"/>
+        android:layout_marginTop="5dp"
+        app:layout_constraintLeft_toLeftOf="parent"
+        app:layout_constraintRight_toRightOf="parent"
+        app:layout_constraintTop_toTopOf="parent"/>
+
 
     <ImageView
         android:id="@+id/ivMore"
         android:layout_width="36dp"
-        android:layout_height="55dp"
-        android:layout_marginTop="10dp"
+        android:layout_height="36dp"
         android:layout_marginEnd="16dp"
+        android:layout_marginTop="5dp"
 
         android:padding="5dp"
         android:src="@drawable/ic_more"
@@ -68,7 +68,7 @@
         android:id="@+id/status_bar"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="20dp"
+        android:layout_marginTop="12dp"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toBottomOf="@id/tvMessage">
@@ -252,7 +252,7 @@
     <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_marginTop="16dp"
+        android:layout_marginTop="0dp"
         android:layout_marginBottom="0dp"
         app:cardBackgroundColor="@android:color/white"
         app:cardElevation="0dp"

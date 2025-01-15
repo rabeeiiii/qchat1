@@ -5,7 +5,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:animateLayoutChanges="true"
-    android:background="@color/primary"
+    android:background="@color/black"
     tools:context=".ui.users.UsersFragment">
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -17,7 +17,7 @@
         android:background="@drawable/background_icon"
         android:padding="6dp"
         android:src="@drawable/ic_back"
-        android:tint="@color/light_pink"
+        android:tint="@color/white"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -27,21 +27,23 @@
         android:layout_height="wrap_content"
         android:text="@string/search_user"
         android:textColor="@color/white"
-        android:textSize="14sp"
+        android:textSize="20sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/ivBack"
         app:layout_constraintStart_toEndOf="@+id/ivBack"
         app:layout_constraintTop_toTopOf="@+id/ivBack" />
 
-    <FrameLayout
+    <com.google.android.material.card.MaterialCardView
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_marginTop="16dp"
-        android:background="@drawable/background_content_bottom"
+        android:layout_height="735dp"
+        android:layout_marginTop="6dp"
+        android:layout_marginBottom="0dp"
+        app:cardBackgroundColor="@android:color/white"
+        app:cardElevation="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivBack">
+        app:shapeAppearanceOverlay="@style/TopRoundedCard">
 
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/rvUsers"
@@ -74,6 +76,6 @@
             tools:text="Error Message"
             tools:visibility="visible" />
 
-    </FrameLayout>
+    </com.google.android.material.card.MaterialCardView>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

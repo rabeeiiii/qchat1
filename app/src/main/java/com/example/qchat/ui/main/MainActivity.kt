@@ -22,12 +22,14 @@ import com.example.qchat.ui.settings.SettingsFragment
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
     private lateinit var binding: ActivityMainBinding
+
     @Inject
     lateinit var pref: SharedPreferences
+
     @Inject
     lateinit var fireStore: FirebaseFirestore
 
-    lateinit var documentReference:DocumentReference
+    lateinit var documentReference: DocumentReference
 
     private lateinit var navHostFragment: NavHostFragment
 
@@ -35,15 +37,14 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
-            getWindow().setStatusBarColor(getResources().getColor(R.color.black));
-        }
-        navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
+        getWindow().setStatusBarColor(getResources().getColor(R.color.black));
+        navHostFragment =
+            supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
 
         navigateToChatFragmentIfNeeded()
 
         documentReference = fireStore.collection(Constant.KEY_COLLECTION_USERS)
-            .document(pref.getString(Constant.KEY_USER_ID,null).toString())
+            .document(pref.getString(Constant.KEY_USER_ID, null).toString())
 
 
         binding = ActivityMainBinding.inflate(layoutInflater)
@@ -58,22 +59,27 @@ class MainActivity : AppCompatActivity() {
                     loadFragment(ChatFragment())
                     true
                 }
+
                 R.id.nav_calls -> {
                     loadFragment(CallsFragment())
                     true
                 }
+
                 R.id.nav_contacts -> {
                     loadFragment(ContactsFragment())
                     true
                 }
+
                 R.id.nav_settings -> {
                     loadFragment(SettingsFragment())
                     true
                 }
+
                 else -> false
             }
         }
     }
+
     fun setBottomNavigationVisibility(visibility: Int) {
         binding.bottomNavigation.visibility = visibility
     }
@@ -81,12 +87,12 @@ class MainActivity : AppCompatActivity() {
 
     override fun onPause() {
         super.onPause()
-        documentReference.update(Constant.KEY_AVAILABILITY,0)
+        documentReference.update(Constant.KEY_AVAILABILITY, 0)
     }
 
     override fun onResume() {
         super.onResume()
-        documentReference.update(Constant.KEY_AVAILABILITY,1)
+        documentReference.update(Constant.KEY_AVAILABILITY, 1)
     }
 
     override fun onNewIntent(intent: Intent) {
@@ -94,11 +100,14 @@ class MainActivity : AppCompatActivity() {
         navigateToChatFragmentIfNeeded()
     }
 
-    private fun navigateToChatFragmentIfNeeded(){
-        if (intent?.action == Constant.ACTION_SHOW_CHAT_FRAGMENT){
+    private fun navigateToChatFragmentIfNeeded() {
+        if (intent?.action == Constant.ACTION_SHOW_CHAT_FRAGMENT) {
             val bundle = Bundle()
-            bundle.putSerializable(Constant.KEY_USER, intent?.getSerializableExtra(Constant.KEY_USER))
-            navHostFragment.findNavController().navigate(R.id.actionChatFragment,bundle)
+            bundle.putSerializable(
+                Constant.KEY_USER,
+                intent?.getSerializableExtra(Constant.KEY_USER)
+            )
+            navHostFragment.findNavController().navigate(R.id.actionChatFragment, bundle)
         }
     }
 

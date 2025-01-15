@@ -65,10 +65,9 @@ class SettingsFragment : Fragment() {
         SettingItem(
             R.drawable.ic_signout,
             "Sign Out",
-            " "
+            "Sign out of this Device "
         ),
     )
-
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -86,11 +85,9 @@ class SettingsFragment : Fragment() {
     }
 
     private fun updateUserDetails(view: View) {
-        // Fetch user details from SharedPreferences (or your data source)
         val userName = sharedPreferences.getString(Constant.KEY_NAME, "User") ?: "User"
         val userImage = sharedPreferences.getString(Constant.KEY_IMAGE, null)
 
-        // Update the UI with user details
         view.findViewById<TextView>(R.id.tvName).text = userName
         userImage?.let {
             view.findViewById<de.hdodenhof.circleimageview.CircleImageView>(R.id.ivProfile)
@@ -103,7 +100,6 @@ class SettingsFragment : Fragment() {
         recyclerView.apply {
             layoutManager = LinearLayoutManager(context)
             adapter = SettingsAdapter(settingsItems) { settingItem ->
-                // Handle the click event here
                 onSettingItemClick(settingItem)
             }
         }
@@ -117,48 +113,29 @@ class SettingsFragment : Fragment() {
             supportActionBar?.title = "Settings"
         }
     }
+
     private fun signOut() {
-
-        viewModel.signOut().observe(viewLifecycleOwner) {
-            if (it) {
-                requireContext().toast("SignOut")
-                val intent = Intent(requireActivity(), RegistrationActivity::class.java)
-                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                startActivity(intent)
-
-            } else {
+        viewModel.signOut().observe(viewLifecycleOwner) { signedOut ->
+            if (signedOut) {
                 requireContext().toast("Sign Out Successfully!")
+                startActivity(Intent(requireActivity(), RegistrationActivity::class.java).apply {
+                    addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+                })
+            } else {
+//                requireContext().toast("Error during Sign Out")
             }
         }
-
-
     }
 
     private fun onSettingItemClick(settingItem: SettingItem) {
         when (settingItem.title) {
-            "Account" -> {
-                // Handle Account settings click
-            }
-            "Chat" -> {
-                // Handle Chat settings click
-            }
-            "Notifications" -> {
-                // Handle Notifications settings click
-            }
-            "Help" -> {
-                // Handle Help settings click
-            }
-            "Storage and data" -> {
-                // Handle Storage and Data settings click
-            }
-            "Invite a friend" -> {
-                // Handle Invite Friend click
-            }
-            "Sign Out" -> {
-                signOut()
-
-            }
+            "Account" -> { /* Handle Account settings click */ }
+            "Chat" -> { /* Handle Chat settings click */ }
+            "Notifications" -> { /* Handle Notifications settings click */ }
+            "Help" -> { /* Handle Help settings click */ }
+            "Storage and data" -> { /* Handle Storage and Data settings click */ }
+            "Invite a friend" -> { /* Handle Invite Friend click */ }
+            "Sign Out" -> signOut()
         }
     }
 }
