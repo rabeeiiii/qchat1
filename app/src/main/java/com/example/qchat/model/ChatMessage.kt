@@ -10,5 +10,6 @@ data class ChatMessage(
     var date:Date,
     val conversionId:String? = null,
     val conversionName:String? = null,
-    val conversionImage:String? = null
+    val conversionImage:String? = null,
+    var unreadCount: Int = 0
 )

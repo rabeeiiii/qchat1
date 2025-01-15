@@ -4,7 +4,6 @@ import android.content.Intent
 import android.content.SharedPreferences
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import androidx.navigation.findNavController
 import androidx.navigation.fragment.NavHostFragment
 import androidx.navigation.fragment.findNavController
 import com.google.firebase.firestore.DocumentReference
@@ -18,7 +17,7 @@ import com.example.qchat.databinding.ActivityMainBinding
 import fragments.CallsFragment
 import fragments.ChatFragment
 import fragments.ContactsFragment
-import fragments.SettingsFragment
+import com.example.qchat.ui.settings.SettingsFragment
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
