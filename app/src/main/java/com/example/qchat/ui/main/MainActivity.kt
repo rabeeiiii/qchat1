@@ -35,7 +35,9 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+            getWindow().setStatusBarColor(getResources().getColor(R.color.black));
+        }
         navHostFragment = supportFragmentManager.findFragmentById(R.id.fragmentContainerView) as NavHostFragment
 
         navigateToChatFragmentIfNeeded()
@@ -72,6 +74,10 @@ class MainActivity : AppCompatActivity() {
             }
         }
     }
+    fun setBottomNavigationVisibility(visibility: Int) {
+        binding.bottomNavigation.visibility = visibility
+    }
+
 
     override fun onPause() {
         super.onPause()
