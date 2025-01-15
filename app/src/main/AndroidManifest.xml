@@ -16,6 +16,7 @@
         <activity
             android:name=".ui.registration.RegistrationActivity"
             android:windowSoftInputMode="adjustResize"
+            android:theme="@style/AppTheme"
             android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
@@ -24,6 +25,16 @@
             </intent-filter>
         </activity>
 
+<!--                <activity-->
+<!--                    android:name=".ui.registration.RegistrationActivity"-->
+<!--                    android:exported="true"-->
+<!--                    android:theme="@style/Theme.App.SplashScreen">-->
+<!--                    <intent-filter>-->
+<!--                        <action android:name="android.intent.action.MAIN" />-->
+
+<!--                        <category android:name="android.intent.category.LAUNCHER" />-->
+<!--                    </intent-filter>-->
+<!--                </activity>-->
         <activity
             android:name=".ui.main.MainActivity"
             android:windowSoftInputMode="adjustResize"
