@@ -15,8 +15,8 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivSend"
-        android:layout_width="35dp"
-        android:layout_height="35dp"
+        android:layout_width="45dp"
+        android:layout_height="45dp"
         android:padding="8dp"
         android:src="@drawable/ic_send"
         app:layout_constraintBottom_toBottomOf="parent"
@@ -28,6 +28,7 @@
         android:id="@+id/ivAdd"
         android:layout_width="22dp"
         android:layout_height="22dp"
+        android:scaleType="centerCrop"
         android:layout_marginStart="12dp"
         android:layout_marginEnd="16dp"
         android:background="@drawable/background_chat_input"
@@ -41,11 +42,11 @@
     <EditText
         android:id="@+id/etMessage"
         android:layout_width="0dp"
-        android:layout_height="40dp"
+        android:layout_height="55dp"
         android:layout_marginStart="4dp"
         android:layout_marginEnd="8dp"
-        android:fontFamily="@font/tt_norms_std_condensed_normal"
         android:background="@null"
+        android:fontFamily="@font/tt_norms_std_condensed_normal"
         android:hint="@string/type_a_message"
         android:imeOptions="actionDone"
         android:importantForAutofill="no"
@@ -71,8 +72,8 @@
     <View
         android:id="@+id/headerBg"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:background="@color/primary"
+        android:layout_height="60dp"
+        android:background="@color/purple_500"
         app:layout_constraintBottom_toTopOf="@+id/viewSupport"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -87,19 +88,19 @@
         android:src="@drawable/ic_back"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/light_pink" />
+        app:tint="@color/white" />
 
     <com.makeramen.roundedimageview.RoundedImageView
         android:id="@+id/ivUserImage"
-        android:layout_width="30dp"
-        android:scaleType="centerCrop"
-        android:layout_height="30dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_marginEnd="16dp"
-        app:riv_oval="true"
         android:padding="2dp"
+        android:scaleType="centerCrop"
         app:layout_constraintBottom_toBottomOf="@+id/ivBack"
         app:layout_constraintStart_toEndOf="@+id/ivBack"
         app:layout_constraintTop_toTopOf="@+id/ivBack"
+        app:riv_oval="true"
         tools:src="@drawable/ic_info" />
 
     <androidx.appcompat.widget.AppCompatImageView
@@ -112,7 +113,7 @@
         android:src="@drawable/ic_info"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
-        app:tint="@color/light_pink" />
+        app:tint="@color/white" />
 
     <TextView
         android:id="@+id/tvName"
@@ -120,8 +121,8 @@
         android:layout_height="wrap_content"
         android:layout_marginHorizontal="8dp"
         android:ellipsize="end"
-        android:gravity="start"
         android:fontFamily="@font/nimbus_san_bolt"
+        android:gravity="start"
         android:maxLines="1"
         android:textColor="@color/white"
         android:textSize="14sp"
@@ -138,19 +139,21 @@
         android:layout_height="0dp"
         android:layout_marginTop="12dp"
         app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintTop_toBottomOf="@+id/ivBack" />
+        app:layout_constraintTop_toBottomOf="@+id/ivBack"
+        app:layout_constraintVertical_bias="1.0"
+        tools:layout_editor_absoluteX="0dp" />
 
     <TextView
         android:id="@+id/tvAvailability"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:background="#008000"
+        android:fontFamily="@font/tt_norms_std_condensed_normal"
         android:padding="2dp"
         android:text="@string/online"
         android:textAlignment="center"
         android:textColor="@color/white"
         android:textSize="10sp"
-        android:fontFamily="@font/tt_norms_std_condensed_normal"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/headerBg"
         tools:visibility="visible" />
