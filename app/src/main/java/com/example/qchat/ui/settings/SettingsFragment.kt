@@ -1,4 +1,4 @@
-package fragments
+package com.example.qchat.ui.settings
 
 import android.content.Intent
 import android.os.Bundle
@@ -13,22 +13,24 @@ import com.example.qchat.R
 import com.example.qchat.adapter.SettingsAdapter
 import com.example.qchat.model.SettingItem
 import com.google.android.material.appbar.MaterialToolbar
-import android.view.MenuItem
-import android.widget.PopupMenu
+import com.example.qchat.utils.decodeToBitmap
+import android.content.SharedPreferences
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
-import androidx.navigation.fragment.findNavController
-import com.example.qchat.adapter.RecentConversationsAdapter
-import com.example.qchat.databinding.MainFragmentBinding
+import com.example.qchat.ui.main.MainViewModel
 import com.example.qchat.ui.registration.RegistrationActivity
 import com.example.qchat.utils.Constant
-import com.example.qchat.utils.decodeToBitmap
 import com.example.qchat.utils.toast
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
-
+@AndroidEntryPoint
 class SettingsFragment : Fragment() {
 
+    @Inject
+    lateinit var sharedPreferences: SharedPreferences
+    private val viewModel: SettingsViewModel by viewModels()
     private val settingsItems = listOf(
         SettingItem(
             R.drawable.ic_key,
@@ -67,6 +69,7 @@ class SettingsFragment : Fragment() {
         ),
     )
 
+
     override fun onCreateView(
         inflater: LayoutInflater,
         container: ViewGroup?,
@@ -79,6 +82,20 @@ class SettingsFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         setupToolbar(view)
         setupRecyclerView(view)
+        updateUserDetails(view)
+    }
+
+    private fun updateUserDetails(view: View) {
+        // Fetch user details from SharedPreferences (or your data source)
+        val userName = sharedPreferences.getString(Constant.KEY_NAME, "User") ?: "User"
+        val userImage = sharedPreferences.getString(Constant.KEY_IMAGE, null)
+
+        // Update the UI with user details
+        view.findViewById<TextView>(R.id.tvName).text = userName
+        userImage?.let {
+            view.findViewById<de.hdodenhof.circleimageview.CircleImageView>(R.id.ivProfile)
+                .setImageBitmap(it.decodeToBitmap())
+        }
     }
 
     private fun setupRecyclerView(view: View) {
@@ -99,6 +116,23 @@ class SettingsFragment : Fragment() {
             supportActionBar?.setDisplayHomeAsUpEnabled(true)
             supportActionBar?.title = "Settings"
         }
+    }
+    private fun signOut() {
+
+        viewModel.signOut().observe(viewLifecycleOwner) {
+            if (it) {
+                requireContext().toast("SignOut")
+                val intent = Intent(requireActivity(), RegistrationActivity::class.java)
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
+                intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+
+            } else {
+                requireContext().toast("Sign Out Successfully!")
+            }
+        }
+
+
     }
 
     private fun onSettingItemClick(settingItem: SettingItem) {
@@ -122,6 +156,7 @@ class SettingsFragment : Fragment() {
                 // Handle Invite Friend click
             }
             "Sign Out" -> {
+                signOut()
 
             }
         }

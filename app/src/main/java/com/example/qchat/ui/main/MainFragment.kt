@@ -76,7 +76,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
                 startActivity(intent)
 
             } else {
-                requireContext().toast("Unable to signOut")
+                requireContext().toast("Sign Out Successfully")
             }
         }
 
