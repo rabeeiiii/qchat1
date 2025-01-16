@@ -51,8 +51,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     ): View? {
         // Hide bottom navigation when the chat fragment is opened
         mainActivity.setBottomNavigationVisibility(View.GONE)
-        activity?.window?.statusBarColor = ContextCompat.getColor(requireContext(), R.color.purple_500)
-
         // Inflate the layout for this fragment
         return inflater.inflate(R.layout.chat_fragment, container, false)
     }
@@ -60,8 +58,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     override fun onDestroyView() {
         super.onDestroyView()
         // Show bottom navigation when the chat fragment is closed
-        activity?.window?.statusBarColor = ContextCompat.getColor(requireContext(), R.color.black)
-
         mainActivity.setBottomNavigationVisibility(View.VISIBLE)
     }
 

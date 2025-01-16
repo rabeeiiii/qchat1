@@ -8,6 +8,7 @@
     tools:context=".ui.chat.ChatFragment">
 
     <View
+        android:id="@+id/view2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
         android:background="#AEAEAE"
@@ -62,7 +63,6 @@
         android:id="@+id/view"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:layout_marginBottom="12dp"
         android:background="@drawable/background_content_top"
         app:layout_constraintBottom_toTopOf="@+id/etMessage"
         app:layout_constraintEnd_toEndOf="parent"
@@ -73,7 +73,7 @@
         android:id="@+id/headerBg"
         android:layout_width="match_parent"
         android:layout_height="60dp"
-        android:background="@color/purple_500"
+        android:background="@color/black"
         app:layout_constraintBottom_toTopOf="@+id/viewSupport"
         app:layout_constraintTop_toTopOf="parent" />
 
@@ -104,13 +104,25 @@
         tools:src="@drawable/ic_info" />
 
     <androidx.appcompat.widget.AppCompatImageView
-        android:id="@+id/ivInfo"
-        android:layout_width="30dp"
-        android:layout_height="30dp"
+        android:id="@+id/ivcall"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:layout_marginTop="12dp"
-        android:layout_marginEnd="16dp"
+        android:layout_marginEnd="26dp"
         android:padding="5dp"
-        android:src="@drawable/ic_info"
+        android:src="@drawable/ic_call"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/white" />
+
+    <androidx.appcompat.widget.AppCompatImageView
+        android:id="@+id/iv_videocall"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="66dp"
+        android:padding="5dp"
+        android:src="@drawable/ic_solid_video_call"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:tint="@color/white" />
@@ -125,10 +137,10 @@
         android:gravity="start"
         android:maxLines="1"
         android:textColor="@color/white"
-        android:textSize="14sp"
+        android:textSize="16sp"
         android:textStyle="bold"
         app:layout_constraintBottom_toBottomOf="@+id/ivBack"
-        app:layout_constraintEnd_toStartOf="@+id/ivInfo"
+        app:layout_constraintEnd_toStartOf="@+id/iv_videocall"
         app:layout_constraintStart_toEndOf="@+id/ivUserImage"
         app:layout_constraintTop_toTopOf="@+id/ivBack"
         tools:text="Name" />

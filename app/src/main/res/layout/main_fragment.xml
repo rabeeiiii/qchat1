@@ -91,14 +91,15 @@
                     android:layout_height="wrap_content">
 
                     <!-- Profile Picture -->
-                    <com.google.android.material.imageview.ShapeableImageView
+
+                    <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/ivProfile"
                         android:layout_width="64dp"
                         android:layout_height="64dp"
                         android:background="@drawable/circle_status_shape"
-                        app:shapeAppearanceOverlay="@style/round"
                         android:contentDescription="Status Icon"
                         android:padding="3dp"
+                        app:shapeAppearanceOverlay="@style/round"
                          />
 
                     <!-- "+" Icon -->
@@ -131,7 +132,7 @@
                 <ImageView
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:background="@drawable/status_circle_grey2"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_ashraf" />

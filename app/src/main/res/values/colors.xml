@@ -39,4 +39,12 @@
     <color name="light_pink">#FECBCE</color>
     <color name="light_gray">#F0F1F5</color>
     <color name="dark_black">#020202</color>
+
+    <color name="received_message">#EEEEEE</color>
+    <color name="sent_mssage">#686D76</color>
+    <color name="theme_grey">#686D76</color>
+
+
+
+
 </resources>

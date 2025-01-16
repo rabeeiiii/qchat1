@@ -16,7 +16,7 @@ import androidx.fragment.app.Fragment
 import com.example.qchat.databinding.ActivityMainBinding
 import fragments.CallsFragment
 import fragments.ChatFragment
-import fragments.ContactsFragment
+import fragments.GroupsFragment
 import com.example.qchat.ui.settings.SettingsFragment
 
 @AndroidEntryPoint
@@ -66,7 +66,7 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 R.id.nav_contacts -> {
-                    loadFragment(ContactsFragment())
+                    loadFragment(GroupsFragment())
                     true
                 }
 

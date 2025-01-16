@@ -81,7 +81,7 @@
                 android:contentDescription="Call"
                 android:padding="6dp"
                 android:scaleType="centerCrop"
-                android:src="@drawable/video50" />
+                android:src="@drawable/video_call" />
 
             <ImageButton
                 android:id="@+id/call_button2"
