@@ -60,5 +60,8 @@
     <string name="firebase_server_key">BDv0FJpjIoqmTCktFBrbJ-2AR6QnWavi2kcLpJKhZF5xvYNbNFtxJnFtZb2zdSSMrc_spoF582pnjfdiHy0DlEU</string>
 
 
+    <string name="photos">Photos</string>
+    <string name="camera">Camera</string>
+    <string name="location">Location</string>
 
 </resources>
