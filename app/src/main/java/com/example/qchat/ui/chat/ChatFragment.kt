@@ -6,7 +6,7 @@ import android.os.Bundle
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.core.content.ContextCompat
+import android.widget.ImageView
 import androidx.core.view.isVisible
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -21,8 +21,8 @@ import com.example.qchat.ui.main.MainActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.decodeToBitmap
 import dagger.hilt.android.AndroidEntryPoint
+import com.example.qchat.fragments.PopMenuFragment
 import javax.inject.Inject
-
 
 @AndroidEntryPoint
 class ChatFragment : Fragment(R.layout.chat_fragment) {
@@ -33,31 +33,24 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private lateinit var user: User
     private lateinit var chatAdapter: ChatAdapter
 
-
-
     @Inject
     lateinit var pref: SharedPreferences
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        // Get reference to MainActivity
         mainActivity = context as MainActivity
-
     }
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View? {
-        // Hide bottom navigation when the chat fragment is opened
         mainActivity.setBottomNavigationVisibility(View.GONE)
-        // Inflate the layout for this fragment
         return inflater.inflate(R.layout.chat_fragment, container, false)
     }
 
     override fun onDestroyView() {
         super.onDestroyView()
-        // Show bottom navigation when the chat fragment is closed
         mainActivity.setBottomNavigationVisibility(View.VISIBLE)
     }
 
@@ -65,18 +58,20 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         super.onViewCreated(view, savedInstanceState)
         binding = ChatFragmentBinding.bind(view)
 
-
-
         getArgument()
-
         setClickListener()
-
         setRecyclerview()
 
         binding.tvName.text = user.name
         binding.ivUserImage.setImageBitmap(user.image?.decodeToBitmap())
 
         observeChat()
+
+        val ivAdd: ImageView = binding.ivAdd
+        ivAdd.setOnClickListener {
+            val popUpFragment = PopMenuFragment()
+            popUpFragment.show(parentFragmentManager, "PopUpFragment")
+        }
 
     }
 
@@ -91,11 +86,10 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             override fun observeChat(newChat: List<ChatMessage>) {
                 if (newChat.isNotEmpty()) {
                     chatAdapter.addMessage(newChat, binding.rvChat)
-
                 }
                 binding.pb.visibility = View.GONE
                 viewModel.conversionId.isEmpty().let {
-                    if(chatAdapter.getMessageSize() != 0){
+                    if (chatAdapter.getMessageSize() != 0) {
                         viewModel.checkForConversation(user.id)
                     }
                 }
@@ -104,23 +98,16 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     }
 
     private fun setClickListener() {
-
         binding.ivBack.setOnClickListener { findNavController().popBackStack() }
-
         binding.ivSend.setOnClickListener {
-            if (binding.etMessage.text.isNullOrBlank() && binding.etMessage.text.toString()
-                    .trim().length < 0
-            )
-                return@setOnClickListener
+            if (binding.etMessage.text.isNullOrBlank()) return@setOnClickListener
             viewModel.sendMessage(binding.etMessage.text.trim().toString(), user)
             binding.etMessage.text.clear()
         }
     }
 
     private fun setRecyclerview() {
-        chatAdapter = ChatAdapter(pref.getString(Constant.KEY_USER_ID, null).toString(),
-            /*user.image.toString().decodeToBitmap()*/
-            emptyList())
+        chatAdapter = ChatAdapter(pref.getString(Constant.KEY_USER_ID, null).toString(), emptyList())
         user.image?.let {
             chatAdapter.setProfileImage(it.decodeToBitmap())
         }
@@ -136,10 +123,10 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
     override fun onResume() {
         super.onResume()
-        viewModel.listenerAvailabilityOfReceiver(user.id){availability,fcm,profileImage ->
+        viewModel.listenerAvailabilityOfReceiver(user.id) { availability, fcm, profileImage ->
             binding.tvAvailability.isVisible = availability
             user.token = fcm
-            if (user.image.isNullOrEmpty()){
+            if (user.image.isNullOrEmpty()) {
                 user.image = profileImage
                 binding.ivUserImage.setImageBitmap(user.image?.decodeToBitmap())
                 chatAdapter.setProfileImage(user.image?.decodeToBitmap()!!)
