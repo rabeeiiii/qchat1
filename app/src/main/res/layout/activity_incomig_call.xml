@@ -1,0 +1,143 @@
+<RelativeLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <!-- Blurred Background -->
+    <ImageView
+        android:id="@+id/blurred_background"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:scaleType="centerCrop"
+        android:src="@drawable/ic_moaz" />
+
+    <!-- Dark Overlay -->
+    <View
+        android:id="@+id/dark_overlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="#80000000" />
+
+    <!-- Circular Profile Picture -->
+    <de.hdodenhof.circleimageview.CircleImageView
+        android:id="@+id/profile_image"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="180dp"
+        android:src="@drawable/ic_moaz" />
+
+    <!-- Name and Status -->
+    <TextView
+        android:id="@+id/caller_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/profile_image"
+        android:layout_centerHorizontal="true"
+        android:text="Moaz"
+        android:textSize="24sp"
+        android:textColor="#FFFFFF"
+        android:textStyle="bold"
+        android:layout_marginTop="10dp" />
+
+    <TextView
+        android:id="@+id/call_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/caller_name"
+        android:layout_centerHorizontal="true"
+        android:text="Incoming Call"
+        android:textSize="18sp"
+        android:textColor="#FFFFFF"
+        android:layout_marginTop="5dp" />
+
+    <!-- Action Buttons -->
+    <LinearLayout
+        android:id="@+id/action_buttons"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@id/call_status"
+        android:layout_centerHorizontal="true"
+        android:orientation="horizontal"
+        android:layout_marginTop="190dp">
+
+        <!-- Remind Me Button -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_marginEnd="100dp"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/remind_me_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/alarm_clock" />
+
+            <TextView
+                android:id="@+id/remind_me"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Remind me"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="5dp" />
+        </LinearLayout>
+
+        <!-- Message Button -->
+        <LinearLayout
+            android:orientation="vertical"
+            android:gravity="center"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content">
+
+            <ImageView
+                android:id="@+id/message_icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:src="@drawable/new50" />
+
+            <TextView
+                android:id="@+id/message"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Message"
+                android:textColor="#FFFFFF"
+                android:textSize="14sp"
+                android:layout_marginTop="5dp" />
+        </LinearLayout>
+    </LinearLayout>
+
+    <!-- Accept and Reject Buttons -->
+    <LinearLayout
+        android:id="@+id/call_control_buttons"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:orientation="horizontal"
+        android:gravity="center"
+        android:layout_marginBottom="20dp">
+
+        <!-- Accept Button -->
+        <ImageButton
+            android:id="@+id/accept_button"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:src="@drawable/phone50"
+            android:background="@drawable/circle_shape_green" />
+
+        <!-- Gap Between Buttons -->
+        <View
+            android:layout_width="150dp"
+            android:layout_height="70dp" />
+
+        <!-- Reject Button -->
+        <ImageButton
+            android:id="@+id/reject_button"
+            android:layout_width="70dp"
+            android:layout_height="70dp"
+            android:src="@drawable/reject"
+            android:background="@drawable/circle_shape_red" />
+    </LinearLayout>
+</RelativeLayout>
