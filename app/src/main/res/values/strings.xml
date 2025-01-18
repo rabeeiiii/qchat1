@@ -64,4 +64,21 @@
     <string name="camera">Camera</string>
     <string name="location">Location</string>
 
+    <string name="profile_image">Profile Image</string>
+
+    <string name="group_name">Mariam</string>
+    <string name="total_people">6 People</string>
+    <string name="status_text">very bad texter, may reply in 3 business days</string>
+
+    <string name="media">Media</string>
+    <string name="nickname">Nickname</string>
+    <string name="block_user">Block User</string>
+    <string name="report_spam">Report Spam</string>
+    <string name="disappearing_messages_icon">Disappearing Messages Icon</string>
+    <string name="nickname_icon">Nickname Icon</string>
+    <string name="block_user_icon">Block User Icon</string>
+    <string name="report_spam_icon">Report Spam Icon</string>
+    <string name="arrow_icon">Arrow Icon</string>
+
+
 </resources>
