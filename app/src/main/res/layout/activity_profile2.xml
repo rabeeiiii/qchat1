@@ -1,0 +1,274 @@
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".ui.profile.profileActivity">
+
+    <ImageView
+        android:id="@+id/profileImage"
+        android:layout_width="wrap_content"
+        android:layout_height="180dp"
+        android:src="@drawable/mariam"
+        android:contentDescription="@string/profile_image"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_centerHorizontal="true"
+        android:scaleType="centerCrop" />
+
+    <View
+        android:id="@+id/view3"
+        android:layout_width="match_parent"
+        android:layout_height="80dp"
+        android:layout_marginTop="-40dp"
+        android:background="@drawable/blured_bottom_overlay"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/profileImage" />
+
+    <TextView
+        android:id="@+id/groupName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="@string/group_name"
+        android:textSize="20sp"
+        android:textStyle="bold"
+        app:layout_constraintTop_toBottomOf="@id/profileImage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:layout_marginTop="12dp"
+        android:textAlignment="center"
+        android:textColor="#1a1a1a" />
+
+    <LinearLayout
+        android:id="@+id/linearLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="20dp"
+        android:gravity="center"
+        android:orientation="horizontal"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@id/groupName">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/audioButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="8dp"
+            android:text="audio"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="8dp"
+            app:elevation="4dp"
+            app:icon="@drawable/call2"
+            app:iconGravity="textStart"
+            app:iconTint="@android:color/black" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/video_button"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="8dp"
+            android:text="viedo call"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="8dp"
+            app:elevation="4dp"
+            app:icon="@drawable/videocall"
+            app:iconGravity="textStart"
+            app:iconTint="@android:color/black" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/muteButton"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:layout_marginEnd="8dp"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="8dp"
+            app:elevation="4dp"
+            android:text="mute"
+            app:icon="@drawable/silence"
+            app:iconGravity="textStart"
+            app:iconTint="@android:color/black" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/search_button"
+            android:layout_width="56dp"
+            android:layout_height="56dp"
+            android:text="search"
+            app:backgroundTint="@android:color/white"
+            app:cornerRadius="8dp"
+            app:elevation="4dp"
+            app:icon="@drawable/ic_search"
+            app:iconGravity="textStart"
+            app:iconTint="@android:color/black" />
+
+    </LinearLayout>
+
+    <TextView
+        android:id="@+id/status"
+        android:layout_width="360dp"
+        android:layout_height="56dp"
+        android:layout_marginBottom="336dp"
+        android:background="@drawable/status_background"
+        android:elevation="4dp"
+        android:gravity="start|center_vertical"
+        android:padding="15dp"
+        android:text="@string/status_text"
+        android:textColor="#000000"
+        android:textSize="16sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.49"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/linearLayout"
+        app:layout_constraintVertical_bias="0.511" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        app:layout_constraintTop_toBottomOf="@id/status"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        android:paddingTop="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/white"
+            android:elevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/gallery"
+                android:contentDescription="@string/media"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Media"
+                android:textSize="16sp"
+                android:textColor="#000000"
+                android:layout_marginStart="16dp"/>
+
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/chevron"
+                android:contentDescription="@string/arrow_icon"
+                android:layout_marginStart="280dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/white"
+            android:elevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/pen"
+                android:contentDescription="@string/nickname_icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Nickname"
+                android:textSize="16sp"
+                android:textColor="#000000"
+                android:layout_marginStart="16dp"/>
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="@string/arrow_icon"
+                android:src="@drawable/chevron"
+                android:layout_marginStart="250dp"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/white"
+            android:elevation="2dp"
+            android:layout_marginBottom="4dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/block"
+                android:contentDescription="@string/block_user_icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Block User"
+                android:textSize="16sp"
+                android:textColor="#ff0000"
+                android:layout_marginStart="16dp"/>
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:src="@drawable/chevron"
+                android:layout_marginStart="245dp"
+                android:contentDescription="@string/arrow_icon"/>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="56dp"
+            android:orientation="horizontal"
+            android:paddingStart="16dp"
+            android:paddingEnd="16dp"
+            android:gravity="center_vertical"
+            android:background="@android:color/white"
+            android:elevation="2dp">
+
+            <ImageView
+                android:layout_width="24dp"
+                android:layout_height="24dp"
+                android:src="@drawable/spam"
+                android:contentDescription="@string/report_spam_icon"/>
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Report Spam"
+                android:textSize="16sp"
+                android:textColor="#ff0000"
+                android:layout_marginStart="16dp"/>
+
+            <ImageView
+                android:layout_width="16dp"
+                android:layout_height="16dp"
+                android:contentDescription="@string/arrow_icon"
+                android:src="@drawable/chevron"
+                android:layout_marginStart="225dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
