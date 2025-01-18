@@ -17,6 +17,7 @@
             android:id="@+id/action_mainFragment_to_chatFragment"
             app:destination="@id/chatFragment" />
     </fragment>
+
     <fragment
         android:id="@+id/usersFragment"
         android:name="com.example.qchat.ui.users.UsersFragment"
@@ -37,9 +38,24 @@
         android:id="@+id/chatFragment"
         android:name="com.example.qchat.ui.chat.ChatFragment"
         android:label="chat_fragment"
-        tools:layout="@layout/chat_fragment" >
+        tools:layout="@layout/chat_fragment">
+        <argument
+            android:name="user"
+            app:argType="com.example.qchat.model.User" />
+        <action
+            android:id="@+id/action_chatFragment_to_profileFragment"
+            app:destination="@id/profileFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/profileFragment"
+        android:name="com.example.qchat.ui.profile.ProfileFragment"
+        android:label="ProfileFragment">
         <argument
             android:name="user"
             app:argType="com.example.qchat.model.User" />
     </fragment>
+
+
+
 </navigation>
