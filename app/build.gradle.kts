@@ -109,4 +109,11 @@ dependencies {
     //dagger
     implementation ("com.google.dagger:hilt-android:2.47")
     kapt("com.google.dagger:hilt-android-compiler:2.47")
+
+    implementation ("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
+
+    implementation ("com.squareup.picasso:picasso:2.71828")
+
+
 }
