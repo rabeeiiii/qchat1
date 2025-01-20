@@ -44,6 +44,8 @@
     <color name="sent_mssage">#686D76</color>
     <color name="theme_grey">#686D76</color>
 
+    <color name="arrow_color">#707070</color>
+
 
 
 </resources>

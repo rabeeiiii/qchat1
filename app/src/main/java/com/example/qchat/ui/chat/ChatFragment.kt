@@ -74,8 +74,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
 
         // Set OnClickListener for the username to navigate to the profile
-        binding.tvName.setOnClickListener {
-            // Pass the entire User object to ProfileFragment
+        binding.ivUserImage.setOnClickListener {
             val action = ChatFragmentDirections.actionChatFragmentToProfileFragment(user)
             findNavController().navigate(action)
         }
