@@ -21,6 +21,22 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
+
+
+    }
+
+    externalNativeBuild {
+        cmake {
+            path ("src/main/CMakeLists.txt")
+        }
     }
 
     buildTypes {
@@ -56,6 +72,7 @@ dependencies {
     implementation("androidx.constraintlayout:constraintlayout:2.1.4")
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation(libs.androidx.activity)
+    implementation(libs.play.services.location)
 
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
