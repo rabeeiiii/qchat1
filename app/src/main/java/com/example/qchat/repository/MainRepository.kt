@@ -1,5 +1,7 @@
 package com.example.qchat.repository
 
+import android.net.Uri
+import android.util.Base64
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.EventListener
@@ -7,8 +9,12 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.JsonObject
 import com.example.qchat.model.MessageBody
 import com.example.qchat.network.Api
+import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Resource
+import com.example.qchat.utils.CryptoUtils
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -63,12 +69,31 @@ class MainRepository @Inject constructor(
             return Resource.Error(e.message ?: "An Unknown Error Occurred")
         }
     }
+    suspend fun sendMessage(message: HashMap<String, Any>): Boolean {
+        return try {
+            // Generate AES Key (you may store and retrieve this key securely)
+            val secretKey = AesUtils.generateAESKey()
 
-    suspend fun sendMessage(message: HashMap<String, Any>): Boolean = try {
-        fireStore.collection(Constant.KEY_COLLECTION_CHAT).document().set(message).await()
-        true
-    } catch (e: Exception) {
-        false
+            // Encrypt the message
+            val encryptedMessage = AesUtils.encryptMessage(
+                message[Constant.KEY_MESSAGE]?.toString() ?: "",
+                secretKey
+            )
+
+            // Store the encrypted message in Firestore
+            val messageData = HashMap<String, Any>()
+            messageData[Constant.KEY_MESSAGE] = encryptedMessage
+            messageData["secret_key"] = AesUtils.keyToBase64(secretKey) // Store the secret key in Base64 format
+//            messageData[Constant.KEY_SENDER_ID] = userId
+//            messageData[Constant.KEY_RECEIVER_ID] = receiverId
+
+            // Save message to Firestore
+            fireStore.collection(Constant.KEY_COLLECTION_CHAT).document().set(messageData).await()
+            true
+        } catch (e: Exception) {
+            e.printStackTrace()
+            false
+        }
     }
 
 
