@@ -13,9 +13,7 @@ import com.google.firebase.messaging.RemoteMessage
 import com.example.qchat.R
 import com.example.qchat.model.User
 import com.example.qchat.ui.main.MainActivity
-import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
-import com.example.qchat.utils.CryptoUtils
 import com.example.qchat.utils.decodeBase64
 import kotlin.random.Random
 
@@ -30,32 +28,10 @@ class MessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d("FCM", "onMessageReceived: ${remoteMessage.notification?.body}")
 
-        val encryptedMessage = remoteMessage.data[Constant.KEY_MESSAGE] ?: ""
         val user = getUser(remoteMessage)
-        // Retrieve the public key, signature, and AES key from the FCM message data
-        val publicKeyString = remoteMessage.data["public_key"]?.toByteArray()
-        val signatureString = remoteMessage.data["signature"]?.toByteArray()
-        val aesKeyBase64 = remoteMessage.data["aes_key"] ?: ""
+        val message = remoteMessage.data[Constant.KEY_MESSAGE]?:""
 
-        if (publicKeyString != null && signatureString != null && aesKeyBase64.isNotEmpty()) {
-            // Decode the AES key from Base64
-            val aesKey = AesUtils.base64ToKey(aesKeyBase64)
-
-            // Decrypt the message content using the AES key
-            val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
-
-            // Verify the message's signature using the public key
-            val isVerified = CryptoUtils.verifySignature(publicKeyString, decryptedMessage.toByteArray(), signatureString)
-
-            if (isVerified) {
-                // If signature is valid, proceed with the notification
-                sendNotification(user, decryptedMessage, getUserPendingIntent(user))
-            } else {
-                Log.e("FCM", "Invalid signature. Message verification failed.")
-            }
-        } else {
-            Log.e("FCM", "Missing public key, signature, or AES key in message data.")
-        }
+        sendNotification(user,message,getUserPendingIntent(user))
     }
 
     private fun getUser(remoteMessage: RemoteMessage) =

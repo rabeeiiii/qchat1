@@ -92,32 +92,21 @@ class ChatViewModel @Inject constructor(
             if (value != null) {
                 for (documentChange in value.documentChanges) {
                     if (documentChange.type == DocumentChange.Type.ADDED) {
-                        val document = documentChange.document
-                        val senderId = document.getString(Constant.KEY_SENDER_ID)
-                        val receiverId = document.getString(Constant.KEY_RECEIVER_ID)
-                        val message = document.getString(Constant.KEY_MESSAGE)
-                        val timestamp = document.getDate(Constant.KEY_TIMESTAMP)
-
-                        if (senderId != null && receiverId != null && message != null && timestamp != null) {
-                            val chatMessage = ChatMessage(
-                                senderId,
-                                receiverId,
-                                message,
-                                timestamp.getReadableDate(),
-                                timestamp
-                            )
-                            newMessageList.add(chatMessage)
-                        } else {
-                            // Handle the case where one or more fields are null
-                            // Log an error or skip this document
-                        }
+                        val chatMessage = ChatMessage(
+                            documentChange.document[Constant.KEY_SENDER_ID].toString(),
+                            documentChange.document[Constant.KEY_RECEIVER_ID].toString(),
+                            documentChange.document[Constant.KEY_MESSAGE].toString(),
+                            documentChange.document.getDate(Constant.KEY_TIMESTAMP)!!
+                                .getReadableDate(),
+                            documentChange.document.getDate(Constant.KEY_TIMESTAMP)!!
+                        )
+                        newMessageList.add(chatMessage)
                     }
                 }
                 chatObserver.observeChat(newMessageList)
                 newMessageList.clear()
             }
         }
-
 
         repository.observeChat(pref.getString(Constant.KEY_USER_ID, null).toString(),
             receiverId,
