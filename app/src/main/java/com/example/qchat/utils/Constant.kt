@@ -14,10 +14,15 @@ object Constant {
     const val KEY_USER = "user"
     const val VIEW_TYPE_SEND = 1
     const val VIEW_TYPE_RECEIVED = 2
+    const val VIEW_TYPE_SEND_PHOTO = 3 // For sending photo messages
+    const val VIEW_TYPE_RECEIVED_PHOTO = 4 // For receiving photo messages
     const val KEY_COLLECTION_CHAT = "chat"
     const val KEY_SENDER_ID = "senderId"
     const val KEY_RECEIVER_ID = "receiverId"
     const val KEY_MESSAGE = "message"
+    const val KEY_MESSAGE_TYPE = "messageType"
+    const val MESSAGE_TYPE_TEXT = "text" // Explicitly define text type
+    const val MESSAGE_TYPE_PHOTO = "photo" // Explicitly define photo type
     const val KEY_TIMESTAMP = "timestamp"
     const val KEY_COLLECTION_CONVERSATIONS = "conversations"
     const val KEY_SENDER_NAME = "senderName"

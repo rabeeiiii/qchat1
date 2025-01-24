@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="2dp">
+
+    <!--    <ImageView-->
+    <!--        android:id="@+id/ivMessageImage"-->
+    <!--        android:layout_width="170dp"-->
+    <!--        android:layout_height="170dp"-->
+    <!--        android:layout_marginTop="4dp"-->
+    <!--        android:layout_marginEnd="0dp"-->
+    <!--        android:adjustViewBounds="true"-->
+    <!--        android:background="@drawable/bg_send_message"-->
+    <!--        android:padding="5dp"-->
+    <!--        android:scaleType="fitEnd"-->
+    <!--        android:src="@drawable/ashraf"-->
+    <!--        app:layout_constraintEnd_toEndOf="parent"-->
+    <!--        app:layout_constraintTop_toTopOf="parent" />-->
+
+    <!-- Background Layer -->
+    <View
+        android:id="@+id/backgroundLayer"
+        android:layout_width="153dp"
+        android:layout_height="202dp"
+        android:layout_marginTop="4dp"
+        android:layout_marginEnd="0dp"
+        android:background="@drawable/bg_send_message"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- Image Layer -->
+    <ImageView
+        android:id="@+id/ivMessageImage"
+        android:layout_width="190dp"
+        android:layout_height="190dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginEnd="5dp"
+        android:scaleType="fitEnd"
+        android:src="@drawable/ashraf"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <TextView
+        android:id="@+id/tvDateTime"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:textColor="@color/secondary_text"
+        android:textSize="7sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/ivMessageImage"
+        tools:text="05:45 PM" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

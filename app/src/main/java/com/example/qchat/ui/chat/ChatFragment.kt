@@ -77,7 +77,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 val bitmap = uriToBitmap(uri)
                 bitmap?.let {
                     encodeBitmapToBase64(it) { encodedImage ->
-                        viewModel.sendMessage(encodedImage, user) // Send the encoded image as a message
+                        viewModel.sendPhoto(encodedImage, user) // Send the encoded image as a message
                     }
                 }
             }
