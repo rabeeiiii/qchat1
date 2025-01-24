@@ -132,7 +132,7 @@
                 <ImageView
                     android:layout_width="64dp"
                     android:layout_height="64dp"
-                    android:background="@drawable/status_circle_grey2"
+                    android:background="@drawable/circle_status_shape"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_ashraf" />
