@@ -77,8 +77,53 @@ class ChatViewModel @Inject constructor(
     }
 
     fun sendPhoto(encodedImage: String, receiverUser: User) {
-        sendMessage(encodedImage, receiverUser, messageType = Constant.MESSAGE_TYPE_PHOTO)
+        viewModelScope.launch {
+            val messageMap = HashMap<String, Any>()
+            messageMap[Constant.KEY_SENDER_ID] = pref.getString(Constant.KEY_USER_ID, null).toString()
+            messageMap[Constant.KEY_RECEIVER_ID] = receiverUser.id
+            messageMap[Constant.KEY_MESSAGE] = encodedImage
+            messageMap[Constant.KEY_MESSAGE_TYPE] = Constant.MESSAGE_TYPE_PHOTO
+            messageMap[Constant.KEY_TIMESTAMP] = Date()
+
+            repository.sendMessage(messageMap)
+
+            if (conversionId.isNotEmpty()) {
+                repository.updateConversation(encodedImage, conversionId)
+            } else {
+                val conversation = HashMap<String, Any>().apply {
+                    put(Constant.KEY_SENDER_ID, pref.getString(Constant.KEY_USER_ID, null).toString())
+                    put(Constant.KEY_SENDER_NAME, pref.getString(Constant.KEY_NAME, null).toString())
+                    put(Constant.KEY_SENDER_IMAGE, pref.getString(Constant.KEY_IMAGE, null).toString())
+                    put(Constant.KEY_RECEIVER_ID, receiverUser.id)
+                    put(Constant.KEY_RECEIVER_NAME, receiverUser.name)
+                    put(Constant.KEY_RECEIVER_IMAGE, receiverUser.image!!)
+                    put(Constant.KEY_LAST_MESSAGE, encodedImage)
+                    put(Constant.KEY_TIMESTAMP, Date())
+                }
+                repository.updateRecentConversation(conversation) {
+                    conversionId = it
+                }
+            }
+
+            if (!isReceiverAvailable) {
+                try {
+                    val messageBody = MessageBody(
+                        data = Data(
+                            userId = pref.getString(Constant.KEY_USER_ID, null).toString(),
+                            name = pref.getString(Constant.KEY_NAME, null).toString(),
+                            fcmToken = pref.getString(Constant.KEY_FCM_TOKEN, null).toString(),
+                            message = encodedImage
+                        ),
+                        regIs = listOf(receiverUser.token!!)
+                    )
+                    sendNotification(messageBody)
+                } catch (e: Exception) {
+                    e.printStackTrace()
+                }
+            }
+        }
     }
+
     fun eventListener(receiverId: String, chatObserver: ChatFragment.ChatObserver) {
         val newMessageList = mutableListOf<ChatMessage>()
         val eventListener =
