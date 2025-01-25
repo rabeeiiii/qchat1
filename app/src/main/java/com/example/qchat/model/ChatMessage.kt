@@ -4,6 +4,7 @@ import com.example.qchat.utils.Constant
 import java.util.*
 
 data class ChatMessage(
+    val id: String = "",
     val senderId:String,
     val receiverId:String,
     var message:String,

@@ -106,18 +106,21 @@ class ChatAdapter(
     }
 
 
-
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
-        chatMessagesList.addAll(newMessage)
-        chatMessagesList.sortBy { it.date }
-        if (chatMessagesList.isEmpty()) {
-
-        } else {
-            notifyItemRangeInserted(chatMessagesList.size, newMessage.size)
-            rvChat.smoothScrollToPosition(chatMessagesList.size - 1)
+        val uniqueMessages = newMessage.filterNot { newMsg ->
+            chatMessagesList.any { it.date == newMsg.date && it.message == newMsg.message }
         }
-        rvChat.visibility = View.VISIBLE
+
+        val initialSize = chatMessagesList.size
+        chatMessagesList.addAll(uniqueMessages)
+        chatMessagesList.sortBy { it.date }
+
+        if (chatMessagesList.isNotEmpty()) {
+            notifyItemRangeInserted(initialSize, uniqueMessages.size)
+            rvChat.scrollToPosition(chatMessagesList.size - 1)
+        }
     }
+
 
     fun getMessageSize() = chatMessagesList.size
 
@@ -193,8 +196,4 @@ class ChatAdapter(
             else -> Constant.VIEW_TYPE_RECEIVED
         }
     }
-
-
-
-
 }

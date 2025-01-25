@@ -52,51 +52,65 @@ class MainViewModel @Inject constructor(
         return signOut
     }
 
-    fun recentMessageEventListener(list:List<ChatMessage>,onUpdateRecentConversation: (List<ChatMessage>) -> Unit) =
-        EventListener<QuerySnapshot> { value, error ->
-            /*if (error != null)
-                return@EventListener*/
-            if (value != null) {
-                val updatedConversionList = mutableListOf<ChatMessage>()
-                updatedConversionList.addAll(list)
-                value.documentChanges.forEach { documentChange ->
-                    if (documentChange.type == DocumentChange.Type.ADDED) {
-                        val senderId = documentChange.document.getString(Constant.KEY_SENDER_ID).toString()
-                        val receiverId = documentChange.document.getString(Constant.KEY_RECEIVER_ID).toString()
-                        var conversionImage = ""
-                        var conversionName = ""
-                        var conversionId = ""
-                        if (pref.getString(Constant.KEY_USER_ID, null).toString() == senderId) {
-                            conversionImage = documentChange.document.getString(Constant.KEY_RECEIVER_IMAGE).toString()
-                            conversionName = documentChange.document.getString(Constant.KEY_RECEIVER_NAME).toString()
-                            conversionId = documentChange.document.getString(Constant.KEY_RECEIVER_ID).toString()
-                        } else {
-                            conversionImage = documentChange.document.getString(Constant.KEY_SENDER_IMAGE).toString()
-                            conversionName = documentChange.document.getString(Constant.KEY_SENDER_NAME).toString()
-                            conversionId = documentChange.document.getString(Constant.KEY_SENDER_ID).toString()
-                        }
-                        var message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).toString()
-                        var date:Date = documentChange.document.getDate(Constant.KEY_TIMESTAMP)!!
-                        updatedConversionList.add(ChatMessage(senderId,receiverId,message,"",date,conversionId,conversionName,conversionImage))
-                    }else if (documentChange.type == DocumentChange.Type.MODIFIED){
-                        for(it in updatedConversionList){
-                            val senderId = documentChange.document.getString(Constant.KEY_SENDER_ID).toString()
-                            val receiverId = documentChange.document.getString(Constant.KEY_RECEIVER_ID).toString()
-                            if (it.senderId == senderId && it.receiverId == receiverId){
-                                it.message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).toString()
-                                it.date = documentChange.document.getDate(Constant.KEY_TIMESTAMP)!!
-                                break
-                            }
-                        }
+    fun recentMessageEventListener(
+        list: List<ChatMessage>,
+        onUpdateRecentConversation: (List<ChatMessage>) -> Unit
+    ) = EventListener<QuerySnapshot> { value, error ->
+        if (value != null) {
+            val updatedConversionList = mutableListOf<ChatMessage>()
+            updatedConversionList.addAll(list)
+
+            value.documentChanges.forEach { documentChange ->
+                if (documentChange.type == DocumentChange.Type.ADDED) {
+                    val senderId = documentChange.document.getString(Constant.KEY_SENDER_ID).orEmpty()
+                    val receiverId = documentChange.document.getString(Constant.KEY_RECEIVER_ID).orEmpty()
+                    var conversionImage = ""
+                    var conversionName = ""
+                    var conversionId = ""
+
+                    if (pref.getString(Constant.KEY_USER_ID, null) == senderId) {
+                        conversionImage = documentChange.document.getString(Constant.KEY_RECEIVER_IMAGE).orEmpty()
+                        conversionName = documentChange.document.getString(Constant.KEY_RECEIVER_NAME).orEmpty()
+                        conversionId = documentChange.document.getString(Constant.KEY_RECEIVER_ID).orEmpty()
+                    } else {
+                        conversionImage = documentChange.document.getString(Constant.KEY_SENDER_IMAGE).orEmpty()
+                        conversionName = documentChange.document.getString(Constant.KEY_SENDER_NAME).orEmpty()
+                        conversionId = documentChange.document.getString(Constant.KEY_SENDER_ID).orEmpty()
+                    }
+
+                    val message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
+                    val date = documentChange.document.getDate(Constant.KEY_TIMESTAMP) ?: Date()
+
+                    updatedConversionList.add(
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = message,
+                            dateTime = date.toString(),
+                            date = date,
+                            conversionId = conversionId,
+                            conversionName = conversionName,
+                            conversionImage = conversionImage
+                        )
+                    )
+                } else if (documentChange.type == DocumentChange.Type.MODIFIED) {
+                    updatedConversionList.find {
+                        it.senderId == documentChange.document.getString(Constant.KEY_SENDER_ID) &&
+                                it.receiverId == documentChange.document.getString(Constant.KEY_RECEIVER_ID)
+                    }?.apply {
+                        message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
+                        date = documentChange.document.getDate(Constant.KEY_TIMESTAMP) ?: date
                     }
                 }
-                updatedConversionList.sortBy { it.date }
-                onUpdateRecentConversation(updatedConversionList)
-
-
             }
-        }.apply {
-            repository.observeRecentConversation(pref.getString(Constant.KEY_USER_ID,null).toString(),this)
-        }
 
+            updatedConversionList.sortBy { it.date }
+            onUpdateRecentConversation(updatedConversionList)
+        }
+    }.apply {
+        repository.observeRecentConversation(
+            pref.getString(Constant.KEY_USER_ID, null).orEmpty(),
+            this
+        )
+    }
 }

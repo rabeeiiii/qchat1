@@ -21,6 +21,19 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        ndk {
+            abiFilters.add("armeabi-v7a")
+            abiFilters.add("arm64-v8a")
+            abiFilters.add("x86")
+            abiFilters.add("x86_64")
+        }
+    }
+
+    externalNativeBuild {
+        cmake {
+            path ("src/main/CMakeLists.txt")
+        }
     }
 
     buildTypes {
@@ -115,7 +128,8 @@ dependencies {
 
     implementation ("com.squareup.picasso:picasso:2.71828")
 
-
-        implementation("com.google.android.gms:play-services-location:21.0.1")
     implementation ("com.google.android.gms:play-services-auth:20.7.0")
+
+    implementation("com.google.android.gms:play-services-location:21.0.1")
+
 }

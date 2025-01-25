@@ -13,7 +13,9 @@ import com.google.firebase.messaging.RemoteMessage
 import com.example.qchat.R
 import com.example.qchat.model.User
 import com.example.qchat.ui.main.MainActivity
+import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
+import com.example.qchat.utils.CryptoUtils
 import com.example.qchat.utils.decodeBase64
 import kotlin.random.Random
 
@@ -28,10 +30,33 @@ class MessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d("FCM", "onMessageReceived: ${remoteMessage.notification?.body}")
 
+        val encryptedMessage = remoteMessage.data[Constant.KEY_MESSAGE] ?: ""
         val user = getUser(remoteMessage)
-        val message = remoteMessage.data[Constant.KEY_MESSAGE]?:""
+        val publicKeyString = remoteMessage.data["public_key"]?.toByteArray()
+        val signatureString = remoteMessage.data["signature"]?.toByteArray()
+        val aesKeyBase64 = remoteMessage.data["aes_key"] ?: ""
+        val aesKey = AesUtils.base64ToKey(aesKeyBase64)
 
-        sendNotification(user,message,getUserPendingIntent(user))
+        val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+
+        Log.d("AES", "Encrypted Message: $encryptedMessage")
+        Log.d("AES", "Decrypted Message: $decryptedMessage")
+
+        if (publicKeyString != null && signatureString != null && aesKeyBase64.isNotEmpty()) {
+            val aesKey = AesUtils.base64ToKey(aesKeyBase64)
+
+            val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+
+            val isVerified = CryptoUtils.verifySignature(publicKeyString, decryptedMessage.toByteArray(), signatureString)
+
+            if (isVerified) {
+                sendNotification(user, decryptedMessage, getUserPendingIntent(user))
+            } else {
+                Log.e("FCM", "Invalid signature. Message verification failed.")
+            }
+        } else {
+            Log.e("FCM", "Missing public key, signature, or AES key in message data.")
+        }
     }
 
     private fun getUser(remoteMessage: RemoteMessage) =
@@ -85,6 +110,4 @@ class MessagingService : FirebaseMessagingService() {
         )
         notificationManager.createNotificationChannel(channel)
     }
-
-
 }
