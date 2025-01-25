@@ -39,5 +39,6 @@ object Constant {
     const val ACTION_SHOW_CHAT_FRAGMENT = "ACTION_SHOW_CHAT_FRAGMENT"
     const val NOTIFICATION_CHANNEL_ID = "message_channel"
     const val NOTIFICATION_CHANNEL_NAME = "message_channel"
+    const val KEY_SECRET_KEY = "secret_key"
 
 }

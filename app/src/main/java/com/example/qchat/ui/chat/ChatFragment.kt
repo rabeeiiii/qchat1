@@ -9,6 +9,7 @@ import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
 import android.util.Base64
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -92,12 +93,10 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
         observeChat()
 
-        // Set OnClickListener for the pop menu
         binding.ivAdd.setOnClickListener {
             togglePopMenuVisibility()
         }
 
-        // Set OnClickListener for the username to navigate to the profile
         binding.ivUserImage.setOnClickListener {
             val action = ChatFragmentDirections.actionChatFragmentToProfileFragment(user)
             findNavController().navigate(action)
@@ -164,19 +163,21 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     }
 
     private fun observeChat() {
-        viewModel.eventListener(user.id, object : ChatObserver {
-            override fun observeChat(newChat: List<ChatMessage>) {
-                if (newChat.isNotEmpty()) {
-                    chatAdapter.addMessage(newChat, binding.rvChat)
-                }
-                binding.pb.visibility = View.GONE
-                viewModel.conversionId.isEmpty().let {
-                    if (chatAdapter.getMessageSize() != 0) {
-                        viewModel.checkForConversation(user.id)
-                    }
-                }
+        binding.pb.visibility = View.VISIBLE
+
+        viewModel.observeChat(user.id) { newChat ->
+            Log.d("ChatFragment", "New chat messages received: ${newChat.size}")
+
+            if (newChat.isNotEmpty()) {
+                chatAdapter.addMessage(newChat, binding.rvChat)
             }
-        })
+
+            binding.pb.visibility = View.GONE
+
+            if (chatAdapter.getMessageSize() != 0) {
+                viewModel.checkForConversation(user.id)
+            }
+        }
     }
 
     private fun setClickListener() {
@@ -195,7 +196,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
         binding.rvChat.apply {
             adapter = chatAdapter
-            layoutManager = LinearLayoutManager(requireContext())
+            layoutManager = LinearLayoutManager(context).apply { stackFromEnd = true }
         }
     }
 
@@ -226,7 +227,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     }
 
     private fun openGallery() {
-        galleryLauncher.launch("image/*") // Open gallery to select an image
+        galleryLauncher.launch("image/*")
     }
 
     private fun openCamera() {

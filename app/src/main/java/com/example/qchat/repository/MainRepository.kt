@@ -1,5 +1,8 @@
 package com.example.qchat.repository
 
+import android.net.Uri
+import android.util.Base64
+import android.util.Log
 import com.google.android.gms.tasks.OnCompleteListener
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.EventListener
@@ -7,8 +10,12 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.google.gson.JsonObject
 import com.example.qchat.model.MessageBody
 import com.example.qchat.network.Api
+import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Resource
+import com.example.qchat.utils.CryptoUtils
+import com.google.android.gms.location.LocationServices
+import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import org.json.JSONObject
@@ -64,23 +71,42 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun sendMessage(message: HashMap<String, Any>): Boolean = try {
-        fireStore.collection(Constant.KEY_COLLECTION_CHAT).document().set(message).await()
-        true
-    } catch (e: Exception) {
-        false
+    suspend fun sendMessage(messageMap: HashMap<String, Any>): Boolean {
+        return try {
+            //1. Encrypt the message using AES
+            val secretKey = AesUtils.generateAESKey()
+            val encryptedMessage = AesUtils.encryptMessage(
+                messageMap[Constant.KEY_MESSAGE]?.toString() ?: "",
+                secretKey
+            )
+            //2. Update the message map with encrypted data
+            messageMap[Constant.KEY_MESSAGE] = encryptedMessage
+            messageMap[Constant.KEY_SECRET_KEY] = AesUtils.keyToBase64(secretKey)
+
+            //3. Save message to Firestore
+            fireStore.collection(Constant.KEY_COLLECTION_CHAT)
+                .add(messageMap)
+                .await()
+
+            true
+        } catch (e: Exception) {
+            Log.e("Firestore", "Failed to send message: ${e.message}")
+            false
+        }
     }
 
 
-    fun observeChat(userId: String, receiverId: String, listener: EventListener<QuerySnapshot>) {
+    fun observeChat(senderId: String, receiverId: String, listener: EventListener<QuerySnapshot>) {
         fireStore.collection(Constant.KEY_COLLECTION_CHAT)
-            .whereEqualTo(Constant.KEY_SENDER_ID, userId)
-            .whereEqualTo(Constant.KEY_RECEIVER_ID, receiverId)
-            .addSnapshotListener(listener)
-        fireStore.collection(Constant.KEY_COLLECTION_CHAT)
-            .whereEqualTo(Constant.KEY_SENDER_ID, receiverId)
-            .whereEqualTo(Constant.KEY_RECEIVER_ID, userId)
-            .addSnapshotListener(listener)
+            .whereIn(Constant.KEY_SENDER_ID, listOf(senderId, receiverId))
+            .whereIn(Constant.KEY_RECEIVER_ID, listOf(senderId, receiverId))
+            .orderBy(Constant.KEY_TIMESTAMP, Query.Direction.ASCENDING)
+            .addSnapshotListener { value, error ->
+                if (error != null) {
+                    Log.e("Firestore", "Error observing chat: ${error.message}")
+                }
+                listener.onEvent(value, error)
+            }
     }
 
     suspend fun checkForConversionRemotely(
