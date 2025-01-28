@@ -99,36 +99,71 @@ class MainRepository @Inject constructor(
             }
     }
 
-    suspend fun checkForConversionRemotely(
+    suspend fun checkForConversion(
+        senderId: String,
+        receiverId: String
+    ): String? {
+        return try {
+            val querySnapshot = fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
+                .whereEqualTo(Constant.KEY_SENDER_ID, senderId)
+                .whereEqualTo(Constant.KEY_RECEIVER_ID, receiverId)
+                .get()
+                .await()
+
+            if (!querySnapshot.isEmpty) {
+                querySnapshot.documents[0].id
+            } else {
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error checking for conversion: ${e.message}")
+            null
+        }
+    }
+
+
+    suspend fun updateRecentConversation(
         senderId: String,
         receiverId: String,
-        listener: OnCompleteListener<QuerySnapshot>,
+        message: HashMap<String, Any>,
+        onSuccessListener: (String) -> Unit
     ) {
-        fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
-            .whereEqualTo(Constant.KEY_SENDER_ID, senderId)
-            .whereEqualTo(Constant.KEY_RECEIVER_ID, receiverId)
-            .get()
-            .addOnCompleteListener(listener)
-            .await()
-    }
+        try {
+            // Step 1: Check for an existing conversation in both directions
+            val querySnapshot = fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
+                .whereIn(Constant.KEY_SENDER_ID, listOf(senderId, receiverId))
+                .whereIn(Constant.KEY_RECEIVER_ID, listOf(senderId, receiverId))
+                .get()
+                .await()
 
-    suspend fun updateConversation(message: String, conversionId: String) {
-        fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS).document(conversionId)
-            .update(
-                Constant.KEY_LAST_MESSAGE,message,
-                Constant.KEY_TIMESTAMP,Date()
-            )
-            .await()
-    }
-
-    suspend fun updateRecentConversation(message: HashMap<String, Any>,onSuccessListener:(String)->Unit){
-        fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
-            .add(message)
-            .addOnSuccessListener {
-                onSuccessListener(it.id)
+            if (!querySnapshot.isEmpty) {
+                // Step 2: Update the existing conversation (use the first match)
+                val documentId = querySnapshot.documents[0].id
+                fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
+                    .document(documentId)
+                    .update(message)
+                    .addOnSuccessListener {
+                        onSuccessListener(documentId)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error updating conversation: ${e.message}")
+                    }
+            } else {
+                // Step 3: Create a new conversation if none exists
+                fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
+                    .add(message)
+                    .addOnSuccessListener {
+                        onSuccessListener(it.id)
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("Firestore", "Error creating new conversation: ${e.message}")
+                    }
             }
-            .await()
+        } catch (e: Exception) {
+            Log.e("Firestore", "Error handling conversation update: ${e.message}")
+        }
     }
+
 
     fun observeRecentConversation(id:String, listener: EventListener<QuerySnapshot>) {
         fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)

@@ -164,12 +164,16 @@ class ChatViewModel @Inject constructor(
             )
 
             try {
-                repository.updateRecentConversation(conversation) { id ->
+                repository.updateRecentConversation(
+                    senderId,
+                    receiverUser.id,
+                    conversation
+                ) { id ->
                     conversionId = id
-                    Log.d("ChatViewModel", "Conversation updated with ID: $conversionId")
+                    Log.d("ChatViewModel", "Conversation updated/created with ID: $conversionId")
                 }
             } catch (e: Exception) {
-                Log.e("ChatViewModel", "Error updating conversation: ${e.message}")
+                Log.e("ChatViewModel", "Error updating/creating conversation: ${e.message}")
             }
         }
     }
@@ -267,22 +271,25 @@ class ChatViewModel @Inject constructor(
     }
 
     fun checkForConversation(receiverUserId: String) = viewModelScope.launch {
-        repository.checkForConversionRemotely(
-            pref.getString(Constant.KEY_USER_ID, null).toString(),
-            receiverUserId
-        ) { task ->
-            if (task.isSuccessful && task.result != null && task.result!!.documents.isNotEmpty()) {
-                conversionId = task.result!!.documents[0].id
-            }
+        val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+        if (senderId.isEmpty()) {
+            Log.e("ChatViewModel", "Sender ID is missing.")
+            return@launch
         }
 
-        repository.checkForConversionRemotely(
-            receiverUserId,
-            pref.getString(Constant.KEY_USER_ID, null).toString()
-        ) { task ->
-            if (task.isSuccessful && task.result != null && task.result!!.documents.isNotEmpty()) {
-                conversionId = task.result!!.documents[0].id
+        try {
+            // Check if a conversation exists where the sender and receiver IDs match
+            conversionId = repository.checkForConversion(senderId, receiverUserId)
+                ?: repository.checkForConversion(receiverUserId, senderId) // Check the reverse
+                        ?: "" // Default to an empty string if no conversation exists
+
+            if (conversionId.isNotEmpty()) {
+                Log.d("ChatViewModel", "Existing conversation found with ID: $conversionId")
+            } else {
+                Log.d("ChatViewModel", "No existing conversation found.")
             }
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "Error checking for conversation: ${e.message}")
         }
     }
 
@@ -306,8 +313,17 @@ class ChatViewModel @Inject constructor(
                 Constant.KEY_RECEIVER_IMAGE to receiverUser.image.orEmpty()
             )
 
-            repository.updateRecentConversation(conversation) { id ->
-                conversionId = id
+            try {
+                repository.updateRecentConversation(
+                    senderId = senderId,
+                    receiverId = receiverUser.id,
+                    message = conversation
+                ) { id ->
+                    conversionId = id
+                    Log.d("ChatViewModel", "Conversation created/updated with ID: $conversionId")
+                }
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error creating/updating conversation: ${e.message}")
             }
         }
     }
