@@ -15,5 +15,10 @@ class CryptoUtils {
         external fun AES_ctx_set_iv(iv: ByteArray?)
         external fun AES_encrypt(input: ByteArray?): ByteArray?
         external fun AES_decrypt(input: ByteArray?): ByteArray?
+
+        //dilithium 2
+        const val CRYPTO_PUBLICKEYBYTES = 1312
+        const val CRYPTO_SECRETKEYBYTES = 2528
+        const val CRYPTO_BYTES = 2420
     }
 }

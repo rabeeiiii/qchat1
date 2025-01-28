@@ -15,6 +15,7 @@ import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Resource
 import com.example.qchat.utils.CryptoUtils
 import com.google.android.gms.location.LocationServices
+import com.google.android.gms.tasks.Task
 import com.google.firebase.ktx.Firebase
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
@@ -71,28 +72,17 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun sendMessage(messageMap: HashMap<String, Any>): Boolean {
-        return try {
-            //1. Encrypt the message using AES
-            val secretKey = AesUtils.generateAESKey()
-            val encryptedMessage = AesUtils.encryptMessage(
-                messageMap[Constant.KEY_MESSAGE]?.toString() ?: "",
-                secretKey
-            )
-            //2. Update the message map with encrypted data
-            messageMap[Constant.KEY_MESSAGE] = encryptedMessage
-            messageMap[Constant.KEY_SECRET_KEY] = AesUtils.keyToBase64(secretKey)
-
-            //3. Save message to Firestore
-            fireStore.collection(Constant.KEY_COLLECTION_CHAT)
-                .add(messageMap)
-                .await()
-
-            true
-        } catch (e: Exception) {
-            Log.e("Firestore", "Failed to send message: ${e.message}")
-            false
-        }
+    fun sendMessage(message: HashMap<String, Any>): Task<Void> {
+        return FirebaseFirestore.getInstance()
+            .collection(Constant.KEY_COLLECTION_CHAT)
+            .add(message)
+            .continueWith { task ->
+                if (task.isSuccessful) {
+                    null
+                } else {
+                    throw task.exception ?: Exception("Unknown Firestore error")
+                }
+            }
     }
 
 

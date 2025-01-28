@@ -35,6 +35,7 @@ int pqcrystals_dilithium2_ref_verify(const uint8_t *sig, size_t siglen,
                                      const uint8_t *ctx, size_t ctxlen,
                                      const uint8_t *pk);
 
+
 int pqcrystals_dilithium2_ref_open(uint8_t *m, size_t *mlen,
                                    const uint8_t *sm, size_t smlen,
                                    const uint8_t *ctx, size_t ctxlen,
