@@ -41,4 +41,8 @@ object Constant {
     const val NOTIFICATION_CHANNEL_NAME = "message_channel"
     const val KEY_SECRET_KEY = "secret_key"
 
+    const val KEY_SIGNATURE = "signature"
+    const val KEY_PUBLIC_KEY = "publicKey"
+
+
 }

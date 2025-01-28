@@ -2,6 +2,7 @@
 #include <string>
 #include "dilithium.h"
 #include "aes.h"
+#include "api.h"
 
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_example_qchat_utils_CryptoUtils_00024Companion_generateDilithiumKeyPair(
@@ -11,7 +12,9 @@ Java_com_example_qchat_utils_CryptoUtils_00024Companion_generateDilithiumKeyPair
     uint8_t sk[CRYPTO_SECRETKEYBYTES];
 
     // Generate the key pair
-    crypto_sign_keypair(pk, sk);
+    if (crypto_sign_keypair(pk, sk) != 0) {
+        return nullptr; // Failed to generate keys
+    }
 
     // Combine public and private keys into a single byte array
     jbyteArray result = env->NewByteArray(CRYPTO_PUBLICKEYBYTES + CRYPTO_SECRETKEYBYTES);
@@ -20,7 +23,6 @@ Java_com_example_qchat_utils_CryptoUtils_00024Companion_generateDilithiumKeyPair
 
     return result;
 }
-
 extern "C" JNIEXPORT jbyteArray JNICALL
 Java_com_example_qchat_utils_CryptoUtils_00024Companion_signMessage(
         JNIEnv* env,
@@ -28,64 +30,43 @@ Java_com_example_qchat_utils_CryptoUtils_00024Companion_signMessage(
         jbyteArray sk,
         jbyteArray message) {
 
-    // Check for null input arrays
     if (sk == nullptr || message == nullptr) {
-        return nullptr; // Return null if any argument is null
+        return nullptr;
     }
 
-    // Get the byte arrays
+    jsize skLen = env->GetArrayLength(sk);
+    if (skLen != CRYPTO_SECRETKEYBYTES) {
+        return nullptr;
+    }
+
     jbyte* skBytes = env->GetByteArrayElements(sk, nullptr);
-    if (skBytes == nullptr) {
-        return nullptr; // Failed to allocate skBytes
-    }
-
     jbyte* messageBytes = env->GetByteArrayElements(message, nullptr);
-    if (messageBytes == nullptr) {
-        env->ReleaseByteArrayElements(sk, skBytes, JNI_ABORT); // Release skBytes
-        return nullptr; // Failed to allocate messageBytes
-    }
-
     jsize messageLength = env->GetArrayLength(message);
 
-    // Ensure CRYPTO_BYTES is sufficient
     uint8_t sig[CRYPTO_BYTES];
-    size_t siglen;
+    size_t siglen = 0;
 
-    // Provide null context (ctx) and set context length (ctxlen) to 0
-    const uint8_t* ctx = nullptr;
-    size_t ctxlen = 0;
-
-    // Call the crypto_sign_signature function
-    int result = crypto_sign_signature(
-            sig, &siglen,                                           // Signature buffer and its length
-            reinterpret_cast<const uint8_t*>(messageBytes),         // Message bytes
-            static_cast<size_t>(messageLength),                     // Message length
-            reinterpret_cast<const uint8_t*>(skBytes),              // Secret key
-            (size_t) ctx,
-            reinterpret_cast<const uint8_t *>(ctxlen)                                             // Context and context length
+    int result = pqcrystals_dilithium2_ref_signature(
+            sig, &siglen,
+            reinterpret_cast<const uint8_t*>(messageBytes),
+            static_cast<size_t>(messageLength),
+            nullptr,  // Context set to NULL
+            0,        // Context length set to 0
+            reinterpret_cast<const uint8_t*>(skBytes)
     );
 
-    // Release the JNI resources early
     env->ReleaseByteArrayElements(sk, skBytes, JNI_ABORT);
     env->ReleaseByteArrayElements(message, messageBytes, JNI_ABORT);
 
-    // Handle signing errors
     if (result != 0) {
-        return nullptr; // Return null if signing fails
+        return nullptr;
     }
 
-    // Create a Java byte array for the signature
     jbyteArray resultArray = env->NewByteArray(static_cast<jsize>(siglen));
-    if (resultArray == nullptr) {
-        return nullptr; // Return null if byte array creation fails
-    }
-
     env->SetByteArrayRegion(resultArray, 0, static_cast<jsize>(siglen), reinterpret_cast<jbyte*>(sig));
 
     return resultArray;
 }
-
-
 
 
 extern "C" JNIEXPORT jboolean JNICALL
@@ -95,33 +76,37 @@ Java_com_example_qchat_utils_CryptoUtils_00024Companion_verifySignature(
         jbyteArray pk,
         jbyteArray message,
         jbyteArray signature) {
+
+    if (pk == nullptr || message == nullptr || signature == nullptr) {
+        return JNI_FALSE;
+    }
+
     jbyte* pkBytes = env->GetByteArrayElements(pk, nullptr);
     jbyte* messageBytes = env->GetByteArrayElements(message, nullptr);
     jbyte* signatureBytes = env->GetByteArrayElements(signature, nullptr);
     jsize messageLength = env->GetArrayLength(message);
     jsize signatureLength = env->GetArrayLength(signature);
 
-    // Placeholder for output length (not used in verification)
-    size_t msglen_out = 0;
+    if (pkBytes == nullptr || signatureBytes == nullptr) {
+        return JNI_FALSE;
+    }
 
-    // Verify the signature
-    int result = crypto_sign_verify(
-            reinterpret_cast<const uint8_t*>(signatureBytes), signatureLength,
-            reinterpret_cast<const uint8_t*>(messageBytes), messageLength,
-            reinterpret_cast<const uint8_t*>(pkBytes),
-            CRYPTO_PUBLICKEYBYTES, // Public key length
-            reinterpret_cast<const uint8_t *>(&msglen_out)            // Message length output
+    int result = pqcrystals_dilithium2_ref_verify(
+            reinterpret_cast<const uint8_t*>(signatureBytes),
+            static_cast<size_t>(signatureLength),
+            reinterpret_cast<const uint8_t*>(messageBytes),
+            static_cast<size_t>(messageLength),
+            NULL,  // Context set to NULL
+            0,     // Context length set to 0
+            reinterpret_cast<const uint8_t*>(pkBytes)
     );
 
-    // Release resources
-    env->ReleaseByteArrayElements(pk, pkBytes, 0);
-    env->ReleaseByteArrayElements(message, messageBytes, 0);
-    env->ReleaseByteArrayElements(signature, signatureBytes, 0);
+    env->ReleaseByteArrayElements(pk, pkBytes, JNI_ABORT);
+    env->ReleaseByteArrayElements(message, messageBytes, JNI_ABORT);
+    env->ReleaseByteArrayElements(signature, signatureBytes, JNI_ABORT);
 
-    return result == 0; // Return true if verification succeeds
+    return (result == 0) ? JNI_TRUE : JNI_FALSE;
 }
-
-
 
 
 

@@ -14,5 +14,7 @@ data class ChatMessage(
     val conversionName:String? = null,
     val conversionImage:String? = null,
     var unreadCount: Int = 0,
-    val messageType: String = Constant.MESSAGE_TYPE_TEXT
+    val messageType: String = Constant.MESSAGE_TYPE_TEXT,
+    val signature: String = "",
+    val publicKey: String = ""
 )
