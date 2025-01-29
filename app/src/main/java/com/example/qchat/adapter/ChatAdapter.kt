@@ -66,45 +66,48 @@ class ChatAdapter(
 
         fun setData(message: ChatMessage) {
             try {
-                Log.d("SendPhotoViewHolder", "Decoding photo message")
+                Log.d("SendPhotoViewHolder", "Photo Base64 (first 100 chars): ${message.message.take(100)}") // Log first 100 characters
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
-                binding.ivMessageImage.setImageBitmap(bitmap)
-                binding.tvDateTime.text = message.dateTime
+
+                if (bitmap != null) {
+                    binding.ivMessageImage.setImageBitmap(bitmap)
+                    binding.tvDateTime.text = message.dateTime
+                    Log.d("SendPhotoViewHolder", "Successfully decoded photo")
+                } else {
+                    Log.e("SendPhotoViewHolder", "Failed to decode image!")
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("SendPhotoViewHolder", "Error decoding photo message")
+                Log.e("SendPhotoViewHolder", "Error decoding photo message: ${e.message}")
             }
         }
     }
-
 
     class ReceivedPhotoViewHolder(val binding: ItemReceivedPhotoBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             try {
-                Log.d("ReceivedPhotoViewHolder", "Decoding photo message: ${message.message}")
+                Log.d("ReceivedPhotoViewHolder", "Photo Base64 (first 100 chars): ${message.message.take(100)}")
 
-                // Decode Base64 to Bitmap
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
-                // Set the image in ImageView
-                binding.ivMessageImage.setImageBitmap(bitmap)
-
-                // Set the timestamp
-                binding.tvDateTime.text = message.dateTime
-
-                // Set the profile image (if available)
-                profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+                if (bitmap != null) {
+                    binding.ivMessageImage.setImageBitmap(bitmap)
+                    binding.tvDateTime.text = message.dateTime
+                    profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+                    Log.d("ReceivedPhotoViewHolder", "Successfully decoded received photo")
+                } else {
+                    Log.e("ReceivedPhotoViewHolder", "Failed to decode received image!")
+                }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("ReceivedPhotoViewHolder", "Error decoding photo message: ${e.message}")
+                Log.e("ReceivedPhotoViewHolder", "Error decoding received photo: ${e.message}")
             }
         }
     }
-
 
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
         val uniqueMessages = newMessage.filterNot { newMsg ->
@@ -189,11 +192,19 @@ class ChatAdapter(
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
         Log.d("ChatAdapter", "MessageType: ${message.messageType}, SenderId: ${message.senderId}")
+
         return when {
-            message.senderId == senderId && message.messageType == Constant.MESSAGE_TYPE_PHOTO -> Constant.VIEW_TYPE_SEND_PHOTO
-            message.senderId != senderId && message.messageType == Constant.MESSAGE_TYPE_PHOTO -> Constant.VIEW_TYPE_RECEIVED_PHOTO
+            message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
+                if (message.senderId == senderId) {
+                    Constant.VIEW_TYPE_SEND_PHOTO
+                } else {
+                    Constant.VIEW_TYPE_RECEIVED_PHOTO
+                }
+            }
             message.senderId == senderId -> Constant.VIEW_TYPE_SEND
             else -> Constant.VIEW_TYPE_RECEIVED
         }
     }
+
+
 }

@@ -132,4 +132,6 @@ dependencies {
 
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
+    implementation ("org.mindrot:jbcrypt:0.4")
+
 }
