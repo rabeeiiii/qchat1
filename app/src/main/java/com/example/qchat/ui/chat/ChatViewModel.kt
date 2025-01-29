@@ -21,6 +21,7 @@ import kotlinx.coroutines.launch
 import android.util.Base64
 import com.example.qchat.utils.CryptoUtils.Companion.CRYPTO_PUBLICKEYBYTES
 import java.util.*
+import javax.crypto.SecretKey
 import javax.inject.Inject
 
 @HiltViewModel
@@ -42,101 +43,86 @@ class ChatViewModel @Inject constructor(
             Base64.NO_WRAP
         )
         val secretKey = Base64.encodeToString(
-            keyPair.copyOfRange(
-                CryptoUtils.CRYPTO_PUBLICKEYBYTES,
-                keyPair.size
-            ), Base64.NO_WRAP
+            keyPair.copyOfRange(CryptoUtils.CRYPTO_PUBLICKEYBYTES, keyPair.size),
+            Base64.NO_WRAP
         )
 
         Log.d("ChatViewModel", "Generated Public Key: $publicKey")
-        Log.d("ChatViewModel", "Generated Secret Key: $secretKey")
-
         return Pair(publicKey, secretKey)
     }
 
-    fun signMessage(privateKey: ByteArray, message: ByteArray): ByteArray {
-        if (privateKey.size != CryptoUtils.CRYPTO_SECRETKEYBYTES) {
-            Log.e("CryptoUtils", "Private Key Size Mismatch! Expected: ${CryptoUtils.CRYPTO_SECRETKEYBYTES}, Got: ${privateKey.size}")
-            return ByteArray(0)
-        }
-
+    private fun signMessage(privateKey: ByteArray, message: ByteArray): String {
         return try {
-            val signature = CryptoUtils.signMessage(privateKey, message) ?: ByteArray(0)
-            Log.d("ChatViewModel", "Generated Signature: ${Base64.encodeToString(signature, Base64.NO_WRAP)}")
-            signature
+            val signature = CryptoUtils.signMessage(privateKey, message)
+            val signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP)
+            Log.d("ChatViewModel", "Generated Signature: $signatureBase64")
+            signatureBase64
         } catch (e: Exception) {
             Log.e("CryptoUtils", "Error signing message: ${e.message}")
-            ByteArray(0)
+            ""
         }
     }
 
-    fun verifyReceivedPhoto(message: ChatMessage): Boolean {
+    private fun verifyMessage(publicKey: ByteArray, message: String, signatureBase64: String): Boolean {
         return try {
-            val publicKeyDecoded = Base64.decode(message.publicKey, Base64.NO_WRAP)
-            val signatureDecoded = Base64.decode(message.signature, Base64.NO_WRAP)
-            val imageBytes = message.message.toByteArray()
-
-            CryptoUtils.verifySignature(publicKeyDecoded, imageBytes, signatureDecoded)
+            val signature = Base64.decode(signatureBase64, Base64.NO_WRAP)
+            CryptoUtils.verifySignature(publicKey, message.toByteArray(Charsets.UTF_8), signature)
         } catch (e: Exception) {
-            Log.e("ChatViewModel", "Error verifying photo signature: ${e.message}")
+            Log.e("ChatViewModel", "Signature verification failed: ${e.message}")
             false
         }
     }
 
+
+    private fun encryptMessage(message: String, secretKey: SecretKey): Pair<String, String> {
+        val encryptedMessage = AesUtils.encryptMessage(message, secretKey)
+        val keyBase64 = AesUtils.keyToBase64(secretKey)
+        return Pair(encryptedMessage, keyBase64)
+    }
+
+    private fun decryptMessage(encryptedMessage: String, aesKeyBase64: String): String {
+        val secretKey = AesUtils.base64ToKey(aesKeyBase64)
+        return AesUtils.decryptMessage(encryptedMessage, secretKey)
+    }
 
     fun sendMessage(message: String, receiverUser: User) {
         viewModelScope.launch {
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty()) return@launch
 
-            // Generate Key Pair
             val keyPair = CryptoUtils.generateDilithiumKeyPair()
-            if (keyPair == null || keyPair.size < CryptoUtils.CRYPTO_PUBLICKEYBYTES + CryptoUtils.CRYPTO_SECRETKEYBYTES) {
-                Log.e("ChatViewModel", "Key pair generation failed or invalid size.")
-                return@launch
-            }
-
             val publicKey = keyPair.sliceArray(0 until CryptoUtils.CRYPTO_PUBLICKEYBYTES)
             val privateKey = keyPair.sliceArray(CryptoUtils.CRYPTO_PUBLICKEYBYTES until keyPair.size)
 
-            if (privateKey.isEmpty() || publicKey.isEmpty() || message.isEmpty()) {
-                Log.e("ChatViewModel", "Public/Private Key or Message is empty.")
-                return@launch
-            }
+            val signatureBase64 = signMessage(privateKey, message.toByteArray())
+            if (signatureBase64.isEmpty()) return@launch
 
-            Log.d("ChatViewModel", "Public Key: ${Base64.encodeToString(publicKey, Base64.NO_WRAP)}")
-            Log.d("ChatViewModel", "Private Key: ${Base64.encodeToString(privateKey, Base64.NO_WRAP)}")
+            val signedMessage = "$message||$signatureBase64"
 
-            //signature
-            val signature = CryptoUtils.signMessage(privateKey, message.toByteArray())
-            if (signature.isEmpty()) {
-                Log.e("ChatViewModel", "Error: Signature generation failed")
-                return@launch
-            }
-
-            val signatureBase64 = Base64.encodeToString(signature, Base64.NO_WRAP)
-            val publicKeyBase64 = Base64.encodeToString(publicKey, Base64.NO_WRAP)
-
-            // Log Signature
-            Log.d("ChatViewModel", "Signature: $signatureBase64")
+            val aesKey = AesUtils.generateAESKey()
+            val (encryptedMessage, aesKeyBase64) = encryptMessage(signedMessage, aesKey)
 
             val messageMap = hashMapOf(
                 Constant.KEY_SENDER_ID to senderId,
                 Constant.KEY_RECEIVER_ID to receiverUser.id,
-                Constant.KEY_MESSAGE to message,
+                Constant.KEY_ENCRYPTED_MESSAGE to encryptedMessage,
+                Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
                 Constant.KEY_SIGNATURE to signatureBase64,
-                Constant.KEY_PUBLIC_KEY to publicKeyBase64,
+                Constant.KEY_PUBLIC_KEY to Base64.encodeToString(publicKey, Base64.NO_WRAP),
                 Constant.KEY_MESSAGE_TYPE to Constant.MESSAGE_TYPE_TEXT,
                 Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp()
             )
 
             repository.sendMessage(messageMap)
                 .addOnSuccessListener {
-                    Log.d("ChatViewModel", "Message sent to Firestore successfully")
+                    Log.d("ChatViewModel", "Message sent successfully")
 
-                    viewModelScope.launch {
-                        updateRecentConversation(senderId, receiverUser, message, Constant.MESSAGE_TYPE_TEXT)
-                    }
+                    updateRecentConversation(
+                        senderId = senderId,
+                        receiverUser = receiverUser,
+                        lastMessage = message,
+                        messageType = Constant.MESSAGE_TYPE_TEXT
+                    )
                 }
                 .addOnFailureListener { e ->
                     Log.e("ChatViewModel", "Failed to send message: ${e.message}")
@@ -228,46 +214,43 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun eventListener(receiverId: String, chatObserver: (List<ChatMessage>) -> Unit) {
+        repository.observeChat(pref.getString(Constant.KEY_USER_ID, null).orEmpty(), receiverId) { querySnapshot, error ->
+            if (error != null) return@observeChat
 
-    fun eventListener(receiverId: String, chatObserver: ChatFragment.ChatObserver) {
-        val newMessageList = mutableListOf<ChatMessage>()
-        val eventListener = EventListener<QuerySnapshot> { value, error ->
-            if (error != null) {
-                Log.e("ChatViewModel", "Firestore error: ${error.message}")
-                return@EventListener
-            }
+            val newMessages = querySnapshot?.documents?.mapNotNull { document ->
+                val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
+                val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
+                val encryptedAesKey = document.getString(Constant.KEY_ENCRYPTED_AES_KEY) ?: return@mapNotNull null
+                val senderPublicKeyBase64 = document.getString(Constant.KEY_PUBLIC_KEY) ?: return@mapNotNull null
 
-            if (value != null) {
-                for (document in value.documents) {
-                    val senderId = document.getString(Constant.KEY_SENDER_ID)
-                    val receiverUserId = document.getString(Constant.KEY_RECEIVER_ID)
-                    val message = document.getString(Constant.KEY_MESSAGE)
-                    val timestamp = document.getDate(Constant.KEY_TIMESTAMP)
-                    val messageType = document.getString(Constant.KEY_MESSAGE_TYPE) ?: Constant.MESSAGE_TYPE_TEXT
+                val decryptedMessage = decryptMessage(encryptedMessage, encryptedAesKey)
+                val parts = decryptedMessage.split("||")
+                if (parts.size != 2) return@mapNotNull null
 
-                    if (senderId != null && receiverUserId != null && message != null && timestamp != null) {
-                        val chatMessage = ChatMessage(
-                            senderId = senderId,
-                            receiverId = receiverUserId,
-                            message = message,
-                            dateTime = timestamp.getReadableDate(),
-                            date = timestamp,
-                            messageType = messageType
-                        )
-                        newMessageList.add(chatMessage)
-                    } else {
-                        Log.e("ChatViewModel", "Missing required fields in document: ${document.id}")
-                    }
+                val originalMessage = parts[0]
+                val signature = parts[1]
+
+                val senderPublicKey = Base64.decode(senderPublicKeyBase64, Base64.NO_WRAP)
+                val isVerified = verifyMessage(senderPublicKey, originalMessage, signature)
+
+                if (!isVerified) {
+                    Log.e("ChatViewModel", "Signature verification failed for message: $originalMessage")
+                    return@mapNotNull null
                 }
-                chatObserver.observeChat(newMessageList)
-            }
-        }
 
-        repository.observeChat(
-            pref.getString(Constant.KEY_USER_ID, null).orEmpty(),
-            receiverId,
-            eventListener
-        )
+                ChatMessage(
+                    senderId = senderId,
+                    receiverId = receiverId,
+                    message = originalMessage,
+                    dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
+                    date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
+                    messageType = Constant.MESSAGE_TYPE_TEXT
+                )
+            }.orEmpty()
+
+            chatObserver(newMessages)
+        }
     }
 
     fun checkForConversation(receiverUserId: String) = viewModelScope.launch {
@@ -278,10 +261,9 @@ class ChatViewModel @Inject constructor(
         }
 
         try {
-            // Check if a conversation exists where the sender and receiver IDs match
             conversionId = repository.checkForConversion(senderId, receiverUserId)
-                ?: repository.checkForConversion(receiverUserId, senderId) // Check the reverse
-                        ?: "" // Default to an empty string if no conversation exists
+                ?: repository.checkForConversion(receiverUserId, senderId)
+                        ?: ""
 
             if (conversionId.isNotEmpty()) {
                 Log.d("ChatViewModel", "Existing conversation found with ID: $conversionId")
@@ -372,36 +354,97 @@ class ChatViewModel @Inject constructor(
 
     fun observeChat(receiverId: String, chatObserver: (List<ChatMessage>) -> Unit) {
         repository.observeChat(pref.getString(Constant.KEY_USER_ID, null).orEmpty(), receiverId) { querySnapshot, error ->
-            if (error != null) return@observeChat
+            if (error != null) {
+                Log.e("ChatViewModel", "Error observing chat: ${error.message}")
+                return@observeChat
+            }
 
-            val newMessages = querySnapshot?.documents?.mapNotNull { document ->
+            if (querySnapshot == null || querySnapshot.isEmpty) return@observeChat
+
+            val newMessages = querySnapshot.documents.mapNotNull { document ->
+                val messageId = document.id
+
+                // Prevent processing the same message twice
+                if (processedMessageIds.contains(messageId)) {
+                    return@mapNotNull null
+                }
+                processedMessageIds.add(messageId)
+
                 val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
                 val receiverUserId = document.getString(Constant.KEY_RECEIVER_ID) ?: return@mapNotNull null
+                val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
+                val encryptedAesKey = document.getString(Constant.KEY_ENCRYPTED_AES_KEY) ?: return@mapNotNull null
+                val senderPublicKeyBase64 = document.getString(Constant.KEY_PUBLIC_KEY) ?: return@mapNotNull null
 
-                // Ensure message is retrieved safely
-                val message = document.get(Constant.KEY_MESSAGE)
-                val messageString = when (message) {
-                    is String -> message
-                    else -> {
-                        Log.e("ChatViewModel", "Invalid message type: ${message?.javaClass?.simpleName}")
-                        return@mapNotNull null
-                    }
+                Log.d("ChatViewModel", "Processing message from sender: $senderId")
+
+                // Convert AES Key from Base64
+                val aesKey: SecretKey = try {
+                    AesUtils.base64ToKey(encryptedAesKey)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("ChatViewModel", "Invalid AES Key Base64 format: ${e.message}")
+                    return@mapNotNull null
                 }
 
-                val timestamp = document.getDate(Constant.KEY_TIMESTAMP) ?: return@mapNotNull null
-                val messageType = document.getString(Constant.KEY_MESSAGE_TYPE) ?: Constant.MESSAGE_TYPE_TEXT
+                // Decrypt the message using AES
+                val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                if (decryptedMessage.isEmpty()) {
+                    Log.e("ChatViewModel", "AES Decryption Failed for message from sender: $senderId")
+                    return@mapNotNull null
+                }
+
+                Log.d("ChatViewModel", "Decrypted Message: $decryptedMessage")
+
+                // Extract the Signature
+                val parts = decryptedMessage.split("||")
+                if (parts.size != 2) {
+                    Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
+                    return@mapNotNull null
+                }
+
+                val originalMessage = parts[0].trim()
+                val signatureDecoded: ByteArray = try {
+                    Base64.decode(parts[1].trim(), Base64.NO_WRAP)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("ChatViewModel", "Invalid Signature Base64 format: ${e.message}")
+                    return@mapNotNull null
+                }
+
+                // Verify Signature
+                val senderPublicKey: ByteArray = try {
+                    Base64.decode(senderPublicKeyBase64, Base64.NO_WRAP)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("ChatViewModel", "Invalid Public Key Base64 format: ${e.message}")
+                    return@mapNotNull null
+                }
+
+                val isVerified = try {
+                    CryptoUtils.verifySignature(senderPublicKey, originalMessage.toByteArray(Charsets.UTF_8), signatureDecoded)
+                } catch (e: Exception) {
+                    Log.e("ChatViewModel", "Signature verification failed due to exception: ${e.message}")
+                    false
+                }
+
+                if (!isVerified) {
+                    Log.e("ChatViewModel", "Signature verification failed! Message might be tampered.")
+                    return@mapNotNull null
+                }
+
+                Log.d("ChatViewModel", "Signature verified successfully!")
 
                 ChatMessage(
                     senderId = senderId,
                     receiverId = receiverUserId,
-                    message = messageString,
-                    dateTime = timestamp.getReadableDate(),
-                    date = timestamp,
-                    messageType = messageType
+                    message = originalMessage,
+                    dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
+                    date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
+                    messageType = Constant.MESSAGE_TYPE_TEXT
                 )
-            }.orEmpty()
+            }
 
-            chatObserver(newMessages)
+            if (newMessages.isNotEmpty()) {
+                chatObserver(newMessages)
+            }
         }
     }
 

@@ -1,5 +1,6 @@
 #include <jni.h>
 #include <string>
+#include <android/log.h>
 #include "dilithium.h"
 #include "aes.h"
 #include "api.h"
@@ -11,10 +12,18 @@ Java_com_example_qchat_utils_CryptoUtils_00024Companion_generateDilithiumKeyPair
     uint8_t pk[CRYPTO_PUBLICKEYBYTES];
     uint8_t sk[CRYPTO_SECRETKEYBYTES];
 
+    // Debug Log: Print Before Key Generation
+    __android_log_print(ANDROID_LOG_DEBUG, "DilithiumCrypto", "Generating Key Pair...");
+
     // Generate the key pair
     if (crypto_sign_keypair(pk, sk) != 0) {
+        __android_log_print(ANDROID_LOG_ERROR, "DilithiumCrypto", "Key Pair Generation Failed!");
         return nullptr; // Failed to generate keys
     }
+
+    // Debug Log: Print Key Sizes
+    __android_log_print(ANDROID_LOG_DEBUG, "DilithiumCrypto", "Public Key Size: %zu", sizeof(pk));
+    __android_log_print(ANDROID_LOG_DEBUG, "DilithiumCrypto", "Private Key Size: %zu", sizeof(sk));
 
     // Combine public and private keys into a single byte array
     jbyteArray result = env->NewByteArray(CRYPTO_PUBLICKEYBYTES + CRYPTO_SECRETKEYBYTES);

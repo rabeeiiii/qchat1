@@ -44,5 +44,8 @@ object Constant {
     const val KEY_SIGNATURE = "signature"
     const val KEY_PUBLIC_KEY = "publicKey"
 
+    const val KEY_ENCRYPTED_MESSAGE = "encrypted_message"
+    const val KEY_ENCRYPTED_AES_KEY = "encrypted_aes_key"
+
 
 }
