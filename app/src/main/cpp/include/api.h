@@ -5,7 +5,7 @@
 #include <stdint.h>
 
 #define pqcrystals_dilithium2_PUBLICKEYBYTES 1312
-#define pqcrystals_dilithium2_SECRETKEYBYTES 2560
+#define pqcrystals_dilithium2_SECRETKEYBYTES 2528
 #define pqcrystals_dilithium2_BYTES 2420
 
 #define pqcrystals_dilithium2_ref_PUBLICKEYBYTES pqcrystals_dilithium2_PUBLICKEYBYTES
