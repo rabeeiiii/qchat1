@@ -197,6 +197,43 @@ class ChatViewModel @Inject constructor(
                 }
         }
     }
+    fun sendLocation(latitude: Double, longitude: Double, receiverUser: User) {
+        viewModelScope.launch {
+            val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+            if (senderId.isEmpty()) return@launch
+
+            // We'll just encrypt location with AES (no signature)
+            val locationString = "$latitude,$longitude"
+            val aesKey = AesUtils.generateAESKey()
+            val (encryptedLocation, aesKeyBase64) = encryptMessage(locationString, aesKey)
+
+            val messageMap = hashMapOf(
+                Constant.KEY_SENDER_ID to senderId,
+                Constant.KEY_RECEIVER_ID to receiverUser.id,
+                Constant.KEY_ENCRYPTED_MESSAGE to encryptedLocation,
+                Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
+                Constant.KEY_MESSAGE_TYPE to Constant.MESSAGE_TYPE_LOCATION,
+                Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp()
+            )
+
+            repository.sendMessage(messageMap)
+                .addOnSuccessListener {
+                    Log.d("ChatViewModel", "Location sent successfully")
+
+                    // Update conversation with "[Location]"
+                    updateRecentConversation(
+                        senderId = senderId,
+                        receiverUser = receiverUser,
+                        lastMessage = "[Location]",
+                        messageType = Constant.MESSAGE_TYPE_LOCATION
+                    )
+                }
+                .addOnFailureListener { e ->
+                    Log.e("ChatViewModel", "Failed to send location: ${e.message}")
+                }
+        }
+    }
+
 
 
     fun eventListener(receiverId: String, chatObserver: (List<ChatMessage>) -> Unit) {
@@ -337,7 +374,9 @@ class ChatViewModel @Inject constructor(
         }
     }
     fun observeChat(receiverId: String, chatObserver: (List<ChatMessage>) -> Unit) {
-        repository.observeChat(pref.getString(Constant.KEY_USER_ID, null).orEmpty(), receiverId) { querySnapshot, error ->
+        val currentUserId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+
+        repository.observeChat(currentUserId, receiverId) { querySnapshot, error ->
             if (error != null) {
                 Log.e("ChatViewModel", "Error observing chat: ${error.message}")
                 return@observeChat
@@ -348,9 +387,11 @@ class ChatViewModel @Inject constructor(
             val newMessages = querySnapshot.documents.mapNotNull { document ->
                 val messageId = document.id
 
+                // Skip if we already processed this message (avoid duplicates)
                 if (processedMessageIds.contains(messageId)) return@mapNotNull null
                 processedMessageIds.add(messageId)
 
+                // Fetch required fields
                 val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
                 val receiverUserId = document.getString(Constant.KEY_RECEIVER_ID) ?: return@mapNotNull null
                 val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
@@ -360,7 +401,8 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Processing message from sender: $senderId, Type: $messageType")
 
-                val aesKey: SecretKey = try {
+                // Decrypt with AES
+                val aesKey = try {
                     AesUtils.base64ToKey(encryptedAesKey)
                 } catch (e: IllegalArgumentException) {
                     Log.e("ChatViewModel", "Invalid AES Key Base64 format: ${e.message}")
@@ -373,12 +415,12 @@ class ChatViewModel @Inject constructor(
                     return@mapNotNull null
                 }
 
-                Log.d("ChatViewModel", "Decrypted Message: ${decryptedMessage.take(100)}")
+                Log.d("ChatViewModel", "Decrypted Message (first 100 chars): ${decryptedMessage.take(100)}")
 
-                // Handle images (NO SIGNATURE)
-                if (messageType == Constant.MESSAGE_TYPE_PHOTO) {
-                    Log.d("ChatViewModel", "Photo successfully received! Decoding Base64...")
-
+                // 1) For PHOTO or LOCATION messages -> skip signature checks
+                if (messageType == Constant.MESSAGE_TYPE_PHOTO ||
+                    messageType == Constant.MESSAGE_TYPE_LOCATION
+                ) {
                     return@mapNotNull ChatMessage(
                         senderId = senderId,
                         receiverId = receiverUserId,
@@ -389,6 +431,7 @@ class ChatViewModel @Inject constructor(
                     )
                 }
 
+                // 2) For TEXT messages -> do signature verification
                 val parts = decryptedMessage.split("||")
                 if (parts.size != 2) {
                     Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
@@ -396,24 +439,32 @@ class ChatViewModel @Inject constructor(
                 }
 
                 val originalMessage = parts[0].trim()
-                val signatureDecoded: ByteArray = try {
-                    Base64.decode(parts[1].trim(), Base64.NO_WRAP)
+                val signatureBase64 = parts[1].trim()
+
+                // Decode signature and public key
+                val signatureDecoded = try {
+                    Base64.decode(signatureBase64, Base64.NO_WRAP)
                 } catch (e: IllegalArgumentException) {
                     Log.e("ChatViewModel", "Invalid Signature Base64 format: ${e.message}")
                     return@mapNotNull null
                 }
 
-                val senderPublicKey: ByteArray = try {
+                val senderPublicKey = try {
                     Base64.decode(senderPublicKeyBase64, Base64.NO_WRAP)
                 } catch (e: IllegalArgumentException) {
                     Log.e("ChatViewModel", "Invalid Public Key Base64 format: ${e.message}")
                     return@mapNotNull null
                 }
 
+                // Verify the signature
                 val isVerified = try {
-                    CryptoUtils.verifySignature(senderPublicKey, originalMessage.toByteArray(Charsets.UTF_8), signatureDecoded)
+                    CryptoUtils.verifySignature(
+                        senderPublicKey,
+                        originalMessage.toByteArray(Charsets.UTF_8),
+                        signatureDecoded
+                    )
                 } catch (e: Exception) {
-                    Log.e("ChatViewModel", "Signature verification failed due to exception: ${e.message}")
+                    Log.e("ChatViewModel", "Signature verification failed (exception): ${e.message}")
                     false
                 }
 
@@ -424,6 +475,7 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Signature verified successfully!")
 
+                // Build the ChatMessage for verified text
                 ChatMessage(
                     senderId = senderId,
                     receiverId = receiverUserId,
@@ -435,10 +487,14 @@ class ChatViewModel @Inject constructor(
             }
 
             if (newMessages.isNotEmpty()) {
-                chatObserver(newMessages.distinctBy { it.message })
+                // If you still want to remove any duplicates by text, you can do:
+                // chatObserver(newMessages.distinctBy { it.message })
+                // Otherwise, just pass them through:
+                chatObserver(newMessages)
             }
         }
     }
+
 
     fun sendNotification(messageBody: MessageBody) = viewModelScope.launch {
         val response = repository.sendNotification(messageBody)

@@ -16,6 +16,8 @@ object Constant {
     const val VIEW_TYPE_RECEIVED = 2
     const val VIEW_TYPE_SEND_PHOTO = 3 // For sending photo messages
     const val VIEW_TYPE_RECEIVED_PHOTO = 4 // For receiving photo messages
+    const val VIEW_TYPE_SEND_LOCATION = 5
+    const val VIEW_TYPE_RECEIVED_LOCATION = 6
     const val KEY_COLLECTION_CHAT = "chat"
     const val KEY_SENDER_ID = "senderId"
     const val KEY_RECEIVER_ID = "receiverId"
@@ -23,6 +25,7 @@ object Constant {
     const val KEY_MESSAGE_TYPE = "messageType"
     const val MESSAGE_TYPE_TEXT = "text" // Explicitly define text type
     const val MESSAGE_TYPE_PHOTO = "photo" // Explicitly define photo type
+    const val MESSAGE_TYPE_LOCATION = "location"
     const val KEY_TIMESTAMP = "timestamp"
     const val KEY_COLLECTION_CONVERSATIONS = "conversations"
     const val KEY_SENDER_NAME = "senderName"

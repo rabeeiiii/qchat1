@@ -134,4 +134,6 @@ dependencies {
 
     implementation ("org.mindrot:jbcrypt:0.4")
 
+    implementation("com.github.bumptech.glide:glide:4.12.0")
+    annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
 }

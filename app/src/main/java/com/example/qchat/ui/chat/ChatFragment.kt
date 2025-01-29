@@ -36,6 +36,12 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import javax.inject.Inject
+import android.Manifest
+import android.content.pm.PackageManager
+import android.location.Location
+import android.os.Looper
+import androidx.core.location.LocationManagerCompat.getCurrentLocation
+import com.google.android.gms.location.*
 
 @AndroidEntryPoint
 class ChatFragment : Fragment(R.layout.chat_fragment) {
@@ -50,6 +56,32 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
 
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val locationRequest = LocationRequest.create().apply {
+        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        interval = 5000
+        fastestInterval = 2000
+    }
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            locationResult.lastLocation?.let { location ->
+                sendCurrentLocation(location)
+            }
+        }
+    }
+
+    // Request permission
+    private val requestLocationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            getCurrentLocation()
+        } else {
+            Log.e("ChatFragment", "Location permission denied")
+        }
+    }
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mainActivity = context as MainActivity
@@ -236,8 +268,36 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     }
 
     private fun openLocationPicker() {
-        // Implement your location picker functionality here
+        if (requireContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            getCurrentLocation()
+        } else {
+            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
     }
+
+    private fun getCurrentLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    sendCurrentLocation(location)
+                } else {
+                    // Request new location update if last location is null
+                    fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e("ChatFragment", "Location access error: ${e.message}")
+        }
+    }
+
+    private fun sendCurrentLocation(location: Location) {
+        val latitude = location.latitude
+        val longitude = location.longitude
+        viewModel.sendLocation(latitude, longitude, user)
+    }
+
 
     interface ChatObserver {
         fun observeChat(newChat: List<ChatMessage>)

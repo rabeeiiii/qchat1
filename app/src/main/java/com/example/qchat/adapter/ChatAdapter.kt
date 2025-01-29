@@ -1,15 +1,21 @@
 package com.example.qchat.adapter
 
+import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
+import com.bumptech.glide.Glide
+import com.example.qchat.R
+import com.example.qchat.databinding.ItemReceivedLocationBinding
 import com.example.qchat.databinding.ItemReceivedMessageBinding
 import com.example.qchat.databinding.ItemReceivedPhotoBinding
+import com.example.qchat.databinding.ItemSendLocationBinding
 import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.model.ChatMessage
@@ -18,6 +24,8 @@ import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_PHOTO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_LOCATION
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
 import java.util.*
 
 class ChatAdapter(
@@ -109,6 +117,79 @@ class ChatAdapter(
         }
     }
 
+    class SendLocationViewHolder(val binding: ItemSendLocationBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: ChatMessage) {
+            val locationUrl = getStaticMapUrl(message.message)
+            Glide.with(binding.root.context)
+                .load(locationUrl)
+                .placeholder(R.drawable.placeholder_map) // Use a placeholder while loading
+                .into(binding.ivMapPreview)
+
+            binding.tvDateTime.text = message.dateTime
+
+            // Open Google Maps when clicking on the preview
+            binding.ivMapPreview.setOnClickListener {
+                openLocationInMap(message.message)
+            }
+        }
+
+        private fun openLocationInMap(location: String) {
+            val locationParts = location.split(",")
+            if (locationParts.size == 2) {
+                val uri = Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                binding.root.context.startActivity(intent)
+            }
+        }
+
+        private fun getStaticMapUrl(location: String): String {
+            val locationParts = location.split(",")
+            return "https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${locationParts[1]},${locationParts[0]}&z=15&l=map&size=400,400"
+        }
+
+    }
+
+    class ReceivedLocationViewHolder(val binding: ItemReceivedLocationBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: ChatMessage, profileImage: Bitmap?) {
+            val locationUrl = getStaticMapUrl(message.message)
+            Glide.with(binding.root.context)
+                .load(locationUrl)
+                .placeholder(R.drawable.placeholder_map) // Use a placeholder while loading
+                .into(binding.ivMapPreview)
+
+            binding.tvDateTime.text = message.dateTime
+            profileImage?.let {
+                binding.ivProfile.setImageBitmap(profileImage)
+            }
+
+            // Open Google Maps when clicking on the preview
+            binding.ivMapPreview.setOnClickListener {
+                openLocationInMap(message.message)
+            }
+        }
+
+        private fun openLocationInMap(location: String) {
+            val locationParts = location.split(",")
+            if (locationParts.size == 2) {
+                val uri = Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                binding.root.context.startActivity(intent)
+            }
+        }
+
+        private fun getStaticMapUrl(location: String): String {
+            val locationParts = location.split(",")
+            return "https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${locationParts[1]},${locationParts[0]}&z=15&l=map&size=400,400"
+        }
+    }
+
+
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
         val uniqueMessages = newMessage.filterNot { newMsg ->
             chatMessagesList.any { it.date == newMsg.date && it.message == newMsg.message }
@@ -131,30 +212,58 @@ class ChatAdapter(
         return when (viewType) {
             VIEW_TYPE_SEND -> {
                 SendMessageViewHolder(
-                    ItemSendMessageBinding.inflate(LayoutInflater.from(parent.context),
+                    ItemSendMessageBinding.inflate(
+                        LayoutInflater.from(parent.context),
                         parent,
-                        false)
+                        false
+                    )
                 )
             }
             VIEW_TYPE_RECEIVED -> {
                 ReceivedMessageViewHolder(
-                    ItemReceivedMessageBinding.inflate(LayoutInflater.from(parent.context),
+                    ItemReceivedMessageBinding.inflate(
+                        LayoutInflater.from(parent.context),
                         parent,
-                        false)
+                        false
+                    )
                 )
             }
             VIEW_TYPE_SEND_PHOTO -> {
                 SendPhotoViewHolder(
-                    ItemSendPhotoBinding.inflate(LayoutInflater.from(parent.context),
+                    ItemSendPhotoBinding.inflate(
+                        LayoutInflater.from(parent.context),
                         parent,
-                        false)
+                        false
+                    )
                 )
             }
             VIEW_TYPE_RECEIVED_PHOTO -> {
                 ReceivedPhotoViewHolder(
-                    ItemReceivedPhotoBinding.inflate(LayoutInflater.from(parent.context),
+                    ItemReceivedPhotoBinding.inflate(
+                        LayoutInflater.from(parent.context),
                         parent,
-                        false)
+                        false
+                    )
+                )
+            }
+            VIEW_TYPE_SEND_LOCATION -> {
+                // Notice we are inflating the item_send_location.xml layout
+                SendLocationViewHolder(
+                    ItemSendLocationBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+            VIEW_TYPE_RECEIVED_LOCATION -> {
+                // Notice we are inflating the item_received_location.xml layout
+                ReceivedLocationViewHolder(
+                    ItemReceivedLocationBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
                 )
             }
             else -> throw IllegalArgumentException("Invalid view type")
@@ -179,8 +288,17 @@ class ChatAdapter(
                 val receivedPhotoHolder = holder as ReceivedPhotoViewHolder
                 receivedPhotoHolder.setData(chatMessagesList[position], profileImage)
             }
+            VIEW_TYPE_SEND_LOCATION -> {
+                val sendLocationHolder = holder as SendLocationViewHolder
+                sendLocationHolder.setData(chatMessagesList[position])
+            }
+            VIEW_TYPE_RECEIVED_LOCATION -> {
+                val receivedLocationHolder = holder as ReceivedLocationViewHolder
+                receivedLocationHolder.setData(chatMessagesList[position], profileImage)
+            }
         }
     }
+
 
     fun setProfileImage(profileImage: Bitmap) {
         this.profileImage = profileImage
@@ -196,15 +314,25 @@ class ChatAdapter(
         return when {
             message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
                 if (message.senderId == senderId) {
-                    Constant.VIEW_TYPE_SEND_PHOTO
+                    VIEW_TYPE_SEND_PHOTO
                 } else {
-                    Constant.VIEW_TYPE_RECEIVED_PHOTO
+                    VIEW_TYPE_RECEIVED_PHOTO
                 }
             }
-            message.senderId == senderId -> Constant.VIEW_TYPE_SEND
-            else -> Constant.VIEW_TYPE_RECEIVED
+            // Check if it's a location message
+            message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
+                if (message.senderId == senderId) {
+                    VIEW_TYPE_SEND_LOCATION
+                } else {
+                    VIEW_TYPE_RECEIVED_LOCATION
+                }
+            }
+            // Otherwise text
+            message.senderId == senderId -> VIEW_TYPE_SEND
+            else -> VIEW_TYPE_RECEIVED
         }
     }
+
 
 
 }
