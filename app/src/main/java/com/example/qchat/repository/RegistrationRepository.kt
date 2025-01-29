@@ -24,21 +24,21 @@ class RegistrationRepository @Inject constructor(private val fireStore: Firebase
     }
 
 
-    suspend fun userSignIn(email:String,password:String):Resource<QuerySnapshot>{
+    suspend fun userSignIn(email: String): Resource<QuerySnapshot> {
         return try {
-            val await = fireStore.collection(Constant.KEY_COLLECTION_USERS)
-                .whereEqualTo(Constant.KEY_EMAIL, email)
-                .whereEqualTo(Constant.KEY_PASSWORD, password)
+            val query = FirebaseFirestore.getInstance()
+                .collection("users")
+                .whereEqualTo(Constant.KEY_EMAIL, email)  // Ensure query filters by email only
                 .get()
                 .await()
-            if (await.isEmpty){
-                Resource.Error("User Not Found")
-            }else{
-                Resource.Success(await)
-            }
 
-        }catch (e:Exception){
-            Resource.Error(e.message?:"An Unknown Error Occurred")
+            if (!query.isEmpty) {
+                Resource.Success(query)
+            } else {
+                Resource.Error("User not found")
+            }
+        } catch (e: Exception) {
+            Resource.Error(e.localizedMessage ?: "Error fetching user")
         }
     }
 
