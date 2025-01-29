@@ -348,7 +348,6 @@ class ChatViewModel @Inject constructor(
             val newMessages = querySnapshot.documents.mapNotNull { document ->
                 val messageId = document.id
 
-                // Prevent duplicate processing
                 if (processedMessageIds.contains(messageId)) return@mapNotNull null
                 processedMessageIds.add(messageId)
 
@@ -356,6 +355,7 @@ class ChatViewModel @Inject constructor(
                 val receiverUserId = document.getString(Constant.KEY_RECEIVER_ID) ?: return@mapNotNull null
                 val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
                 val encryptedAesKey = document.getString(Constant.KEY_ENCRYPTED_AES_KEY) ?: return@mapNotNull null
+                val senderPublicKeyBase64 = document.getString(Constant.KEY_PUBLIC_KEY) ?: ""
                 val messageType = document.getString(Constant.KEY_MESSAGE_TYPE) ?: Constant.MESSAGE_TYPE_TEXT
 
                 Log.d("ChatViewModel", "Processing message from sender: $senderId, Type: $messageType")
@@ -375,17 +375,59 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Decrypted Message: ${decryptedMessage.take(100)}")
 
-                val formattedMessage = if (messageType == Constant.MESSAGE_TYPE_PHOTO) {
-                    Log.d("ChatViewModel", "Photo successfully received! Decoding Base64")
-                    decryptedMessage
-                } else {
-                    decryptedMessage
+                // Handle images (NO SIGNATURE)
+                if (messageType == Constant.MESSAGE_TYPE_PHOTO) {
+                    Log.d("ChatViewModel", "Photo successfully received! Decoding Base64...")
+
+                    return@mapNotNull ChatMessage(
+                        senderId = senderId,
+                        receiverId = receiverUserId,
+                        message = decryptedMessage,
+                        dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
+                        date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
+                        messageType = messageType
+                    )
                 }
+
+                val parts = decryptedMessage.split("||")
+                if (parts.size != 2) {
+                    Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
+                    return@mapNotNull null
+                }
+
+                val originalMessage = parts[0].trim()
+                val signatureDecoded: ByteArray = try {
+                    Base64.decode(parts[1].trim(), Base64.NO_WRAP)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("ChatViewModel", "Invalid Signature Base64 format: ${e.message}")
+                    return@mapNotNull null
+                }
+
+                val senderPublicKey: ByteArray = try {
+                    Base64.decode(senderPublicKeyBase64, Base64.NO_WRAP)
+                } catch (e: IllegalArgumentException) {
+                    Log.e("ChatViewModel", "Invalid Public Key Base64 format: ${e.message}")
+                    return@mapNotNull null
+                }
+
+                val isVerified = try {
+                    CryptoUtils.verifySignature(senderPublicKey, originalMessage.toByteArray(Charsets.UTF_8), signatureDecoded)
+                } catch (e: Exception) {
+                    Log.e("ChatViewModel", "Signature verification failed due to exception: ${e.message}")
+                    false
+                }
+
+                if (!isVerified) {
+                    Log.e("ChatViewModel", "Signature verification failed! Message might be tampered.")
+                    return@mapNotNull null
+                }
+
+                Log.d("ChatViewModel", "Signature verified successfully!")
 
                 ChatMessage(
                     senderId = senderId,
                     receiverId = receiverUserId,
-                    message = formattedMessage,
+                    message = originalMessage,
                     dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
                     date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
                     messageType = messageType
@@ -397,8 +439,6 @@ class ChatViewModel @Inject constructor(
             }
         }
     }
-
-
 
     fun sendNotification(messageBody: MessageBody) = viewModelScope.launch {
         val response = repository.sendNotification(messageBody)
