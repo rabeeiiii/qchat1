@@ -46,6 +46,8 @@
             android:exported="true"
             android:windowSoftInputMode="adjustResize" />
 
+        <activity android:name=".ui.profile.EditProfileActivity" />
+
         <service
             android:name=".fcmservice.MessagingService"
             android:exported="false">

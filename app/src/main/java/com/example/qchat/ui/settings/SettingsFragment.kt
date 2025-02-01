@@ -19,9 +19,11 @@ import android.widget.TextView
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import com.example.qchat.ui.main.MainViewModel
+import com.example.qchat.ui.profile.EditProfileActivity
 import com.example.qchat.ui.registration.RegistrationActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.toast
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 
@@ -29,7 +31,10 @@ import javax.inject.Inject
 class SettingsFragment : Fragment() {
 
     @Inject
-    lateinit var sharedPreferences: SharedPreferences
+    lateinit var sharedPreferences: SharedPreferences // Inject SharedPreferences here
+
+    lateinit var fireStore: FirebaseFirestore // Inject FirebaseFirestore here
+
     private val viewModel: SettingsViewModel by viewModels()
     private val settingsItems = listOf(
         SettingItem(
@@ -129,7 +134,20 @@ class SettingsFragment : Fragment() {
 
     private fun onSettingItemClick(settingItem: SettingItem) {
         when (settingItem.title) {
-            "Account" -> { /* Handle Account settings click */ }
+            "Account" -> {
+                val userId = sharedPreferences.getString(Constant.KEY_USER_ID, "") ?: ""
+                val userName = sharedPreferences.getString(Constant.KEY_NAME, "User") ?: "User"
+                val userEmail = sharedPreferences.getString(Constant.KEY_EMAIL, "") ?: ""
+                val userImage = sharedPreferences.getString(Constant.KEY_IMAGE, null)
+
+                val intent = Intent(requireContext(), EditProfileActivity::class.java).apply {
+                    putExtra("USER_ID", userId)
+                    putExtra("USER_NAME", userName)
+                    putExtra("USER_EMAIL", userEmail)
+                    putExtra("USER_IMAGE", userImage)
+                }
+                startActivity(intent)
+            }
             "Chat" -> { /* Handle Chat settings click */ }
             "Notifications" -> { /* Handle Notifications settings click */ }
             "Help" -> { /* Handle Help settings click */ }
