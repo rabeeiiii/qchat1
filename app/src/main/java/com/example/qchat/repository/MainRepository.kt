@@ -185,4 +185,16 @@ class MainRepository @Inject constructor(
         return fcmApi.sendMessage(messageBody =  messageBody, header = remoteHeader)
     }
 
+    suspend fun updateUserProfile(userId: String, updates: Map<String, Any>): Boolean {
+        return try {
+            fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .update(updates)
+                .await()
+            true
+        } catch (e: Exception) {
+            false
+        }
+    }
+
 }

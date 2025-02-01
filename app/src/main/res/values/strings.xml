@@ -80,5 +80,10 @@
     <string name="report_spam_icon">Report Spam Icon</string>
     <string name="arrow_icon">Arrow Icon</string>
 
+    <string name="save">Save</string>
+    <string name="change_photo">Change Photo</string>
+    <string name="cancel">Cancel</string>
+    <string name="current_password">Current Password</string>
+    <string name="new_password">New Password</string>
 
 </resources>
