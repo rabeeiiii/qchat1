@@ -2,7 +2,7 @@
 <layout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".ui.registration.signin.SignInFragment">
+    tools:context=".ui.registration.signup.SignUpFragment">
 
     <ScrollView
         android:layout_width="match_parent"
@@ -13,19 +13,18 @@
         android:padding="24dp"
         android:scrollbars="none">
 
-
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
             android:orientation="vertical"
             android:gravity="center">
 
-
             <ImageView
                 android:layout_width="100dp"
                 android:layout_height="68dp"
                 android:layout_marginTop="10dp"
                 android:src="@drawable/logo" />
+
             <TextView
                 android:id="@+id/tvWelcomeBack"
                 android:layout_width="wrap_content"
@@ -42,30 +41,22 @@
                 android:layout_marginTop="10dp"
                 android:background="@drawable/background_image"
                 android:scaleType="centerCrop"
-                app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintStart_toStartOf="parent"
-                app:layout_constraintTop_toBottomOf="@+id/tvCreateNewAccount"
                 app:riv_oval="true" />
 
             <TextView
                 android:id="@+id/tvAddImage"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:fontFamily="@font/dexapro_narrow_medium"
                 android:text="@string/add_image"
                 android:textColor="@color/secondary_text"
-                android:textSize="10sp"
-                app:layout_constraintBottom_toBottomOf="@id/ivProfile"
-                app:layout_constraintEnd_toEndOf="@id/ivProfile"
-                app:layout_constraintStart_toStartOf="@id/ivProfile"
-                app:layout_constraintTop_toTopOf="@+id/ivProfile" />
+                android:textSize="10sp" />
 
+            <!-- Name Field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_margin="10dp"
-                app:boxBackgroundColor="@android:color/transparent">
+                android:layout_margin="10dp">
 
                 <EditText
                     android:id="@+id/etName"
@@ -73,18 +64,17 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/name"
                     android:inputType="textPersonName"
-                    android:importantForAutofill="no"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Email Field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                android:layout_margin="10dp"
-                app:boxBackgroundColor="@android:color/transparent">
+                android:layout_margin="10dp">
 
                 <EditText
                     android:id="@+id/etEmail"
@@ -92,18 +82,18 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/email"
                     android:inputType="textEmailAddress"
-                    android:importantForAutofill="no"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Toggle -->
             <com.google.android.material.textfield.TextInputLayout
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_margin="10dp"
-                app:boxBackgroundColor="@android:color/transparent">
+                app:endIconMode="password_toggle">
 
                 <EditText
                     android:id="@+id/etPassword"
@@ -111,19 +101,18 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/password"
                     android:inputType="textPassword"
-                    android:importantForAutofill="no"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!--  Toggle -->
             <com.google.android.material.textfield.TextInputLayout
-                android:id="@+id/editTextPasswordInputLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
                 android:layout_margin="10dp"
-                app:boxBackgroundColor="@android:color/transparent">
+                app:endIconMode="password_toggle">
 
                 <EditText
                     android:id="@+id/etConfirmPassword"
@@ -131,12 +120,12 @@
                     android:layout_height="wrap_content"
                     android:hint="@string/confirm_password"
                     android:inputType="textPassword"
-                    android:importantForAutofill="no"
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
 
             </com.google.android.material.textfield.TextInputLayout>
 
+            <!-- Sign Up Button -->
             <com.google.android.material.button.MaterialButton
                 android:id="@+id/btnSignUp"
                 android:layout_width="300dp"
@@ -145,17 +134,14 @@
                 android:text="@string/sign_up"
                 android:textColor="@color/white"
                 android:textSize="13sp"
-                android:textStyle="bold"
-                app:backgroundTint="@color/button_purple"
+                app:backgroundTint="@color/signal_blue"
                 app:cornerRadius="36dp" />
 
             <ProgressBar
                 android:id="@+id/pbSignUp"
                 android:layout_width="25dp"
                 android:layout_height="25dp"
-                android:layout_gravity="center_horizontal"
-                android:visibility="gone"
-                tools:visibility="visible"/>
+                android:visibility="gone"/>
 
             <TextView
                 android:id="@+id/tvSignIn"
@@ -164,8 +150,7 @@
                 android:layout_marginTop="30dp"
                 android:gravity="center"
                 android:text="@string/already_have_an_account"
-                android:textColor="@color/black"
-                android:textStyle="bold" />
+                android:textColor="@color/black" />
 
         </LinearLayout>
     </ScrollView>

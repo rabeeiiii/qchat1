@@ -118,10 +118,10 @@
 
     <com.makeramen.roundedimageview.RoundedImageView
         android:id="@+id/ivUserImage"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_marginStart="168dp"
-        android:layout_marginTop="15dp"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="52dp"
+        android:layout_marginTop="16dp"
         android:scaleType="centerCrop"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintTop_toTopOf="parent"
@@ -180,14 +180,14 @@
         android:id="@+id/tvName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="5dp"
+        android:layout_marginTop="28dp"
         android:gravity="center"
         android:textColor="@color/black"
         android:textSize="14sp"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintHorizontal_bias="0.466"
+        app:layout_constraintHorizontal_bias="0.302"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toBottomOf="@id/ivUserImage"
+        app:layout_constraintTop_toTopOf="@+id/view"
         tools:text="Name" />
 
     <View
@@ -204,7 +204,7 @@
         android:id="@+id/tvAvailability"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="32dp"
+        android:layout_marginTop="4dp"
         android:background="#008000"
         android:fontFamily="@font/tt_norms_std_condensed_normal"
         android:padding="2dp"
@@ -214,7 +214,7 @@
         android:textSize="10sp"
         android:visibility="gone"
         app:layout_constraintTop_toBottomOf="@+id/headerBg"
-        tools:layout_editor_absoluteX="0dp"
+        tools:layout_editor_absoluteX="4dp"
         tools:visibility="visible" />
 
     <androidx.recyclerview.widget.RecyclerView

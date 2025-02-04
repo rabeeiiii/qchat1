@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory
 import android.os.Bundle
 import android.provider.MediaStore
 import android.view.View
-import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
@@ -17,7 +16,7 @@ import com.example.qchat.databinding.SignUpFragmentBinding
 import com.example.qchat.utils.*
 import dagger.hilt.android.AndroidEntryPoint
 import java.io.FileNotFoundException
-
+import java.util.regex.Pattern
 
 @AndroidEntryPoint
 class SignUpFragment : Fragment(R.layout.sign_up_fragment) {
@@ -31,53 +30,32 @@ class SignUpFragment : Fragment(R.layout.sign_up_fragment) {
         binding = SignUpFragmentBinding.bind(view)
 
         setClickListener()
-
         setObserver()
-
     }
 
     private fun setObserver() {
-
         viewModel.signUp.observe(viewLifecycleOwner) { resource ->
             when (resource) {
                 is Resource.Success -> {
                     loading(false)
                     requireContext().toast("Registered Successfully!")
-                    val intent = Intent(requireActivity(), MainActivity::class.java)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK)
-                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-                    startActivity(intent)
+                    startActivity(Intent(requireActivity(), MainActivity::class.java))
                 }
                 is Resource.Error -> {
                     loading(false)
-                    resource.message?.let {
-                        requireContext().toast(it)
-                    }
+                    resource.message?.let { requireContext().toast(it) }
                 }
-                is Resource.Loading -> {
-                    loading(true)
-                }
-
+                is Resource.Loading -> loading(true)
                 is Resource.Empty -> TODO()
             }
         }
-
     }
 
     private fun setClickListener() {
         binding.tvSignIn.setOnClickListener { findNavController().popBackStack() }
-
-        binding.btnSignUp.setOnClickListener {
-            if (isValidSignUpDetails()) {
-                signUp()
-            }
-        }
-
+        binding.btnSignUp.setOnClickListener { if (isValidSignUpDetails()) signUp() }
         binding.ivProfile.setOnClickListener {
-            val pickImageIntent =
-                Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI).apply {
-                    addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-                }
+            val pickImageIntent = Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
             pickImage.launch(pickImageIntent)
         }
     }
@@ -91,7 +69,7 @@ class SignUpFragment : Fragment(R.layout.sign_up_fragment) {
         )
     }
 
-    private val pickImage: ActivityResultLauncher<Intent> = registerForActivityResult(
+    private val pickImage = registerForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) { it ->
         if (it.resultCode == RESULT_OK) {
@@ -113,37 +91,64 @@ class SignUpFragment : Fragment(R.layout.sign_up_fragment) {
     }
 
     private fun isValidSignUpDetails(): Boolean {
+        val name = binding.etName.getFiledText().trim()
+        val email = binding.etEmail.getFiledText().trim()
+        val password = binding.etPassword.getFiledText()
+        val confirmPassword = binding.etConfirmPassword.getFiledText()
+
         if (encodedImage == null) {
             requireContext().toast("Please Select Profile Picture")
             return false
         }
-        if (binding.etName.isFiledIsEmpty()) {
-            requireContext().toast("Please Enter Valid Name")
+        if (name.isEmpty() || name.length < 3) {
+            requireContext().toast("Name must be at least 3 characters long")
             return false
         }
-        if (binding.etEmail.isFiledIsEmpty()) {
-            requireContext().toast("Please Enter Email")
+        if (email.isEmpty() || !email.isValidEmail()) {
+            requireContext().toast("Please Enter a Valid Email")
             return false
         }
-        if (!binding.etEmail.getFiledText().isValidEmail()) {
-            requireContext().toast("Please Enter Valid Email")
+        if (password.isEmpty()) {
+            requireContext().toast("Please Enter a Password")
             return false
         }
-        if (binding.etPassword.isFiledIsEmpty()) {
-            requireContext().toast("Please Enter Password")
+        if (password.length < 8) {
+            requireContext().toast("Password must be at least 8 characters long")
             return false
         }
-        if (binding.etConfirmPassword.isFiledIsEmpty()) {
-            requireContext().toast("Please Enter Valid Confirm Password")
+        if (!password.contains(Regex("[A-Z]"))) {
+            requireContext().toast("Password must contain at least one uppercase letter")
             return false
         }
-        if (!binding.etPassword.getFiledText()
-                .isPasswordIsSame(binding.etConfirmPassword.getFiledText())
-        ) {
-            requireContext().toast("Password is not matches")
+        if (!password.contains(Regex("[a-z]"))) {
+            requireContext().toast("Password must contain at least one lowercase letter")
             return false
         }
+        if (!password.contains(Regex("[0-9]"))) {
+            requireContext().toast("Password must contain at least one number")
+            return false
+        }
+        if (!password.contains(Regex("[@\$!%*?&]"))) {
+            requireContext().toast("Password must contain at least one special character")
+            return false
+        }
+        if (confirmPassword.isEmpty()) {
+            requireContext().toast("Please Confirm Your Password")
+            return false
+        }
+        if (password != confirmPassword) {
+            requireContext().toast("Passwords do not match")
+            return false
+        }
+
         return true
+    }
+
+
+    private fun isPasswordStrong(password: String): Boolean {
+        val passwordPattern =
+            "^(?=.*[A-Z])(?=.*[a-z])(?=.*\\d)(?=.*[@\$!%*?&])[A-Za-z\\d@\$!%*?&]{8,}$"
+        return Pattern.compile(passwordPattern).matcher(password).matches()
     }
 
     private fun loading(isLoading: Boolean) {
@@ -155,5 +160,4 @@ class SignUpFragment : Fragment(R.layout.sign_up_fragment) {
             binding.pbSignUp.gone()
         }
     }
-
 }

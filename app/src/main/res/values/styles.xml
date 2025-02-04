@@ -9,8 +9,8 @@
     <!-- res/values/styles.xml -->
     <style name="AppTheme" parent="Theme.MaterialComponents.Light.NoActionBar">
         <!-- Customize your theme here. -->
-        <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryDark">@color/purple_500</item>
+        <item name="colorPrimary">@color/signal_blue</item>
+        <item name="colorPrimaryDark">@color/white</item>
         <item name="android:navigationBarColor">@color/black</item>
     </style>
 
