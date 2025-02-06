@@ -120,8 +120,9 @@ class ChatViewModel @Inject constructor(
                     updateRecentConversation(
                         senderId = senderId,
                         receiverUser = receiverUser,
-                        lastMessage = message,
-                        messageType = Constant.MESSAGE_TYPE_TEXT
+                        lastMessage = encryptedMessage,
+                        messageType = Constant.MESSAGE_TYPE_TEXT,
+                        aesKeyBase64 = aesKeyBase64
                     )
                 }
                 .addOnFailureListener { e ->
@@ -134,13 +135,15 @@ class ChatViewModel @Inject constructor(
         senderId: String,
         receiverUser: User,
         lastMessage: String,
-        messageType: String
+        messageType: String,
+        aesKeyBase64: String
     ) {
         viewModelScope.launch {
             val conversation = hashMapOf(
                 Constant.KEY_SENDER_ID to senderId,
                 Constant.KEY_RECEIVER_ID to receiverUser.id,
                 Constant.KEY_LAST_MESSAGE to lastMessage,
+                Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
                 Constant.KEY_MESSAGE_TYPE to messageType,
                 Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp(),
                 Constant.KEY_SENDER_NAME to pref.getString(Constant.KEY_NAME, null).orEmpty(),
@@ -189,7 +192,8 @@ class ChatViewModel @Inject constructor(
                         senderId = senderId,
                         receiverUser = receiverUser,
                         lastMessage = "[Photo Sent]",
-                        messageType = Constant.MESSAGE_TYPE_PHOTO
+                        messageType = Constant.MESSAGE_TYPE_PHOTO,
+                        aesKeyBase64 = aesKeyBase64
                     )
                 }
                 .addOnFailureListener { e ->
@@ -225,7 +229,8 @@ class ChatViewModel @Inject constructor(
                         senderId = senderId,
                         receiverUser = receiverUser,
                         lastMessage = "[Location]",
-                        messageType = Constant.MESSAGE_TYPE_LOCATION
+                        messageType = Constant.MESSAGE_TYPE_LOCATION,
+                        aesKeyBase64 = aesKeyBase64
                     )
                 }
                 .addOnFailureListener { e ->
