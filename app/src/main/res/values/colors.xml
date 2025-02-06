@@ -46,6 +46,8 @@
 
     <color name="arrow_color">#707070</color>
 
+    <color name="signal_blue">#004776</color>
+
 
 
 </resources>
