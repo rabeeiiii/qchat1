@@ -2,6 +2,8 @@ package com.example.qchat.utils
 
 object Constant {
 
+    const val KEY_LAST_ENCRYPTED_AES_KEY = "last encrypted_aes_key"
+    const val KEY_LAST_ENCRYPTED_MESSAGE = "last encrypted_message"
     const val KEY_COLLECTION_USERS = "users"
     const val KEY_NAME = "name"
     const val KEY_EMAIL = "email"

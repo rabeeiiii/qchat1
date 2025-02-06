@@ -1,6 +1,7 @@
 package com.example.qchat.ui.main
 
 import android.content.SharedPreferences
+import android.util.Log
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -11,6 +12,7 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.QuerySnapshot
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.repository.MainRepository
+import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.clearAll
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -78,14 +80,32 @@ class MainViewModel @Inject constructor(
                         conversionId = documentChange.document.getString(Constant.KEY_SENDER_ID).orEmpty()
                     }
 
-                    val message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
+
+//                    val message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
+                    val encryptedMessage = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
+                    val encryptedAesKey = documentChange.document.getString(Constant.KEY_ENCRYPTED_AES_KEY).orEmpty()
+
+                    // 🔹 Decrypt message
+                    val decryptedMessage = try {
+                        val aesKey = AesUtils.base64ToKey(encryptedAesKey)
+                        AesUtils.decryptMessage(encryptedMessage, aesKey)
+                    } catch (e: Exception) {
+                        "Decryption Failed" // Handle errors gracefully
+                    }
+                    val parts = decryptedMessage.split("||")
+                    if (parts.size != 2) {
+                        Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
+
+                    }
+
+                    val originalMessage = parts[0].trim()
                     val date = documentChange.document.getDate(Constant.KEY_TIMESTAMP) ?: Date()
 
                     updatedConversionList.add(
                         ChatMessage(
                             senderId = senderId,
                             receiverId = receiverId,
-                            message = message,
+                            message = originalMessage,
                             dateTime = date.toString(),
                             date = date,
                             conversionId = conversionId,
