@@ -94,9 +94,9 @@
 
                     <de.hdodenhof.circleimageview.CircleImageView
                         android:id="@+id/ivProfile"
-                        android:layout_width="64dp"
-                        android:layout_height="64dp"
-                        android:background="@drawable/circle_status_shape"
+                        android:layout_width="66dp"
+                        android:layout_height="66dp"
+                        android:background="@drawable/bg_darkblue"
                         android:contentDescription="Status Icon"
                         android:padding="3dp"
                         app:shapeAppearanceOverlay="@style/round"
@@ -130,9 +130,9 @@
                 android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_ashraf" />
@@ -155,9 +155,9 @@
                 android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_mariam" />
@@ -180,9 +180,9 @@
                 android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_kons" />
@@ -205,9 +205,9 @@
                 android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_ehab" />
@@ -230,9 +230,9 @@
                 android:padding="8dp">
 
                 <ImageView
-                    android:layout_width="64dp"
-                    android:layout_height="64dp"
-                    android:background="@drawable/circle_status_shape"
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
                     android:src="@drawable/ic_rabeei" />

@@ -12,6 +12,7 @@ import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.lifecycleScope
 import com.bumptech.glide.Glide
+import com.example.qchat.R
 import com.example.qchat.databinding.ActivityEditProfileBinding
 import com.example.qchat.repository.MainRepository
 import com.example.qchat.utils.Constant
@@ -57,6 +58,7 @@ class EditProfileActivity : AppCompatActivity() {
         binding = ActivityEditProfileBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
+        window.statusBarColor = resources.getColor(R.color.black, theme)
         // Load current user data
         loadUserData()
 
@@ -71,6 +73,9 @@ class EditProfileActivity : AppCompatActivity() {
 
         binding.btnCancel.setOnClickListener {
             finish() // Close the activity and return to previous screen
+        }
+        binding.ivBack.setOnClickListener {
+            onBackPressedDispatcher.onBackPressed() // Navigates back
         }
     }
 
