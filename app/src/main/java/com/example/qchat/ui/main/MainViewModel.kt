@@ -80,8 +80,6 @@ class MainViewModel @Inject constructor(
                         conversionId = documentChange.document.getString(Constant.KEY_SENDER_ID).orEmpty()
                     }
 
-
-//                    val message = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
                     val encryptedMessage = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
                     val encryptedAesKey = documentChange.document.getString(Constant.KEY_ENCRYPTED_AES_KEY).orEmpty()
 
@@ -90,15 +88,22 @@ class MainViewModel @Inject constructor(
                         val aesKey = AesUtils.base64ToKey(encryptedAesKey)
                         AesUtils.decryptMessage(encryptedMessage, aesKey)
                     } catch (e: Exception) {
-                        "Decryption Failed" // Handle errors gracefully
+                        "Decryption Failed"
                     }
+
                     val parts = decryptedMessage.split("||")
                     if (parts.size != 2) {
                         Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
-
                     }
 
-                    val originalMessage = parts[0].trim()
+                    val messageType = documentChange.document.getString(Constant.KEY_MESSAGE_TYPE).orEmpty()
+
+                    val originalMessage = when (messageType) {
+                        "photo" -> "📷 Photo"
+                        "location" -> "📍 Location"
+                        else -> parts[0].trim()
+                    }
+
                     val date = documentChange.document.getDate(Constant.KEY_TIMESTAMP) ?: Date()
 
                     updatedConversionList.add(
@@ -124,7 +129,7 @@ class MainViewModel @Inject constructor(
                 }
             }
 
-            updatedConversionList.sortBy { it.date }
+            updatedConversionList.sortByDescending { it.date }
             onUpdateRecentConversation(updatedConversionList)
         }
     }.apply {
@@ -133,4 +138,5 @@ class MainViewModel @Inject constructor(
             this
         )
     }
+
 }

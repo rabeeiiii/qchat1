@@ -28,15 +28,16 @@
 
 
     <ImageView
-        android:id="@+id/ivSearch"
-        android:layout_width="36dp"
-        android:layout_height="36dp"
+        android:id="@+id/ivedit"
+        android:layout_width="27dp"
+        android:layout_height="27dp"
         android:layout_marginStart="26dp"
         android:layout_marginTop="5dp"
         android:contentDescription="Search Icon"
-        android:src="@drawable/ic_search_icon"
+        android:src="@drawable/edit"
         app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent"
+        app:tint="@color/white"/>
 
     <TextView
         android:id="@+id/tvMessage"
@@ -44,7 +45,7 @@
         android:layout_height="wrap_content"
         android:textColor="@color/white"
         android:fontFamily="@font/nimbus_san_bolt"
-        android:text="Home"
+        android:text="Chats"
         android:textSize="18sp"
         android:layout_marginTop="5dp"
         app:layout_constraintLeft_toLeftOf="parent"

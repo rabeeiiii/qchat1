@@ -48,7 +48,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     }
 
     private fun clickListener() {
-        binding.ivSearch.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_usersFragment) }
+        binding.ivedit.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_usersFragment) }
         binding.ivMore.setOnClickListener { showMoreMenu() }
     }
 

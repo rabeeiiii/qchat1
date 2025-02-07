@@ -8,6 +8,8 @@ import com.example.qchat.databinding.ItemUserListRecentConversionBinding
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.model.User
 import com.example.qchat.utils.decodeToBitmap
+import java.text.SimpleDateFormat
+import java.util.Locale
 
 class RecentConversationsAdapter :
     RecyclerView.Adapter<RecentConversationsAdapter.ConversationViewHolder>() {
@@ -36,9 +38,11 @@ class RecentConversationsAdapter :
         RecyclerView.ViewHolder(binding.root) {
 
         fun setData(chatMessage: ChatMessage) {
+            val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
             with(binding) {
                 tvName.text = chatMessage.conversionName
                 tvRecentMessage.text = chatMessage.message
+                tvTimestamp.text = timeFormat.format(chatMessage.date)
                 ivProfile.setImageBitmap(chatMessage.conversionImage?.decodeToBitmap())
                 root.setOnClickListener {
                     onClickConversation?.let { it1 ->

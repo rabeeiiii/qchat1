@@ -85,5 +85,8 @@
     <string name="cancel">Cancel</string>
     <string name="current_password">Current Password</string>
     <string name="new_password">New Password</string>
+    <string name="new_messages">New Message</string>
+
+
 
 </resources>
