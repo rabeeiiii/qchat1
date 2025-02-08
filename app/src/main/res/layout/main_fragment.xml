@@ -136,17 +136,20 @@
                     android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
-                    android:src="@drawable/ic_ashraf" />
+                    android:src="@drawable/ic_hossam" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:gravity="center"
-                    android:text="Ashraf"
+                    android:text="Hossam"
                     android:textColor="@android:color/white"
                     android:textSize="12sp" />
             </LinearLayout>
+
+
+
             <!-- status of friends -->
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -186,42 +189,18 @@
                     android:background="@drawable/bg_darkblue"
                     android:contentDescription="Status Icon"
                     android:padding="3dp"
-                    android:src="@drawable/ic_kons" />
+                    android:src="@drawable/ic_moaz" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_marginTop="4dp"
                     android:gravity="center"
-                    android:text="Kons"
+                    android:text="Moaz"
                     android:textColor="@android:color/white"
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="66dp"
-                    android:layout_height="66dp"
-                    android:background="@drawable/bg_darkblue"
-                    android:contentDescription="Status Icon"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_ehab" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:text="Ehab"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-            </LinearLayout>
 
             <LinearLayout
                 android:layout_width="wrap_content"
@@ -248,6 +227,30 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:gravity="center_horizontal"
+                android:orientation="vertical"
+                android:padding="8dp">
+
+                <ImageView
+                    android:layout_width="66dp"
+                    android:layout_height="66dp"
+                    android:background="@drawable/bg_darkblue"
+                    android:contentDescription="Status Icon"
+                    android:padding="3dp"
+                    android:src="@drawable/ic_mahitab" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginTop="4dp"
+                    android:gravity="center"
+                    android:text="Mahitab"
+                    android:textColor="@android:color/white"
+                    android:textSize="12sp" />
+            </LinearLayout>
         </LinearLayout>
     </HorizontalScrollView>
 
