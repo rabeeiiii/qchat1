@@ -1,14 +1,13 @@
 {
   "project_info": {
-    "project_number": "280526953882",
-    "firebase_url": "https://chatmessenger-5026d-default-rtdb.firebaseio.com",
-    "project_id": "chatmessenger-5026d",
-    "storage_bucket": "chatmessenger-5026d.firebasestorage.app"
+    "project_number": "439078212139",
+    "project_id": "qchat-bd937",
+    "storage_bucket": "qchat-bd937.firebasestorage.app"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:280526953882:android:00d1d8e00addc941726e23",
+        "mobilesdk_app_id": "1:439078212139:android:a750c433d6c3b035ea906e",
         "android_client_info": {
           "package_name": "com.example.qchat"
         }
@@ -16,26 +15,7 @@
       "oauth_client": [],
       "api_key": [
         {
-          "current_key": "AIzaSyCnCQqHFRFHW2TgIaqO2abuaBJiSKpr9FE"
-        }
-      ],
-      "services": {
-        "appinvite_service": {
-          "other_platform_oauth_client": []
-        }
-      }
-    },
-    {
-      "client_info": {
-        "mobilesdk_app_id": "1:280526953882:android:6d024c28dfdcef2c726e23",
-        "android_client_info": {
-          "package_name": "com.vivek.chatingapp"
-        }
-      },
-      "oauth_client": [],
-      "api_key": [
-        {
-          "current_key": "AIzaSyCnCQqHFRFHW2TgIaqO2abuaBJiSKpr9FE"
+          "current_key": "AIzaSyAHYXHiZrq9aeQAc7nL-lqhSWIIdHS7pzA"
         }
       ],
       "services": {
