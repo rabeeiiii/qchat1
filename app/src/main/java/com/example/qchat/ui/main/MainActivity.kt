@@ -14,6 +14,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import javax.inject.Inject
 import androidx.fragment.app.Fragment
 import com.example.qchat.databinding.ActivityMainBinding
+import com.example.qchat.model.User
 import fragments.CallsFragment
 import fragments.ChatFragment
 import fragments.GroupsFragment
@@ -101,13 +102,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun navigateToChatFragmentIfNeeded() {
+        // Check if the action is to show the ChatFragment
         if (intent?.action == Constant.ACTION_SHOW_CHAT_FRAGMENT) {
-            val bundle = Bundle()
-            bundle.putSerializable(
-                Constant.KEY_USER,
-                intent?.getSerializableExtra(Constant.KEY_USER)
-            )
-            navHostFragment.findNavController().navigate(R.id.actionChatFragment, bundle)
+            // Retrieve the user from the intent extras
+            val user = intent?.getSerializableExtra(Constant.KEY_USER) as? User
+
+            // If user is not null, navigate to ChatFragment with the user data
+            user?.let {
+                val bundle = Bundle()
+                bundle.putSerializable(Constant.KEY_USER, it)
+                // Use the correct action to navigate to the ChatFragment
+                navHostFragment.findNavController().navigate(R.id.action_mainFragment_to_chatFragment, bundle)
+            }
         }
     }
 

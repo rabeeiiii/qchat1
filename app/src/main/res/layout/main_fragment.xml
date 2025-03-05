@@ -23,10 +23,6 @@
 <!--        />-->
 
 
-
-
-
-
     <ImageView
         android:id="@+id/ivedit"
         android:layout_width="27dp"
@@ -123,40 +119,19 @@
                     android:textSize="12sp" />
             </LinearLayout>
             <!-- status of friends -->
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="8dp">
 
-                <ImageView
-                    android:layout_width="66dp"
-                    android:layout_height="66dp"
-                    android:background="@drawable/bg_darkblue"
-                    android:contentDescription="Status Icon"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_hossam" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:text="Hossam"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-            </LinearLayout>
 
 
 
             <!-- status of friends -->
+            <!-- Status of friends (Mariam) -->
             <LinearLayout
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:gravity="center_horizontal"
                 android:orientation="vertical"
-                android:padding="8dp">
+                android:padding="8dp"
+                android:id="@+id/linearLayoutMariam"> <!-- Give this LinearLayout an ID -->
 
                 <ImageView
                     android:layout_width="66dp"
@@ -176,81 +151,7 @@
                     android:textSize="12sp" />
             </LinearLayout>
 
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="8dp">
 
-                <ImageView
-                    android:layout_width="66dp"
-                    android:layout_height="66dp"
-                    android:background="@drawable/bg_darkblue"
-                    android:contentDescription="Status Icon"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_moaz" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:text="Moaz"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="66dp"
-                    android:layout_height="66dp"
-                    android:background="@drawable/bg_darkblue"
-                    android:contentDescription="Status Icon"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_rabeei" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:text="Rabeei"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-            </LinearLayout>
-
-            <LinearLayout
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:gravity="center_horizontal"
-                android:orientation="vertical"
-                android:padding="8dp">
-
-                <ImageView
-                    android:layout_width="66dp"
-                    android:layout_height="66dp"
-                    android:background="@drawable/bg_darkblue"
-                    android:contentDescription="Status Icon"
-                    android:padding="3dp"
-                    android:src="@drawable/ic_mahitab" />
-
-                <TextView
-                    android:layout_width="wrap_content"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="4dp"
-                    android:gravity="center"
-                    android:text="Mahitab"
-                    android:textColor="@android:color/white"
-                    android:textSize="12sp" />
-            </LinearLayout>
         </LinearLayout>
     </HorizontalScrollView>
 

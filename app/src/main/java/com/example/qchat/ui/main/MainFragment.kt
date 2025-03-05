@@ -2,6 +2,8 @@ package com.example.qchat.ui.main
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.Handler
+import android.os.Looper
 import android.view.MenuItem
 import android.view.View
 import android.widget.PopupMenu
@@ -48,9 +50,25 @@ class MainFragment : Fragment(R.layout.main_fragment) {
     }
 
     private fun clickListener() {
-        binding.ivedit.setOnClickListener { findNavController().navigate(R.id.action_mainFragment_to_usersFragment) }
-        binding.ivMore.setOnClickListener { showMoreMenu() }
+        binding.ivedit.setOnClickListener {
+            findNavController().navigate(R.id.action_mainFragment_to_usersFragment)
+        }
+        binding.ivMore.setOnClickListener {
+            showMoreMenu()
+        }
+        binding.linearLayoutMariam.setOnClickListener {
+            // Navigate to the StoryViewFragment using the correct action ID
+            findNavController().navigate(R.id.action_mainFragment_to_storyViewFragment)
+
+            // Optionally, delay the exit from StoryViewFragment
+            Handler(Looper.getMainLooper()).postDelayed({
+                // After 5 seconds, navigate back or finish story view
+                findNavController().popBackStack()
+            }, 5000)
+        }
+
     }
+
 
     private fun setRecyclerview() {
         adapter = RecentConversationsAdapter()

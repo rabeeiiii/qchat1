@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+    <!-- Background of the progress bar -->
+    <item android:id="@android:id/background">
+        <shape>
+            <corners android:radius="2dp" />
+            <solid android:color="#D3D3D3" /> <!-- Change this for your desired background color -->
+        </shape>
+    </item>
+
+    <!-- Secondary progress (Can be used for buffering) -->
+    <item android:id="@android:id/secondaryProgress">
+        <clip>
+            <shape>
+                <corners android:radius="2dp" />
+                <solid android:color="#FFD700" /> <!-- Change this for your desired secondary progress color -->
+            </shape>
+        </clip>
+    </item>
+
+    <!-- Foreground progress -->
+    <item android:id="@android:id/progress">
+        <clip>
+            <shape>
+                <corners android:radius="2dp" />
+                <solid android:color="#255390" /> <!-- Change this for your desired progress color -->
+            </shape>
+        </clip>
+    </item>
+</layer-list>

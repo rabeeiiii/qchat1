@@ -5,6 +5,7 @@
     android:id="@+id/main_nav_graph"
     app:startDestination="@id/mainFragment">
 
+    <!-- Main Fragment -->
     <fragment
         android:id="@+id/mainFragment"
         android:name="com.example.qchat.ui.main.MainFragment"
@@ -16,8 +17,12 @@
         <action
             android:id="@+id/action_mainFragment_to_chatFragment"
             app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_storyViewFragment"
+            app:destination="@id/storyViewFragment" /> <!-- Add action for story view -->
     </fragment>
 
+    <!-- Users Fragment -->
     <fragment
         android:id="@+id/usersFragment"
         android:name="com.example.qchat.ui.users.UsersFragment"
@@ -30,10 +35,7 @@
             app:popUpToInclusive="true"/>
     </fragment>
 
-    <action
-        android:id="@+id/actionChatFragment"
-        app:destination="@id/chatFragment"/>
-
+    <!-- Chat Fragment -->
     <fragment
         android:id="@+id/chatFragment"
         android:name="com.example.qchat.ui.chat.ChatFragment"
@@ -47,6 +49,7 @@
             app:destination="@id/profileFragment" />
     </fragment>
 
+    <!-- Profile Fragment -->
     <fragment
         android:id="@+id/profileFragment"
         android:name="com.example.qchat.ui.profile.ProfileFragment"
@@ -56,6 +59,10 @@
             app:argType="com.example.qchat.model.User" />
     </fragment>
 
-
-
+    <!-- Story View Fragment -->
+    <fragment
+        android:id="@+id/storyViewFragment"
+        android:name="com.example.qchat.ui.story.StoryViewFragment"
+        android:label="Story View"
+        tools:layout="@layout/fragment_story_view" />
 </navigation>
