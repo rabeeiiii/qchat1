@@ -39,10 +39,10 @@
 
 
     <!-- Profile Picture (Circle) -->
-    <ImageView
+    <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/profileImage"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
         android:layout_marginTop="10dp"
         android:layout_marginStart="10dp"
         android:src="@drawable/ic_mariam"
@@ -58,7 +58,7 @@
         android:layout_marginTop="10dp"
         android:text="Mariam Samy"
         android:textColor="@android:color/white"
-        android:textSize="16sp"
+        android:textSize="18sp"
         android:layout_marginStart="8dp"
         app:layout_constraintTop_toTopOf="@id/profileImage"
         app:layout_constraintStart_toEndOf="@id/profileImage"/>
@@ -71,8 +71,8 @@
         android:layout_marginTop="14dp"
         android:layout_marginStart="16dp"
         android:text="2H"
-        android:textColor="@android:color/darker_gray"
-        android:textSize="12sp"
+        android:textColor="@color/white_obacity25"
+        android:textSize="14sp"
         app:layout_constraintTop_toTopOf="@id/profileImage"
         app:layout_constraintStart_toEndOf="@id/userName"/>
 
@@ -88,27 +88,27 @@
         app:layout_constraintEnd_toEndOf="parent"/>
 
     <!-- Left & Right Tap Areas -->
-    <LinearLayout
-        android:id="@+id/storyTapArea"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:orientation="horizontal"
-        android:background="@android:color/transparent">
+<!--    <LinearLayout-->
+<!--        android:id="@+id/storyTapArea"-->
+<!--        android:layout_width="match_parent"-->
+<!--        android:layout_height="match_parent"-->
+<!--        android:orientation="horizontal"-->
+<!--        android:background="@android:color/transparent">-->
 
-        <!-- Left Side (Previous Story) -->
-        <!-- Remove the comments if you plan to re-enable the tap areas -->
-        <!-- <View-->
-        <!--    android:id="@+id/tapPrevious"-->
-        <!--    android:layout_width="0dp"-->
-        <!--    android:layout_height="match_parent"-->
-        <!--    android:layout_weight="1"/> -->
+<!--&lt;!&ndash;         Left Side (Previous Story) &ndash;&gt;-->
+<!--&lt;!&ndash;         Remove the comments if you plan to re-enable the tap areas &ndash;&gt;-->
+<!--         <View-->
+<!--            android:id="@+id/tapPrevious"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_weight="1"/>-->
 
-        <!-- Right Side (Next Story) -->
-        <!-- <View-->
-        <!--    android:id="@+id/tapNext"-->
-        <!--    android:layout_width="0dp"-->
-        <!--    android:layout_height="match_parent"-->
-        <!--    android:layout_weight="1"/> -->
-    </LinearLayout>
+<!--&lt;!&ndash;         Right Side (Next Story) &ndash;&gt;-->
+<!--         <View-->
+<!--            android:id="@+id/tapNext"-->
+<!--            android:layout_width="0dp"-->
+<!--            android:layout_height="match_parent"-->
+<!--            android:layout_weight="1"/>-->
+<!--    </LinearLayout>-->
 
 </androidx.constraintlayout.widget.ConstraintLayout>

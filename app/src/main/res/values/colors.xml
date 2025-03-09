@@ -55,5 +55,8 @@
     <color name="new_message_background">#BEC8D6</color>"
     <color name="chat_botombar">#94EEEEEE</color>
 
+    <color name="white_obacity50">#80ffffff</color>
+    <color name="white_obacity25">#bfffffff</color>
+
 
 </resources>

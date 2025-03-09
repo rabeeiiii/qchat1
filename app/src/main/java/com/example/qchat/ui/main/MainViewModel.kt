@@ -1,7 +1,11 @@
 package com.example.qchat.ui.main
 
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.net.Uri
 import android.util.Log
+import androidx.core.content.ContentProviderCompat.requireContext
 import androidx.lifecycle.LiveData
 import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
@@ -15,12 +19,18 @@ import com.example.qchat.repository.MainRepository
 import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.clearAll
+import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import org.w3c.dom.DocumentType
+import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.HashMap
+import android.util.Base64
+import com.example.qchat.model.Story
+import com.google.firebase.firestore.Query
 
 @HiltViewModel
 class MainViewModel @Inject constructor(
@@ -38,6 +48,69 @@ class MainViewModel @Inject constructor(
     fun loadUserDetails() = pref.getString(Constant.KEY_IMAGE, null).toString()
 
     fun getName(): String = pref.getString(Constant.KEY_NAME, null).toString()
+
+    fun getUserId(): String = pref.getString(Constant.KEY_USER_ID, "")!!
+
+    fun sendPhotoToStories(encodedImage: String) {
+        val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+        val userName = pref.getString(Constant.KEY_NAME, null).orEmpty()
+        val userProfilePicture = pref.getString(Constant.KEY_IMAGE, null).orEmpty()
+
+        val storyMap = hashMapOf(
+            "userId" to senderId,
+            "userName" to userName,
+            "userProfilePicture" to userProfilePicture,
+            "photo" to encodedImage,
+            "timestamp" to FieldValue.serverTimestamp()
+        )
+
+        FirebaseFirestore.getInstance().collection("stories")
+            .add(storyMap)
+            .addOnSuccessListener {
+                Log.d("MainViewModel", "Story uploaded successfully")
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainViewModel", "Failed to upload story: ${e.message}")
+            }
+    }
+
+    val storiesLiveData = MutableLiveData<List<Story>>()
+
+
+    fun fetchStories() {
+        FirebaseFirestore.getInstance().collection("stories")
+            .orderBy("timestamp", Query.Direction.DESCENDING)
+            .addSnapshotListener { snapshot, e ->
+                if (e != null) {
+                    Log.w("MainViewModel", "Listen failed.", e)
+                    return@addSnapshotListener
+                }
+
+                val storyMap = mutableMapOf<String, Story>()
+                snapshot?.documents?.forEach { document ->
+                    try {
+                        val story = document.toObject(Story::class.java)
+                        story?.let {
+                            val userId = it.userId ?: ""
+                            // Compare existing story in map with the current one by timestamp
+                            if (storyMap.containsKey(userId)) {
+                                val existingStory = storyMap[userId]
+                                if (existingStory == null || existingStory.timestamp?.compareTo(it.timestamp) ?: -1 < 0) {
+                                    storyMap[userId] = it
+                                }
+                            } else {
+                                storyMap[userId] = it
+                            }
+                        }
+                    } catch (ex: Exception) {
+                        Log.e("MainViewModel", "Error processing document ${document.id}", ex)
+                    }
+                }
+                val latestStories = storyMap.values.toList()
+                storiesLiveData.postValue(latestStories)
+            }
+    }
+
 
     fun signOut(): LiveData<Boolean> {
         val signOut = MutableLiveData(false)
