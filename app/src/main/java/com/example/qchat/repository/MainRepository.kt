@@ -1,5 +1,6 @@
 package com.example.qchat.repository
 
+import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
 import android.util.Log
@@ -17,20 +18,30 @@ import com.example.qchat.utils.CryptoUtils
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import com.google.firebase.ktx.Firebase
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
+import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.HashMap
+
+
+
 
 class MainRepository @Inject constructor(
     private val fireStore: FirebaseFirestore,
     private val fireMessage: FirebaseMessaging,
     private val fcmApi:Api,
     private val remoteHeader:HashMap<String,String>
+
 ) {
+
+    private val storage = FirebaseStorage.getInstance()
+
 
     suspend fun updateToken(token: String, userId: String): Boolean {
         return try {
@@ -196,5 +207,38 @@ class MainRepository @Inject constructor(
             false
         }
     }
+
+    suspend fun uploadFile(fileUri: Uri, path: String): String {
+        return try {
+            val storageRef = storage.reference.child(path)
+
+            val metadata = StorageMetadata.Builder()
+                .setContentType("video/mp4") // ✅ Fix: Set correct MIME type
+                .build()
+
+            val uploadTask = storageRef.putFile(fileUri, metadata).await()
+            storageRef.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            Log.e("Firebase", "Error uploading file: ${e.message}")
+            ""
+        }
+    }
+
+
+
+    suspend fun uploadImage(bitmap: Bitmap, path: String): String {
+        return try {
+            val storageRef = storage.reference.child(path)
+            val byteArrayOutputStream = ByteArrayOutputStream()
+            bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
+            val byteArray = byteArrayOutputStream.toByteArray()
+            val uploadTask = storageRef.putBytes(byteArray).await()
+            storageRef.downloadUrl.await().toString()
+        } catch (e: Exception) {
+            Log.e("Firebase", "Error uploading image: ${e.message}")
+            ""
+        }
+    }
+
 
 }

@@ -20,6 +20,9 @@ object Constant {
     const val VIEW_TYPE_RECEIVED_PHOTO = 4 // For receiving photo messages
     const val VIEW_TYPE_SEND_LOCATION = 5
     const val VIEW_TYPE_RECEIVED_LOCATION = 6
+    const val VIEW_TYPE_SEND_VIDEO = 7
+    const val VIEW_TYPE_RECEIVED_VIDEO = 8
+
     const val KEY_COLLECTION_CHAT = "chat"
     const val KEY_SENDER_ID = "senderId"
     const val KEY_RECEIVER_ID = "receiverId"
@@ -45,6 +48,10 @@ object Constant {
     const val NOTIFICATION_CHANNEL_ID = "message_channel"
     const val NOTIFICATION_CHANNEL_NAME = "message_channel"
     const val KEY_SECRET_KEY = "secret_key"
+    const val MESSAGE_TYPE_VIDEO = "video"
+    const val KEY_VIDEO_URL = "videoUrl"
+    const val KEY_THUMBNAIL_URL = "thumbnailUrl"
+
 
     const val KEY_SIGNATURE = "signature"
     const val KEY_PUBLIC_KEY = "publicKey"

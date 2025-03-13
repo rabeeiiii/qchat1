@@ -15,9 +15,11 @@ import com.example.qchat.R
 import com.example.qchat.databinding.ItemReceivedLocationBinding
 import com.example.qchat.databinding.ItemReceivedMessageBinding
 import com.example.qchat.databinding.ItemReceivedPhotoBinding
+import com.example.qchat.databinding.ItemReceivedVideoBinding
 import com.example.qchat.databinding.ItemSendLocationBinding
 import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
+import com.example.qchat.databinding.ItemSendVideoBinding
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
@@ -26,6 +28,8 @@ import com.example.qchat.utils.Constant.VIEW_TYPE_SEND
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_LOCATION
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_VIDEO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_VIDEO
 import java.util.*
 
 class ChatAdapter(
@@ -203,6 +207,7 @@ class ChatAdapter(
             notifyItemRangeInserted(initialSize, uniqueMessages.size)
             rvChat.scrollToPosition(chatMessagesList.size - 1)
         }
+        Log.d("ChatAdapter", "✅ Added ${uniqueMessages.size} new messages to chat.")
     }
 
 
@@ -266,6 +271,26 @@ class ChatAdapter(
                     )
                 )
             }
+            VIEW_TYPE_SEND_VIDEO -> {
+                SendVideoViewHolder(
+                    ItemSendVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+            VIEW_TYPE_RECEIVED_VIDEO -> {
+                ReceivedVideoViewHolder(
+                    ItemReceivedVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -296,6 +321,16 @@ class ChatAdapter(
                 val receivedLocationHolder = holder as ReceivedLocationViewHolder
                 receivedLocationHolder.setData(chatMessagesList[position], profileImage)
             }
+            VIEW_TYPE_SEND_VIDEO -> {
+                val sendVideoHolder = holder as SendVideoViewHolder
+                sendVideoHolder.setData(chatMessagesList[position])
+            }
+            VIEW_TYPE_RECEIVED_VIDEO -> {
+                val receivedVideoHolder = holder as ReceivedVideoViewHolder
+                receivedVideoHolder.setData(chatMessagesList[position], profileImage)
+            }
+
+
         }
     }
 
@@ -309,29 +344,77 @@ class ChatAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
-        Log.d("ChatAdapter", "MessageType: ${message.messageType}, SenderId: ${message.senderId}")
+        Log.d("ChatAdapter", "🔍 Checking message type: ${message.messageType}")
 
         return when {
             message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
-                if (message.senderId == senderId) {
-                    VIEW_TYPE_SEND_PHOTO
-                } else {
-                    VIEW_TYPE_RECEIVED_PHOTO
-                }
+                if (message.senderId == senderId) VIEW_TYPE_SEND_PHOTO else VIEW_TYPE_RECEIVED_PHOTO
             }
-            // Check if it's a location message
+            message.messageType == Constant.MESSAGE_TYPE_VIDEO -> { // ✅ Ensure video is recognized
+                Log.d("ChatAdapter", "📺 Video detected in chat!")
+                if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
+            }
             message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
-                if (message.senderId == senderId) {
-                    VIEW_TYPE_SEND_LOCATION
-                } else {
-                    VIEW_TYPE_RECEIVED_LOCATION
-                }
+                if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
             }
-            // Otherwise text
-            message.senderId == senderId -> VIEW_TYPE_SEND
-            else -> VIEW_TYPE_RECEIVED
+            else -> {
+                if (message.senderId == senderId) VIEW_TYPE_SEND else VIEW_TYPE_RECEIVED
+            }
         }
     }
+
+
+    class SendVideoViewHolder(val binding: ItemSendVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: ChatMessage) {
+            Log.d("ChatAdapter", "🎥 Displaying sent video: ${message.videoUrl}")
+
+            Glide.with(binding.root.context)
+                .load(message.thumbnailUrl)
+                .placeholder(R.drawable.ic_play) // ✅ Ensure a placeholder appears
+                .into(binding.ivVideoThumbnail)
+
+            binding.ivPlayButton.setOnClickListener {
+                Log.d("ChatAdapter", "▶️ Playing sent video: ${message.videoUrl}")
+
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(message.videoUrl))
+                intent.setDataAndType(Uri.parse(message.videoUrl), "video/mp4")
+                binding.root.context.startActivity(intent) // ✅ Opens the video player
+            }
+
+            binding.tvDateTime.text = message.dateTime
+        }
+    }
+
+    class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: ChatMessage, profileImage: Bitmap?) {
+            Log.d("ChatAdapter", "🎥 Displaying received video: ${message.videoUrl}")
+
+            Glide.with(binding.root.context)
+                .load(message.thumbnailUrl)
+                .placeholder(R.drawable.ic_play) // ✅ Ensure a placeholder appears
+                .into(binding.ivVideoThumbnail)
+
+            binding.ivPlayButton.setOnClickListener {
+                Log.d("ChatAdapter", "▶️ Playing received video: ${message.videoUrl}")
+
+                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(message.videoUrl))
+                intent.setDataAndType(Uri.parse(message.videoUrl), "video/mp4")
+                binding.root.context.startActivity(intent) // ✅ Opens the video player
+            }
+
+            binding.tvDateTime.text = message.dateTime
+            profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+        }
+    }
+
+
+
+
+
 
 
 
