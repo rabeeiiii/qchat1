@@ -39,9 +39,12 @@ import javax.inject.Inject
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.MediaMetadataRetriever
 import android.os.Looper
 import androidx.core.location.LocationManagerCompat.getCurrentLocation
+import com.example.qchat.utils.AesUtils
 import com.google.android.gms.location.*
+import java.io.File
 
 @AndroidEntryPoint
 class ChatFragment : Fragment(R.layout.chat_fragment) {
@@ -55,6 +58,8 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     lateinit var pref: SharedPreferences
 
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
+    private lateinit var videoLauncher: ActivityResultLauncher<String>
+
 
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -115,6 +120,13 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 }
             }
         }
+        videoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                Log.d("ChatFragment", "Selected video URI: $uri")
+                handleVideoSelection(uri)
+            }
+        }
+
 
         getArgument()
         setClickListener()
@@ -235,8 +247,8 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private fun setupPopMenu() {
         val adapter = AttachmentAdapter(
             requireContext(),
-            arrayOf("Photos", "Camera", "Location"),
-            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.location)
+            arrayOf("Photos", "Camera", "Video", "Location"),
+            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.ic_play, R.drawable.location)
         )
         binding.gridView.adapter = adapter
 
@@ -244,11 +256,16 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             when (position) {
                 0 -> openGallery()
                 1 -> openCamera()
-                2 -> openLocationPicker()
+                2 -> openVideoPicker()
+                3 -> openLocationPicker()
             }
             togglePopMenuVisibility()
         }
     }
+    private fun openVideoPicker() {
+        videoLauncher.launch("video/*")
+    }
+
 
     private fun togglePopMenuVisibility() {
         if (binding.popMenuLayout.isVisible) {
@@ -315,4 +332,54 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             }
         }
     }
+
+    private fun handleVideoSelection(videoUri: Uri) {
+        lifecycleScope.launch(Dispatchers.IO) {
+            val thumbnail = generateVideoThumbnail(videoUri)
+            val encryptedVideoUri = encryptVideo(videoUri)
+
+            withContext(Dispatchers.Main) {
+                if (encryptedVideoUri != null && thumbnail != null) {
+                    viewModel.sendVideo(encryptedVideoUri, thumbnail, user)
+                } else {
+                    Log.e("ChatFragment", "Failed to process video selection")
+                }
+            }
+        }
+    }
+
+    private fun generateVideoThumbnail(videoUri: Uri): Bitmap? {
+        return try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(requireContext(), videoUri)
+            val bitmap = retriever.getFrameAtTime(1, MediaMetadataRetriever.OPTION_CLOSEST)
+            retriever.release()
+            bitmap
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun encryptVideo(videoUri: Uri): Uri? {
+        return try {
+            val inputStream = requireContext().contentResolver.openInputStream(videoUri)
+            val byteArray = inputStream?.readBytes() ?: return null
+            inputStream.close()
+
+            val encryptedBytes = AesUtils.encryptByteArray(byteArray)
+
+            val encryptedFile = File(requireContext().cacheDir, "encrypted_video.mp4")
+            encryptedFile.writeBytes(encryptedBytes)
+
+            Uri.fromFile(encryptedFile)
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+
+
+
 }
