@@ -70,6 +70,10 @@ dependencies {
     implementation("androidx.activity:activity-ktx:1.7.2")
     implementation(libs.androidx.activity)
 
+
+
+    implementation ("io.getstream:stream-webrtc-android:1.3.8")
+
     // Test dependencies
     testImplementation("junit:junit:4.13.2")
     androidTestImplementation("androidx.test.ext:junit:1.1.5")
@@ -137,5 +141,8 @@ dependencies {
     implementation("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
+
+
+
 
 }
