@@ -71,6 +71,9 @@ dependencies {
     implementation(libs.androidx.activity)
 
 
+    implementation ("com.google.android.exoplayer:exoplayer:2.19.1")
+
+
 
     implementation ("io.getstream:stream-webrtc-android:1.3.8")
 
@@ -84,11 +87,12 @@ dependencies {
     implementation("androidx.lifecycle:lifecycle-viewmodel-ktx:2.6.1")
 
     // Firebase dependencies
-    implementation("com.google.firebase:firebase-firestore-ktx:24.4.5")
+    implementation("com.google.firebase:firebase-firestore-ktx:25.1.2")
     implementation("com.google.firebase:firebase-auth-ktx:21.2.0")
-    implementation("com.google.firebase:firebase-storage:20.1.0")
+    implementation("com.google.firebase:firebase-storage:21.0.1")
     implementation("com.google.firebase:firebase-messaging:23.1.2")
     implementation("com.google.firebase:firebase-installations:17.1.3")
+    implementation ("com.google.firebase:firebase-firestore:25.1.2")
 
     // Navigation components
     implementation("androidx.navigation:navigation-fragment-ktx:2.7.2")

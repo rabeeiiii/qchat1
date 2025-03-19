@@ -64,6 +64,8 @@
 
         <activity android:name=".ui.profile.EditProfileActivity" />
         <activity android:name=".ui.call.IncomingCallActivity" />
+        <activity android:name=".ui.video.VideoPlayerActivity"/>
+
         <activity
             android:name=".ui.call.VoiceCallActivity"
             android:exported="false" />

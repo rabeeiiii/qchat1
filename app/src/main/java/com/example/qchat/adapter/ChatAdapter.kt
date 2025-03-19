@@ -9,6 +9,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Toast
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.qchat.R
@@ -21,6 +22,7 @@ import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.databinding.ItemSendVideoBinding
 import com.example.qchat.model.ChatMessage
+import com.example.qchat.ui.video.VideoPlayerActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
@@ -363,26 +365,28 @@ class ChatAdapter(
         }
     }
 
-
     class SendVideoViewHolder(val binding: ItemSendVideoBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         fun setData(message: ChatMessage) {
             Log.d("ChatAdapter", "🎥 Displaying sent video: ${message.videoUrl}")
 
+            // Load the video thumbnail using Glide
             Glide.with(binding.root.context)
                 .load(message.thumbnailUrl)
-                .placeholder(R.drawable.ic_play) // ✅ Ensure a placeholder appears
+                .placeholder(R.drawable.ic_play) // Placeholder while loading
                 .into(binding.ivVideoThumbnail)
 
+            // Set up the play button click listener
             binding.ivPlayButton.setOnClickListener {
-                Log.d("ChatAdapter", "▶️ Playing sent video: ${message.videoUrl}")
-
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(message.videoUrl))
-                intent.setDataAndType(Uri.parse(message.videoUrl), "video/mp4")
-                binding.root.context.startActivity(intent) // ✅ Opens the video player
+                val context = binding.root.context
+                val intent = Intent(context, VideoPlayerActivity::class.java)
+                intent.putExtra("video_url", message.videoUrl)
+                context.startActivity(intent)
             }
 
+
+            // Set the date and time of the video message
             binding.tvDateTime.text = message.dateTime
         }
     }
@@ -393,29 +397,25 @@ class ChatAdapter(
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             Log.d("ChatAdapter", "🎥 Displaying received video: ${message.videoUrl}")
 
+            // Load the video thumbnail using Glide
             Glide.with(binding.root.context)
                 .load(message.thumbnailUrl)
-                .placeholder(R.drawable.ic_play) // ✅ Ensure a placeholder appears
+                .placeholder(R.drawable.ic_play) // Placeholder while loading
                 .into(binding.ivVideoThumbnail)
 
+            // Set up the play button click listener
             binding.ivPlayButton.setOnClickListener {
-                Log.d("ChatAdapter", "▶️ Playing received video: ${message.videoUrl}")
-
-                val intent = Intent(Intent.ACTION_VIEW, Uri.parse(message.videoUrl))
-                intent.setDataAndType(Uri.parse(message.videoUrl), "video/mp4")
-                binding.root.context.startActivity(intent) // ✅ Opens the video player
+                val context = binding.root.context
+                val intent = Intent(context, VideoPlayerActivity::class.java)
+                intent.putExtra("video_url", message.videoUrl)
+                context.startActivity(intent)
             }
 
+            // Set the date and time of the video message
             binding.tvDateTime.text = message.dateTime
+
+            // Set the profile image if available
             profileImage?.let { binding.ivProfile.setImageBitmap(it) }
         }
     }
-
-
-
-
-
-
-
-
 }
