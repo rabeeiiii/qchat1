@@ -6,6 +6,7 @@ import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.messaging.FirebaseMessaging
 import com.example.qchat.R
 import com.example.qchat.network.Api
+import com.example.qchat.repository.MainRepository
 import com.example.qchat.utils.Constant
 import dagger.Module
 import dagger.Provides
@@ -59,5 +60,16 @@ object AppModule {
       fun provideSharedPreferencesEditor(preferences: SharedPreferences):SharedPreferences.Editor {
           return preferences.edit()
       }*/
+    @Provides
+    @Singleton
+    fun provideMainRepository(
+        fireStore: FirebaseFirestore,
+        fireMessage: FirebaseMessaging,
+        fcmApi: Api,
+        remoteHeader: HashMap<String, String>,
+        @ApplicationContext context: Context
+    ): MainRepository {
+        return MainRepository(fireStore, fireMessage, fcmApi, remoteHeader, context)
+    }
 
 }
