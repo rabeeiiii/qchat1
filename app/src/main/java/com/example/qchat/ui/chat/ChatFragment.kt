@@ -41,7 +41,6 @@ import android.content.pm.PackageManager
 import android.location.Location
 import android.media.MediaMetadataRetriever
 import android.os.Looper
-import android.widget.Toast
 import androidx.core.location.LocationManagerCompat.getCurrentLocation
 import com.example.qchat.ui.call.VideoCallActivity
 import com.example.qchat.ui.call.VoiceCallActivity
@@ -344,26 +343,15 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     }
 
     private fun handleVideoSelection(videoUri: Uri) {
-
         lifecycleScope.launch(Dispatchers.IO) {
-            try {
-                // Generate thumbnail
-                val thumbnail = generateVideoThumbnail(videoUri)
-                if (thumbnail == null) {
-                    Log.e("ChatFragment", "Failed to generate video thumbnail")
-                    return@launch
-                }
+            val thumbnail = generateVideoThumbnail(videoUri)
+            val encryptedVideoUri = encryptVideo(videoUri)
 
-                // Send video to ViewModel
-                withContext(Dispatchers.Main) {
-                    viewModel.sendVideo(videoUri, thumbnail, user)
-
-                }
-            } catch (e: Exception) {
-                Log.e("ChatFragment", "Error handling video selection: ${e.message}")
-                withContext(Dispatchers.Main) {
-
-                    Toast.makeText(requireContext(), "Failed to process video", Toast.LENGTH_SHORT).show()
+            withContext(Dispatchers.Main) {
+                if (encryptedVideoUri != null && thumbnail != null) {
+                    viewModel.sendVideo(encryptedVideoUri, thumbnail, user)
+                } else {
+                    Log.e("ChatFragment", "Failed to process video selection")
                 }
             }
         }

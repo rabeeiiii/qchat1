@@ -1,6 +1,5 @@
 package com.example.qchat.repository
 
-import android.content.Context
 import android.graphics.Bitmap
 import android.net.Uri
 import android.util.Base64
@@ -20,7 +19,6 @@ import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import com.google.firebase.ktx.Firebase
 import com.google.firebase.storage.FirebaseStorage
-import com.google.firebase.storage.StorageException
 import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.tasks.await
 import okhttp3.ResponseBody
@@ -30,18 +28,15 @@ import java.io.ByteArrayOutputStream
 import java.util.*
 import javax.inject.Inject
 import kotlin.collections.HashMap
-import kotlin.coroutines.cancellation.CancellationException
-import kotlinx.coroutines.withContext
-import kotlinx.coroutines.Dispatchers
-import javax.inject.Singleton
 
-@Singleton
+
+
+
 class MainRepository @Inject constructor(
     private val fireStore: FirebaseFirestore,
     private val fireMessage: FirebaseMessaging,
     private val fcmApi:Api,
-    private val remoteHeader:HashMap<String,String>,
-    private val context: Context
+    private val remoteHeader:HashMap<String,String>
 
 ) {
 
@@ -213,51 +208,34 @@ class MainRepository @Inject constructor(
         }
     }
 
-    suspend fun uploadFile(fileUri: Uri, path: String): String = withContext(Dispatchers.IO) {
-        return@withContext try {
+    suspend fun uploadFile(fileUri: Uri, path: String): String {
+        return try {
             val storageRef = storage.reference.child(path)
 
-            // Determine MIME type
-            val mimeType = context.contentResolver.getType(fileUri) ?: "video/mp4"
             val metadata = StorageMetadata.Builder()
-                .setContentType(mimeType)
+                .setContentType("video/mp4") // ✅ Fix: Set correct MIME type
                 .build()
 
-            Log.d("MainRepository", "🔄 Uploading file: $fileUri to path: $path")
-
-            // Upload file
             val uploadTask = storageRef.putFile(fileUri, metadata).await()
-
-            // Get download URL
-            val downloadUrl = uploadTask.storage.downloadUrl.await().toString()
-            Log.d("MainRepository", "✅ File uploaded successfully. URL: $downloadUrl")
-
-            downloadUrl
+            storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.e("MainRepository", "❌ Error uploading file: ${e.message}")
+            Log.e("Firebase", "Error uploading file: ${e.message}")
             ""
         }
     }
 
+
+
     suspend fun uploadImage(bitmap: Bitmap, path: String): String {
         return try {
             val storageRef = storage.reference.child(path)
-
-            // Compress bitmap to byte array
             val byteArrayOutputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
             val byteArray = byteArrayOutputStream.toByteArray()
-
-            // Upload byte array
-            storageRef.putBytes(byteArray).await()
-
-            // Get download URL
-            val downloadUrl = storageRef.downloadUrl.await().toString()
-            Log.d("MainRepository", "✅ Image uploaded successfully. URL: $downloadUrl")
-
-            downloadUrl
+            val uploadTask = storageRef.putBytes(byteArray).await()
+            storageRef.downloadUrl.await().toString()
         } catch (e: Exception) {
-            Log.e("MainRepository", "❌ Error uploading image: ${e.message}")
+            Log.e("Firebase", "Error uploading image: ${e.message}")
             ""
         }
     }

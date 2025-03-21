@@ -204,7 +204,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendVideo(videoUri: Uri, thumbnail: Bitmap, receiverUser: User) {
+    fun sendVideo(encryptedVideoUri: Uri, thumbnail: Bitmap, receiverUser: User) {
         viewModelScope.launch {
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty()) {
@@ -212,24 +212,15 @@ class ChatViewModel @Inject constructor(
                 return@launch
             }
 
-            try {
-                // Upload video to Firebase Storage
-                Log.d("ChatViewModel", "⏳ Uploading video...")
-                val videoRef = repository.uploadFile(videoUri, "videos/$senderId/${UUID.randomUUID()}.mp4")
-                if (videoRef.isEmpty()) {
-                    Log.e("ChatViewModel", "❌ Video upload failed!")
-                    return@launch
-                }
+            Log.d("ChatViewModel", "⏳ Uploading video...")
+            val videoRef = repository.uploadFile(encryptedVideoUri, "videos/$senderId/${UUID.randomUUID()}.mp4")
 
-                // Upload thumbnail to Firebase Storage
-                Log.d("ChatViewModel", "⏳ Uploading thumbnail...")
-                val thumbnailRef = repository.uploadImage(thumbnail, "thumbnails/$senderId/${UUID.randomUUID()}.jpg")
-                if (thumbnailRef.isEmpty()) {
-                    Log.e("ChatViewModel", "❌ Thumbnail upload failed!")
-                    return@launch
-                }
+            Log.d("ChatViewModel", "⏳ Uploading thumbnail...")
+            val thumbnailRef = repository.uploadImage(thumbnail, "thumbnails/$senderId/${UUID.randomUUID()}.jpg")
 
-                // Create Firestore message
+            if (videoRef.isNotEmpty() && thumbnailRef.isNotEmpty()) {
+                Log.d("ChatViewModel", "✅ Video and thumbnail uploaded successfully!")
+
                 val messageMap = hashMapOf(
                     Constant.KEY_SENDER_ID to senderId,
                     Constant.KEY_RECEIVER_ID to receiverUser.id,
@@ -239,12 +230,11 @@ class ChatViewModel @Inject constructor(
                     Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp()
                 )
 
-                // Send message to Firestore
                 repository.sendMessage(messageMap)
                     .addOnSuccessListener {
                         Log.d("ChatViewModel", "✅ Video message sent successfully!")
 
-                        // Update recent conversation
+                        // ✅ Update conversation (same as photo)
                         updateRecentConversation(
                             senderId = senderId,
                             receiverUser = receiverUser,
@@ -256,11 +246,12 @@ class ChatViewModel @Inject constructor(
                     .addOnFailureListener { e ->
                         Log.e("ChatViewModel", "❌ Failed to send video message: ${e.message}")
                     }
-            } catch (e: Exception) {
-                Log.e("ChatViewModel", "❌ Error sending video: ${e.message}")
+            } else {
+                Log.e("ChatViewModel", "❌ Video or thumbnail upload failed!")
             }
         }
     }
+
 
 
 
