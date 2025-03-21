@@ -52,31 +52,6 @@ object Constant {
     const val KEY_VIDEO_URL = "videoUrl"
     const val KEY_THUMBNAIL_URL = "thumbnailUrl"
 
-    // 🔹 WebRTC Call Constants
-    const val KEY_COLLECTION_CALLS = "calls"
-    const val KEY_CALL_ID = "callId"
-    const val KEY_CALLER_ID = "callerId"
-    const val KEY_CALL_TYPE = "callType"
-    const val CALL_TYPE_AUDIO = "audio"
-    const val CALL_TYPE_VIDEO = "video"
-
-    const val KEY_CALLER_IMAGE = "CallerImage"
-    const val KEY_CALLER_NAME = "CallerName"
-    const val KEY_REMOTE_USER = "key_remote_user"
-
-
-    // 🔹 Call Status Constants
-    const val KEY_CALL_STATUS = "callStatus"
-    const val CALL_STATUS_RINGING = "ringing"
-    const val CALL_STATUS_ONGOING = "ongoing"
-    const val CALL_STATUS_ENDED = "ended"
-
-    // 🔹 Call Signaling Data
-    const val KEY_SIGNAL_TYPE = "signalType"
-    const val SIGNAL_OFFER = "offer"
-    const val SIGNAL_ANSWER = "answer"
-    const val SIGNAL_CANDIDATE = "candidate"
-
 
     const val KEY_SIGNATURE = "signature"
     const val KEY_PUBLIC_KEY = "publicKey"
