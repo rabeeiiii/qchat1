@@ -111,26 +111,6 @@ object AesUtils {
         val decodedKey = Base64.decode(base64Key, Base64.NO_WRAP)
         return SecretKeySpec(decodedKey, 0, decodedKey.size, AES_ALGORITHM)
     }
-
-    fun encryptByteArray(byteArray: ByteArray): ByteArray {
-        return try {
-            val secretKey = generateAESKey()
-            val cipher = Cipher.getInstance(AES_MODE)
-            val iv = ByteArray(12)
-            SecureRandom().nextBytes(iv)
-
-            val gcmSpec = GCMParameterSpec(TAG_LENGTH, iv)
-            cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
-            val encryptedData = cipher.doFinal(byteArray)
-
-            // Combine IV and encrypted data
-            iv + encryptedData
-        } catch (e: Exception) {
-            Log.e("AES", "Error encrypting byte array: ${e.message}")
-            byteArray // Return original if encryption fails
-        }
-    }
-
 }
 
 
