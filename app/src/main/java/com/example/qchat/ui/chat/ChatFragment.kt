@@ -42,8 +42,6 @@ import android.location.Location
 import android.media.MediaMetadataRetriever
 import android.os.Looper
 import androidx.core.location.LocationManagerCompat.getCurrentLocation
-import com.example.qchat.ui.call.VideoCallActivity
-import com.example.qchat.ui.call.VoiceCallActivity
 import com.example.qchat.utils.AesUtils
 import com.google.android.gms.location.*
 import java.io.File
@@ -127,13 +125,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 Log.d("ChatFragment", "Selected video URI: $uri")
                 handleVideoSelection(uri)
             }
-        }
-        binding.ivcall.setOnClickListener {
-            startVoiceCall()
-        }
-
-        binding.ivVideocall.setOnClickListener {
-            startVideoCall()
         }
 
 
@@ -388,19 +379,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
     }
 
-    private fun startVoiceCall() {
-        val intent = Intent(requireContext(), VoiceCallActivity::class.java).apply {
-            putExtra(Constant.KEY_REMOTE_USER, user) // Pass the user object to VoiceCallActivity
-        }
-        startActivity(intent)
-    }
 
-    private fun startVideoCall() {
-        val intent = Intent(requireContext(), VideoCallActivity::class.java).apply {
-            putExtra(Constant.KEY_REMOTE_USER, user) // Pass the user object to VideoCallActivity
-        }
-        startActivity(intent)
-    }
 
 
 }

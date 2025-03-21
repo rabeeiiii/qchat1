@@ -4,6 +4,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/gradient_background">
 
+
     <!-- Circular Profile Picture -->
     <de.hdodenhof.circleimageview.CircleImageView
         android:id="@+id/ongoing_profile_image"
