@@ -20,20 +20,85 @@ import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.launch
 import android.util.Base64
 import com.example.qchat.utils.CryptoUtils.Companion.CRYPTO_PUBLICKEYBYTES
+import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
 import java.util.*
 import javax.crypto.SecretKey
 import javax.inject.Inject
+import androidx.core.content.ContextCompat.startActivity
+import dagger.hilt.android.qualifiers.ApplicationContext
+import androidx.core.content.ContextCompat
+import android.content.Context
+import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.pdf.PdfRenderer
+import android.net.Uri
+import android.os.ParcelFileDescriptor
+import com.google.firebase.storage.FirebaseStorage
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val repository: MainRepository,
     private val pref: SharedPreferences,
+    @ApplicationContext private val context: Context
 
-    ) : ViewModel() {
+) : ViewModel() {
 
     var conversionId = ""
     private var isReceiverAvailable = false
     private val processedMessageIds = mutableSetOf<String>()
+
+    fun storeDocument(fileBytes: ByteArray): String {
+        val documentFile = File(context.filesDir, "document_${System.currentTimeMillis()}.pdf")
+        try {
+            FileOutputStream(documentFile).use { fos ->
+                fos.write(fileBytes)
+            }
+            return documentFile.absolutePath
+        } catch (e: IOException) {
+            Log.e("ChatViewModel", "Error storing document: ${e.message}")
+        }
+        return ""
+    }
+
+    private fun openDocument(documentPath: String, context: Context) {
+        try {
+            Log.d("Document", "Trying to open document from path: $documentPath")
+            val file = File(documentPath)
+
+            if (file.exists()) {
+                val uri = Uri.fromFile(file)
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    setDataAndType(uri, "application/pdf")
+                    flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+                }
+                context.startActivity(intent)
+                Log.d("Document", "Document found, preparing to open")
+            } else {
+                Log.e("Document", "Document not found at path: $documentPath")
+            }
+        } catch (e: Exception) {
+            Log.e("Document", "Error opening document: ${e.message}")
+        }
+    }
+
+
+    fun encryptAndStoreDocument(fileBytes: ByteArray, context: Context): String {
+        val aesKey = AesUtils.generateAESKey()
+        val encryptedDocument = AesUtils.encryptBytes(fileBytes, aesKey)
+        val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
+        val documentFile = File(context.filesDir, "document_${System.currentTimeMillis()}.pdf")
+        try {
+            FileOutputStream(documentFile).use { fos ->
+                fos.write(encryptedDocument)
+            }
+            return documentFile.absolutePath
+        } catch (e: IOException) {
+            Log.e("ChatViewModel", "Error storing document: ${e.message}")
+        }
+        return "Error storing document"
+    }
 
 
     fun generateKeyPair(): Pair<String, String> {
@@ -224,7 +289,6 @@ class ChatViewModel @Inject constructor(
                 .addOnSuccessListener {
                     Log.d("ChatViewModel", "Location sent successfully")
 
-                    // Update conversation with "[Location]"
                     updateRecentConversation(
                         senderId = senderId,
                         receiverUser = receiverUser,
@@ -239,7 +303,115 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun uploadDocumentToFirebase(fileBytes: ByteArray, fileName: String, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val documentRef = storageRef.child("documents/$fileName")
 
+        val uploadTask = documentRef.putBytes(fileBytes)
+        uploadTask.addOnSuccessListener {
+            documentRef.downloadUrl.addOnSuccessListener { uri ->
+                val downloadUrl = uri.toString()
+                Log.d("ChatViewModel", "Document uploaded successfully: $downloadUrl")
+                onSuccess(downloadUrl)
+            }
+        }.addOnFailureListener { exception ->
+            Log.e("ChatViewModel", "Error uploading document: ${exception.message}")
+            onFailure(exception)
+        }
+    }
+
+    fun sendDocument(fileBytes: ByteArray?, receiverUser: User) {
+        viewModelScope.launch {
+            val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+            if (senderId.isEmpty() || fileBytes == null) return@launch
+
+            val fileName = "document_${System.currentTimeMillis()}.pdf"
+
+            uploadDocumentToFirebase(fileBytes, fileName, { documentUrl ->
+                val aesKey = AesUtils.generateAESKey()
+                val encryptedDocument = AesUtils.encryptBytes(fileBytes, aesKey)
+                val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
+
+                val messageMap = hashMapOf(
+                    Constant.KEY_SENDER_ID to senderId,
+                    Constant.KEY_RECEIVER_ID to receiverUser.id,
+                    Constant.KEY_ENCRYPTED_MESSAGE to Base64.encodeToString(encryptedDocument, Base64.NO_WRAP),
+                    Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
+                    Constant.KEY_MESSAGE_TYPE to Constant.MESSAGE_TYPE_DOCUMENT,
+                    Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp(),
+                    "documentUrl" to documentUrl,
+                    "documentName" to fileName
+                )
+
+                repository.sendMessage(messageMap)
+                    .addOnSuccessListener {
+                        Log.d("ChatViewModel", "Document sent successfully")
+                        updateRecentConversation(
+                            senderId = senderId,
+                            receiverUser = receiverUser,
+                            lastMessage = "[Document Sent] $fileName",
+                            messageType = Constant.MESSAGE_TYPE_DOCUMENT,
+                            aesKeyBase64 = aesKeyBase64
+                        )
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatViewModel", "Failed to send document: ${e.message}")
+                    }
+            }, { exception ->
+                Log.e("ChatViewModel", "Document upload failed: ${exception.message}")
+            })
+        }
+    }
+
+    fun downloadAndRenderPdf(documentUrl: String, onSuccess: (Bitmap) -> Unit, onFailure: (Exception) -> Unit) {
+        val tempFile = File(context.cacheDir, "document_${System.currentTimeMillis()}.pdf")
+        val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(documentUrl)
+        storageRef.getFile(tempFile).addOnSuccessListener {
+            try {
+                val pdfRenderer = PdfRenderer(ParcelFileDescriptor.open(tempFile, ParcelFileDescriptor.MODE_READ_ONLY))
+                val pageCount = pdfRenderer.pageCount
+
+                if (pageCount > 0) {
+                    val page = pdfRenderer.openPage(0)
+                    val bitmap = Bitmap.createBitmap(page.width, page.height, Bitmap.Config.ARGB_8888)
+                    page.render(bitmap, null, null, PdfRenderer.Page.RENDER_MODE_FOR_DISPLAY)
+                    page.close()
+                    onSuccess(bitmap)
+                } else {
+                    onFailure(Exception("PDF has no pages"))
+                }
+
+                pdfRenderer.close()
+            } catch (e: Exception) {
+                onFailure(e)
+            }
+        }.addOnFailureListener { exception ->
+            onFailure(exception)
+        }
+    }
+
+    fun receiveDocument(documentPath: String, encryptedKeyBase64: String) {
+        viewModelScope.launch {
+            try {
+                val aesKey = AesUtils.base64ToKey(encryptedKeyBase64)
+                val file = File(documentPath)
+
+                if (file.exists()) {
+                    val encryptedDocument = file.readBytes()
+                    val decryptedDocument = AesUtils.decryptBytes(encryptedDocument, aesKey)
+                    val decryptedFile = File(context.cacheDir, "decrypted_document.pdf")
+                    FileOutputStream(decryptedFile).use { fos ->
+                        fos.write(decryptedDocument)
+                    }
+                    openDocument(decryptedFile.absolutePath, context)
+                } else {
+                    Log.e("ChatViewModel", "Document not found at path: $documentPath")
+                }
+            } catch (e: Exception) {
+                Log.e("ChatViewModel", "Error receiving document: ${e.message}")
+            }
+        }
+    }
 
     fun eventListener(receiverId: String, chatObserver: (List<ChatMessage>) -> Unit) {
         repository.observeChat(pref.getString(Constant.KEY_USER_ID, null).orEmpty(), receiverId) { querySnapshot, error ->
@@ -392,11 +564,9 @@ class ChatViewModel @Inject constructor(
             val newMessages = querySnapshot.documents.mapNotNull { document ->
                 val messageId = document.id
 
-                // Skip if we already processed this message (avoid duplicates)
                 if (processedMessageIds.contains(messageId)) return@mapNotNull null
                 processedMessageIds.add(messageId)
 
-                // Fetch required fields
                 val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
                 val receiverUserId = document.getString(Constant.KEY_RECEIVER_ID) ?: return@mapNotNull null
                 val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
@@ -406,7 +576,6 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Processing message from sender: $senderId, Type: $messageType")
 
-                // Decrypt with AES
                 val aesKey = try {
                     AesUtils.base64ToKey(encryptedAesKey)
                 } catch (e: IllegalArgumentException) {
@@ -422,10 +591,25 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Decrypted Message (first 100 chars): ${decryptedMessage.take(100)}")
 
-                // 1) For PHOTO or LOCATION messages -> skip signature checks
                 if (messageType == Constant.MESSAGE_TYPE_PHOTO ||
-                    messageType == Constant.MESSAGE_TYPE_LOCATION
+                    messageType == Constant.MESSAGE_TYPE_LOCATION ||
+                    messageType == Constant.MESSAGE_TYPE_DOCUMENT
                 ) {
+                    if (messageType == Constant.MESSAGE_TYPE_DOCUMENT) {
+                        val documentUrl = document.getString("documentUrl") ?: return@mapNotNull null
+                        val documentName = document.getString("documentName") ?: "Document"
+
+                        return@mapNotNull ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = documentUrl,
+                            documentName = documentName,
+                            dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
+                            date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
+                            messageType = Constant.MESSAGE_TYPE_DOCUMENT
+                        )
+                    }
+
                     return@mapNotNull ChatMessage(
                         senderId = senderId,
                         receiverId = receiverUserId,
@@ -435,8 +619,6 @@ class ChatViewModel @Inject constructor(
                         messageType = messageType
                     )
                 }
-
-                // 2) For TEXT messages -> do signature verification
                 val parts = decryptedMessage.split("||")
                 if (parts.size != 2) {
                     Log.e("ChatViewModel", "Invalid decrypted message format. Expected 'message||signature'")
@@ -446,7 +628,6 @@ class ChatViewModel @Inject constructor(
                 val originalMessage = parts[0].trim()
                 val signatureBase64 = parts[1].trim()
 
-                // Decode signature and public key
                 val signatureDecoded = try {
                     Base64.decode(signatureBase64, Base64.NO_WRAP)
                 } catch (e: IllegalArgumentException) {
@@ -461,7 +642,6 @@ class ChatViewModel @Inject constructor(
                     return@mapNotNull null
                 }
 
-                // Verify the signature
                 val isVerified = try {
                     CryptoUtils.verifySignature(
                         senderPublicKey,
@@ -480,8 +660,7 @@ class ChatViewModel @Inject constructor(
 
                 Log.d("ChatViewModel", "Signature verified successfully!")
 
-                // Build the ChatMessage for verified text
-                ChatMessage(
+                return@mapNotNull ChatMessage(
                     senderId = senderId,
                     receiverId = receiverUserId,
                     message = originalMessage,
@@ -492,14 +671,10 @@ class ChatViewModel @Inject constructor(
             }
 
             if (newMessages.isNotEmpty()) {
-                // If you still want to remove any duplicates by text, you can do:
-                // chatObserver(newMessages.distinctBy { it.message })
-                // Otherwise, just pass them through:
                 chatObserver(newMessages)
             }
         }
     }
-
 
     fun sendNotification(messageBody: MessageBody) = viewModelScope.launch {
         val response = repository.sendNotification(messageBody)

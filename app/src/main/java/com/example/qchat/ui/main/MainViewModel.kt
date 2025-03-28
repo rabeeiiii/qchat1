@@ -174,6 +174,7 @@ class MainViewModel @Inject constructor(
                     val originalMessage = when (messageType) {
                         "photo" -> "📷 Photo"
                         "location" -> "📍 Location"
+                        "document" -> "📄 Document"
                         else -> parts[0].trim()
                     }
 
