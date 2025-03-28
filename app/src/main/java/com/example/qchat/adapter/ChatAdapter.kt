@@ -1,5 +1,6 @@
 package com.example.qchat.adapter
 
+import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -12,20 +13,24 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.qchat.R
+import com.example.qchat.databinding.ItemReceivedDocumentBinding
 import com.example.qchat.databinding.ItemReceivedLocationBinding
 import com.example.qchat.databinding.ItemReceivedMessageBinding
 import com.example.qchat.databinding.ItemReceivedPhotoBinding
+import com.example.qchat.databinding.ItemSendDocumentBinding
 import com.example.qchat.databinding.ItemSendLocationBinding
 import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_DOCUMENT
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_LOCATION
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_DOCUMENT
 import java.util.*
 
 class ChatAdapter(
@@ -124,12 +129,10 @@ class ChatAdapter(
             val locationUrl = getStaticMapUrl(message.message)
             Glide.with(binding.root.context)
                 .load(locationUrl)
-                .placeholder(R.drawable.placeholder_map) // Use a placeholder while loading
+                .placeholder(R.drawable.placeholder_map)
                 .into(binding.ivMapPreview)
 
             binding.tvDateTime.text = message.dateTime
-
-            // Open Google Maps when clicking on the preview
             binding.ivMapPreview.setOnClickListener {
                 openLocationInMap(message.message)
             }
@@ -159,15 +162,13 @@ class ChatAdapter(
             val locationUrl = getStaticMapUrl(message.message)
             Glide.with(binding.root.context)
                 .load(locationUrl)
-                .placeholder(R.drawable.placeholder_map) // Use a placeholder while loading
+                .placeholder(R.drawable.placeholder_map)
                 .into(binding.ivMapPreview)
 
             binding.tvDateTime.text = message.dateTime
             profileImage?.let {
                 binding.ivProfile.setImageBitmap(profileImage)
             }
-
-            // Open Google Maps when clicking on the preview
             binding.ivMapPreview.setOnClickListener {
                 openLocationInMap(message.message)
             }
@@ -247,7 +248,6 @@ class ChatAdapter(
                 )
             }
             VIEW_TYPE_SEND_LOCATION -> {
-                // Notice we are inflating the item_send_location.xml layout
                 SendLocationViewHolder(
                     ItemSendLocationBinding.inflate(
                         LayoutInflater.from(parent.context),
@@ -257,7 +257,6 @@ class ChatAdapter(
                 )
             }
             VIEW_TYPE_RECEIVED_LOCATION -> {
-                // Notice we are inflating the item_received_location.xml layout
                 ReceivedLocationViewHolder(
                     ItemReceivedLocationBinding.inflate(
                         LayoutInflater.from(parent.context),
@@ -266,6 +265,13 @@ class ChatAdapter(
                     )
                 )
             }
+            VIEW_TYPE_SEND_DOCUMENT -> {
+                SendDocumentViewHolder(ItemSendDocumentBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+            }
+            VIEW_TYPE_RECEIVED_DOCUMENT -> {
+                ReceivedDocumentViewHolder(ItemReceivedDocumentBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+            }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -296,6 +302,14 @@ class ChatAdapter(
                 val receivedLocationHolder = holder as ReceivedLocationViewHolder
                 receivedLocationHolder.setData(chatMessagesList[position], profileImage)
             }
+            VIEW_TYPE_SEND_DOCUMENT -> {
+                val sendDocumentHolder = holder as SendDocumentViewHolder
+                sendDocumentHolder.setData(chatMessagesList[position])
+            }
+            VIEW_TYPE_RECEIVED_DOCUMENT -> {
+                val receivedDocumentHolder = holder as ReceivedDocumentViewHolder
+                receivedDocumentHolder.setData(chatMessagesList[position], profileImage, holder.itemView.context)
+            }
         }
     }
 
@@ -309,7 +323,6 @@ class ChatAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
-        Log.d("ChatAdapter", "MessageType: ${message.messageType}, SenderId: ${message.senderId}")
 
         return when {
             message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
@@ -319,20 +332,67 @@ class ChatAdapter(
                     VIEW_TYPE_RECEIVED_PHOTO
                 }
             }
-            // Check if it's a location message
-            message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
-                if (message.senderId == senderId) {
-                    VIEW_TYPE_SEND_LOCATION
-                } else {
-                    VIEW_TYPE_RECEIVED_LOCATION
-                }
+            message.messageType == Constant.MESSAGE_TYPE_DOCUMENT -> {
+                if (message.senderId == senderId) VIEW_TYPE_SEND_DOCUMENT else VIEW_TYPE_RECEIVED_DOCUMENT
             }
-            // Otherwise text
+            message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
+                if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
+            }
             message.senderId == senderId -> VIEW_TYPE_SEND
             else -> VIEW_TYPE_RECEIVED
         }
     }
+    class SendDocumentViewHolder(val binding: ItemSendDocumentBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: ChatMessage) {
+            binding.apply {
+                binding.tvDocumentName.text = message.documentName ?: "Unnamed "
+                tvDateTime.text = message.dateTime
+                Glide.with(itemView.context)
+                    .load(message.message)
 
+                binding.root.setOnClickListener {
+                    openDocument(message.message)
+                }
+            }
+        }
 
+        private fun openDocument(url: String) {
+            // Open the document URL (maybe using a PDF viewer)
+            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
+            intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+            binding.root.context.startActivity(intent)
+        }
+    }
 
+    class ReceivedDocumentViewHolder(val binding: ItemReceivedDocumentBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: ChatMessage, profileImage: Bitmap?, context: Context) {
+            binding.apply {
+                profileImage?.let {
+                    ivProfile.setImageBitmap(it)
+                }
+                tvDocumentName.text = message.documentName ?: "Document"
+                tvDateTime.text = message.dateTime
+                root.setOnClickListener {
+                    message.message.takeIf { it.isNotEmpty() }?.let { url ->
+                        openDocument(url, context)
+                    }
+                }
+            }
+        }
+
+        private fun openDocument(url: String, context: Context) {
+            try {
+                val intent = Intent(Intent.ACTION_VIEW).apply {
+                    data = Uri.parse(url)
+                    flags = Intent.FLAG_ACTIVITY_NO_HISTORY
+                    setDataAndType(Uri.parse(url), "application/pdf")
+                }
+                context.startActivity(intent)
+            } catch (e: Exception) {
+                Log.e("ReceivedDocument", "Error opening document", e)
+            }
+        }
+    }
 }

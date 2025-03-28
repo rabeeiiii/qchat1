@@ -46,11 +46,17 @@ object Constant {
     const val NOTIFICATION_CHANNEL_NAME = "message_channel"
     const val KEY_SECRET_KEY = "secret_key"
 
+    const val VIEW_TYPE_SEND_DOCUMENT = 7
+    const val VIEW_TYPE_RECEIVED_DOCUMENT = 8
+
     const val KEY_SIGNATURE = "signature"
     const val KEY_PUBLIC_KEY = "publicKey"
 
     const val KEY_ENCRYPTED_MESSAGE = "encrypted_message"
     const val KEY_ENCRYPTED_AES_KEY = "encrypted_aes_key"
 
+    const val MESSAGE_TYPE_DOCUMENT = "document"
 
+    private const val MESSAGE_TYPE_SENT = 1
+    private const val MESSAGE_TYPE_RECEIVED = 2
 }

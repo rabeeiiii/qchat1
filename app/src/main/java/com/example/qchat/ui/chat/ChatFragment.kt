@@ -55,6 +55,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     lateinit var pref: SharedPreferences
 
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
+    private lateinit var documentLauncher: ActivityResultLauncher<String>
 
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
@@ -72,7 +73,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
     }
 
-    // Request permission
     private val requestLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -104,15 +104,20 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         super.onViewCreated(view, savedInstanceState)
         binding = ChatFragmentBinding.bind(view)
 
-        // Initialize the gallery launcher
         galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
                 val bitmap = uriToBitmap(uri)
                 bitmap?.let {
                     encodeBitmapToBase64(it) { encodedImage ->
-                        viewModel.sendPhoto(encodedImage, user) // Send the encoded image as a message
+                        viewModel.sendPhoto(encodedImage, user)
                     }
                 }
+            }
+        }
+
+        documentLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                handleDocumentSelection(it)
             }
         }
 
@@ -155,9 +160,9 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private fun encodeBitmapToBase64(bitmap: Bitmap, callback: (String) -> Unit) {
         lifecycleScope.launch {
             withContext(Dispatchers.Default) {
-                val resizedBitmap = resizeBitmap(bitmap, 800, 800) // Resize the image for optimization
+                val resizedBitmap = resizeBitmap(bitmap, 800, 800)
                 val byteArrayOutputStream = ByteArrayOutputStream()
-                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream) // Compress the image
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
                 val byteArray = byteArrayOutputStream.toByteArray()
                 val encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT)
                 withContext(Dispatchers.Main) {
@@ -193,6 +198,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             user = ChatFragmentArgs.fromBundle(it).user
         }
     }
+
 
     private fun observeChat() {
         binding.pb.visibility = View.VISIBLE
@@ -235,8 +241,8 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private fun setupPopMenu() {
         val adapter = AttachmentAdapter(
             requireContext(),
-            arrayOf("Photos", "Camera", "Location"),
-            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.location)
+            arrayOf("Photos", "Camera", "Location", "Document"),
+            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.location, R.drawable.document)
         )
         binding.gridView.adapter = adapter
 
@@ -245,9 +251,29 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 0 -> openGallery()
                 1 -> openCamera()
                 2 -> openLocationPicker()
+                3 -> openDocumentPicker()
             }
             togglePopMenuVisibility()
         }
+    }
+    private fun openDocumentPicker() {
+        documentLauncher.launch("application/*")
+    }
+
+    private fun handleDocumentSelection(uri: Uri) {
+        val contentResolver = requireContext().contentResolver
+        val inputStream = contentResolver.openInputStream(uri)
+        val fileBytes = inputStream?.readBytes()
+        fileBytes?.let {
+            viewModel.sendDocument(it, user)
+        }
+    }
+
+    fun openDocumentFromUrl(documentUrl: String) {
+        val uri = Uri.parse(documentUrl)
+        val intent = Intent(Intent.ACTION_VIEW)
+        intent.setDataAndType(uri, "application/pdf")
+        startActivity(intent)
     }
 
     private fun togglePopMenuVisibility() {
@@ -283,7 +309,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 if (location != null) {
                     sendCurrentLocation(location)
                 } else {
-                    // Request new location update if last location is null
                     fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
                 }
             }
