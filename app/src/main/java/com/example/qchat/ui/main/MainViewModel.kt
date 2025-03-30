@@ -18,11 +18,13 @@ import com.example.qchat.model.ChatMessage
 import com.example.qchat.repository.MainRepository
 import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
+import com.example.qchat.utils.ECDHUtils
 import com.example.qchat.utils.clearAll
 import com.google.firebase.firestore.FirebaseFirestore
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.tasks.await
 import org.w3c.dom.DocumentType
 import java.io.ByteArrayOutputStream
 import java.util.*
@@ -36,12 +38,30 @@ import com.google.firebase.firestore.Query
 class MainViewModel @Inject constructor(
     private val pref: SharedPreferences,
     private val repository: MainRepository,
+    private val fireStore: FirebaseFirestore
 ) : ViewModel() {
 
     init {
         viewModelScope.launch {
-            pref.getString(Constant.KEY_USER_ID, null)
-                ?.let { repository.updateToken(repository.getToken(), it) }
+            pref.getString(Constant.KEY_USER_ID, null)?.let { userId ->
+                // Only generate keys if they don't exist
+                if (repository.getECDHPublicKey(userId) == null) {
+                    val keyPair = ECDHUtils.generateKeyPair()
+                    val publicKey = ECDHUtils.publicKeyToString(keyPair.public)
+                    val privateKey = ECDHUtils.privateKeyToString(keyPair.private)
+
+                    // Save with user-specific document
+                    val updates = mapOf(
+                        "ecdhPublicKey" to publicKey,
+                        "ecdhPrivateKey" to privateKey
+                    )
+                    fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                        .document(userId)
+                        .update(updates)
+                        .await()
+                }
+                repository.updateToken(repository.getToken(), userId)
+            }
         }
     }
 
