@@ -14,6 +14,7 @@ import com.example.qchat.utils.AesUtils
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Resource
 import com.example.qchat.utils.CryptoUtils
+import com.example.qchat.utils.ECDHUtils
 import com.google.android.gms.location.LocationServices
 import com.google.android.gms.tasks.Task
 import com.google.firebase.ktx.Firebase
@@ -22,6 +23,7 @@ import okhttp3.ResponseBody
 import org.json.JSONObject
 import retrofit2.Response
 import java.util.*
+import javax.crypto.SecretKey
 import javax.inject.Inject
 import kotlin.collections.HashMap
 
@@ -129,7 +131,6 @@ class MainRepository @Inject constructor(
         onSuccessListener: (String) -> Unit
     ) {
         try {
-            // Step 1: Check for an existing conversation in both directions
             val querySnapshot = fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
                 .whereIn(Constant.KEY_SENDER_ID, listOf(senderId, receiverId))
                 .whereIn(Constant.KEY_RECEIVER_ID, listOf(senderId, receiverId))
@@ -137,7 +138,6 @@ class MainRepository @Inject constructor(
                 .await()
 
             if (!querySnapshot.isEmpty) {
-                // Step 2: Update the existing conversation (use the first match)
                 val documentId = querySnapshot.documents[0].id
                 fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
                     .document(documentId)
@@ -149,7 +149,6 @@ class MainRepository @Inject constructor(
                         Log.e("Firestore", "Error updating conversation: ${e.message}")
                     }
             } else {
-                // Step 3: Create a new conversation if none exists
                 fireStore.collection(Constant.KEY_COLLECTION_CONVERSATIONS)
                     .add(message)
                     .addOnSuccessListener {
@@ -197,22 +196,33 @@ class MainRepository @Inject constructor(
         }
     }
 
+    suspend fun generateAndSaveKeys(userId: String) {
+        val keyPair = ECDHUtils.generateKeyPair()
+        val publicKey = ECDHUtils.publicKeyToString(keyPair.public)
+        val privateKey = ECDHUtils.privateKeyToString(keyPair.private)
+
+        saveECDHKeys(userId, publicKey, privateKey)
+    }
+
     suspend fun saveECDHKeys(userId: String, publicKey: String, privateKey: String): Boolean {
         return try {
             val updates = hashMapOf<String, Any>(
                 "ecdhPublicKey" to publicKey,
                 "ecdhPrivateKey" to privateKey
             )
-            fireStore.collection(Constant.KEY_COLLECTION_USERS)
+            fireStore.collection("users")
                 .document(userId)
                 .update(updates)
                 .await()
+
+            Log.d("MainRepository", "ECDH keys saved for user: $userId")
             true
         } catch (e: Exception) {
-            Log.e("MainRepository", "Error saving ECDH keys", e)
+            Log.e("MainRepository", "Error saving ECDH keys for user: $userId", e)
             false
         }
     }
+
 
     suspend fun getECDHPublicKey(userId: String): String? {
         return try {
@@ -220,12 +230,20 @@ class MainRepository @Inject constructor(
                 .document(userId)
                 .get()
                 .await()
-            document.getString("ecdhPublicKey")
+
+            val publicKey = document.getString("ecdhPublicKey")
+            if (publicKey == null) {
+                Log.e("MainRepository", "No public key found for userId: $userId")
+            } else {
+                Log.d("MainRepository", "Retrieved public key for $userId: $publicKey")
+            }
+            publicKey
         } catch (e: Exception) {
-            Log.e("MainRepository", "Error getting public key", e)
+            Log.e("MainRepository", "Error getting public key for $userId", e)
             null
         }
     }
+
 
     suspend fun getUserECDHPrivateKey(userId: String): String? {
         return try {
@@ -233,11 +251,76 @@ class MainRepository @Inject constructor(
                 .document(userId)
                 .get()
                 .await()
-            document.getString("ecdhPrivateKey")
+            val privateKey = document.getString("ecdhPrivateKey")
+            Log.d("MainRepository", "Retrieved private key for $userId: $privateKey")
+            privateKey
         } catch (e: Exception) {
-            Log.e("MainRepository", "Error getting private key", e)
+            Log.e("MainRepository", "Error getting private key for $userId", e)
             null
         }
     }
 
+    suspend fun getReceiverECDHKeys(receiverId: String): Pair<String, String>? {
+        return try {
+            val receiverDoc = fireStore.collection("users").document(receiverId).get().await()
+            val publicKey = receiverDoc.getString("ecdhPublicKey")
+            val privateKey = receiverDoc.getString("ecdhPrivateKey")
+
+            if (publicKey != null && privateKey != null) {
+                Log.d("MainRepository", "Successfully retrieved receiver keys for $receiverId.")
+                Log.d("ECDH", "Receiver Public Key: $publicKey")
+                Log.d("ECDH", "Receiver Private Key: $privateKey")
+                Pair(publicKey, privateKey)
+            } else {
+                Log.e("MainRepository", "Receiver keys not found in Firestore for user: $receiverId")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error retrieving receiver keys for $receiverId", e)
+            null
+        }
+    }
+
+    suspend fun getSenderECDHKeys(senderId: String): Pair<String, String>? {
+        return try {
+            val senderDoc = fireStore.collection("users").document(senderId).get().await()
+            val publicKey = senderDoc.getString("ecdhPublicKey")
+            val privateKey = senderDoc.getString("ecdhPrivateKey")
+
+            if (publicKey != null && privateKey != null) {
+                Log.d("MainRepository", "Successfully retrieved sender keys for $senderId.")
+                Log.d("ECDH", "Sender Public Key: $publicKey")
+                Log.d("ECDH", "Sender Private Key: $privateKey")
+                Pair(publicKey, privateKey)
+            } else {
+                Log.e("MainRepository", "Sender keys not found in Firestore for user: $senderId")
+                null
+            }
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error retrieving sender keys for $senderId", e)
+            null
+        }
+    }
+
+    suspend fun getSharedSecret(senderId: String, receiverId: String): SecretKey? {
+        val (receiverPublicKeyString, receiverPrivateKeyString) = getReceiverECDHKeys(receiverId) ?: return null
+        val (senderPublicKeyString, senderPrivateKeyString) = getSenderECDHKeys(senderId) ?: return null
+
+        val receiverPrivateKey = ECDHUtils.privateKeyFromString(receiverPrivateKeyString)
+        val senderPublicKey = ECDHUtils.publicKeyFromString(senderPublicKeyString)
+
+        Log.d("ECDH", "Receiver's Private Key (String): $receiverPrivateKeyString")
+        Log.d("ECDH", "Sender's Public Key (String): $senderPublicKeyString")
+
+        return try {
+            val sharedSecret = ECDHUtils.generateSharedSecret(receiverPrivateKey, senderPublicKey)
+
+            Log.d("ECDH", "Generated Shared Secret: $sharedSecret")
+
+            sharedSecret
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error generating shared secret: ${e.message}")
+            null
+        }
+    }
 }

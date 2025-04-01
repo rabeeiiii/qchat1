@@ -58,19 +58,18 @@ object AesUtils {
 
             val iv = cipherTextWithIv.copyOfRange(0, 12)
             val cipherText = cipherTextWithIv.copyOfRange(12, cipherTextWithIv.size)
+
             val cipher = Cipher.getInstance(AES_MODE)
             val gcmSpec = GCMParameterSpec(TAG_LENGTH, iv)
             cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
+
             val decryptedData = cipher.doFinal(cipherText)
             val decryptedMessage = String(decryptedData)
-            Log.d("AES", "Decryption successful: $decryptedMessage")
+
+            if (decryptedMessage.isEmpty()) {
+                Log.e("AES", "Decryption failed: Message is empty. EncryptedText: $encryptedText")
+            }
             return decryptedMessage
-        } catch (e: BadPaddingException) {
-            Log.e("AES", "Decryption failed: Invalid padding. EncryptedText: $encryptedText", e)
-        } catch (e: IllegalBlockSizeException) {
-            Log.e("AES", "Decryption failed: Invalid block size. EncryptedText: $encryptedText", e)
-        } catch (e: IllegalArgumentException) {
-            Log.e("AES", "Decryption failed: Malformed Base64 input. EncryptedText: $encryptedText", e)
         } catch (e: Exception) {
             Log.e("AES", "Decryption failed: ${e.message}. EncryptedText: $encryptedText", e)
         }

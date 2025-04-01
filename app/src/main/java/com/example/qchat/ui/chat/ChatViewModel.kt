@@ -36,6 +36,8 @@ import android.graphics.pdf.PdfRenderer
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.example.qchat.utils.ECDHUtils
+import com.example.qchat.utils.ECDHUtils.getReceiverECDHKeys
+import com.example.qchat.utils.ECDHUtils.getSenderECDHKeys
 import com.google.firebase.storage.FirebaseStorage
 
 @HiltViewModel
@@ -140,13 +142,11 @@ class ChatViewModel @Inject constructor(
     }
 
 
-    private fun encryptMessage(message: String, secretKey: SecretKey): Pair<String, String> {
-        val encryptedMessage = AesUtils.encryptMessage(message, secretKey)
-        val keyBase64 = AesUtils.keyToBase64(secretKey)
-        return Pair(encryptedMessage, keyBase64)
+    fun encryptMessage(message: String, secretKey: SecretKey): String {
+        return AesUtils.encryptMessage(message, secretKey)
     }
 
-    private fun decryptMessage(encryptedMessage: String, aesKeyBase64: String): String {
+    fun decryptMessage(encryptedMessage: String, aesKeyBase64: String): String {
         val secretKey = AesUtils.base64ToKey(aesKeyBase64)
         return AesUtils.decryptMessage(encryptedMessage, secretKey)
     }
@@ -156,7 +156,7 @@ class ChatViewModel @Inject constructor(
             val senderId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
 
 
-            val aesKey = getSharedSecret(receiverUser.id) ?: run {
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
                 Log.e("ChatViewModel", "Failed to get shared secret")
                 AesUtils.generateAESKey()
             }
@@ -240,8 +240,13 @@ class ChatViewModel @Inject constructor(
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty()) return@launch
 
-            val aesKey = AesUtils.generateAESKey()
-            val (encryptedImage, aesKeyBase64) = encryptMessage(encodedImage, aesKey)
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
+                Log.e("ChatViewModel", "Failed to get shared secret")
+                AesUtils.generateAESKey()
+            }
+
+            val encryptedImage = AesUtils.encryptMessage(encodedImage, aesKey)
+            val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
 
             val messageMap = hashMapOf(
                 Constant.KEY_SENDER_ID to senderId,
@@ -255,11 +260,10 @@ class ChatViewModel @Inject constructor(
             repository.sendMessage(messageMap)
                 .addOnSuccessListener {
                     Log.d("ChatViewModel", "Photo sent successfully")
-
                     updateRecentConversation(
                         senderId = senderId,
                         receiverUser = receiverUser,
-                        lastMessage = "[Photo Sent]",
+                        lastMessage = "[Photo]",
                         messageType = Constant.MESSAGE_TYPE_PHOTO,
                         aesKeyBase64 = aesKeyBase64
                     )
@@ -274,10 +278,14 @@ class ChatViewModel @Inject constructor(
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty()) return@launch
 
-            // We'll just encrypt location with AES (no signature)
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
+                Log.e("ChatViewModel", "Failed to get shared secret")
+                AesUtils.generateAESKey()
+            }
+
             val locationString = "$latitude,$longitude"
-            val aesKey = AesUtils.generateAESKey()
-            val (encryptedLocation, aesKeyBase64) = encryptMessage(locationString, aesKey)
+            val encryptedLocation = AesUtils.encryptMessage(locationString, aesKey)
+            val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
 
             val messageMap = hashMapOf(
                 Constant.KEY_SENDER_ID to senderId,
@@ -291,7 +299,6 @@ class ChatViewModel @Inject constructor(
             repository.sendMessage(messageMap)
                 .addOnSuccessListener {
                     Log.d("ChatViewModel", "Location sent successfully")
-
                     updateRecentConversation(
                         senderId = senderId,
                         receiverUser = receiverUser,
@@ -305,6 +312,9 @@ class ChatViewModel @Inject constructor(
                 }
         }
     }
+
+
+
 
     fun uploadDocumentToFirebase(fileBytes: ByteArray, fileName: String, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference
@@ -557,103 +567,84 @@ class ChatViewModel @Inject constructor(
         val currentUserId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
 
         repository.observeChat(currentUserId, receiverId) { querySnapshot, error ->
-            viewModelScope.launch {
-                if (error != null) {
-                    Log.e("ChatViewModel", "Error observing chat: ${error.message}")
-                    chatObserver(emptyList())
-                    return@launch
-                }
-
-                val messages = querySnapshot?.documents?.mapNotNull { document ->
-                    try {
-                        val messageId = document.id
-                        if (processedMessageIds.contains(messageId)) return@mapNotNull null
-                        processedMessageIds.add(messageId)
-
-                        val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
-                        val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
-                        val encryptedAesKey = document.getString(Constant.KEY_ENCRYPTED_AES_KEY) ?: ""
-                        val messageType = document.getString(Constant.KEY_MESSAGE_TYPE) ?: Constant.MESSAGE_TYPE_TEXT
-
-                        val decryptedMessage = try {
-                            val aesKey = getSharedSecret(senderId) ?: run {
-                                if (encryptedAesKey.isEmpty()) throw Exception("No AES key available")
-                                AesUtils.base64ToKey(encryptedAesKey)
-                            }
-                            AesUtils.decryptMessage(encryptedMessage, aesKey) ?: throw Exception("Decryption failed")
-                        } catch (e: Exception) {
-                            Log.e("ChatViewModel", "Decryption error: ${e.message}")
-                            return@mapNotNull null
-                        }
-
-                        when (messageType) {
-                            Constant.MESSAGE_TYPE_PHOTO, Constant.MESSAGE_TYPE_LOCATION -> {
-                                ChatMessage(
-                                    senderId = senderId,
-                                    receiverId = receiverId,
-                                    message = decryptedMessage,
-                                    dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
-                                    date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
-                                    messageType = messageType
-                                )
-                            }
-                            else -> {
-                                val parts = decryptedMessage.split("||")
-                                if (parts.size != 2) return@mapNotNull null
-
-                                val originalMessage = parts[0]
-                                val signatureBase64 = parts[1]
-                                val publicKeyBase64 = document.getString(Constant.KEY_PUBLIC_KEY) ?: return@mapNotNull null
-
-                                val publicKey = try {
-                                    Base64.decode(publicKeyBase64, Base64.NO_WRAP)
-                                } catch (e: Exception) {
-                                    return@mapNotNull null
-                                }
-
-                                if (!verifyMessage(publicKey, originalMessage, signatureBase64)) {
-                                    return@mapNotNull null
-                                }
-
-                                ChatMessage(
-                                    senderId = senderId,
-                                    receiverId = receiverId,
-                                    message = originalMessage,
-                                    dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
-                                    date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
-                                    messageType = messageType
-                                )
-                            }
-                        }
-                    } catch (e: Exception) {
-                        Log.e("ChatViewModel", "Error processing message: ${e.message}")
-                        null
-                    }
-                } ?: emptyList()
-
-                chatObserver(messages)
+            if (error != null) {
+                Log.e("ChatViewModel", "Error observing chat: ${error.message}")
+                chatObserver(emptyList())
+                return@observeChat
             }
+
+            if (querySnapshot == null || querySnapshot.isEmpty) return@observeChat
+
+            val newMessages = querySnapshot.documents.mapNotNull { document ->
+                val messageId = document.id
+                if (processedMessageIds.contains(messageId)) return@mapNotNull null
+                processedMessageIds.add(messageId)
+
+                val senderId = document.getString(Constant.KEY_SENDER_ID) ?: return@mapNotNull null
+                val encryptedMessage = document.getString(Constant.KEY_ENCRYPTED_MESSAGE) ?: return@mapNotNull null
+                val encryptedAesKey = document.getString(Constant.KEY_ENCRYPTED_AES_KEY) ?: return@mapNotNull null
+                val messageType = document.getString(Constant.KEY_MESSAGE_TYPE) ?: Constant.MESSAGE_TYPE_TEXT
+                val timestamp = document.getDate(Constant.KEY_TIMESTAMP) ?: Date()
+
+                val aesKey = AesUtils.base64ToKey(encryptedAesKey)
+
+                when (messageType) {
+                    Constant.MESSAGE_TYPE_TEXT -> {
+                        val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                        val parts = decryptedMessage.split("||")
+                        if (parts.size != 2) return@mapNotNull null
+
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = parts[0],
+                            messageType = messageType,
+                            dateTime = timestamp.getReadableDate(),
+                            date = timestamp
+                        )
+                    }
+                    Constant.MESSAGE_TYPE_PHOTO -> {
+                        val decryptedImage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = decryptedImage,
+                            messageType = messageType,
+                            dateTime = timestamp.getReadableDate(),
+                            date = timestamp
+                        )
+                    }
+                    Constant.MESSAGE_TYPE_LOCATION -> {
+                        val decryptedLocation = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = decryptedLocation,
+                            messageType = messageType,
+                            dateTime = timestamp.getReadableDate(),
+                            date = timestamp
+                        )
+                    }
+                    else -> null
+                }
+            }
+
+            chatObserver(newMessages)
         }
     }
-    private suspend fun getSharedSecret(senderId: String): SecretKey? {
-        val receiverId = pref.getString(Constant.KEY_USER_ID, null) ?: return null
 
-        val ourPrivateKeyString = repository.getUserECDHPrivateKey(receiverId) ?: run {
-            Log.e("ChatViewModel", "Our private key not found")
-            return null
-        }
+    suspend fun generateSharedSecret(senderId: String, receiverId: String): SecretKey? {
+        val (receiverPublicKeyString, receiverPrivateKeyString) = getReceiverECDHKeys(receiverId) ?: return null
+        val (senderPublicKeyString, senderPrivateKeyString) = getSenderECDHKeys(senderId) ?: return null
 
-        val senderPublicKeyString = repository.getECDHPublicKey(senderId) ?: run {
-            Log.e("ChatViewModel", "Sender's public key not found")
-            return null
-        }
+        val receiverPrivateKey = ECDHUtils.privateKeyFromString(receiverPrivateKeyString)
+        val senderPublicKey = ECDHUtils.publicKeyFromString(senderPublicKeyString)
 
         return try {
-            val ourPrivateKey = ECDHUtils.privateKeyFromString(ourPrivateKeyString)
-            val senderPublicKey = ECDHUtils.publicKeyFromString(senderPublicKeyString)
-            ECDHUtils.generateSharedSecret(ourPrivateKey, senderPublicKey)
+            val sharedSecret = ECDHUtils.generateSharedSecret(receiverPrivateKey, senderPublicKey)
+            sharedSecret
         } catch (e: Exception) {
-            Log.e("ChatViewModel", "Error generating shared secret: ${e.message}")
+            Log.e("MainRepository", "Error generating shared secret: ${e.message}")
             null
         }
     }
