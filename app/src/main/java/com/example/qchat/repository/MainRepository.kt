@@ -197,4 +197,47 @@ class MainRepository @Inject constructor(
         }
     }
 
+    suspend fun saveECDHKeys(userId: String, publicKey: String, privateKey: String): Boolean {
+        return try {
+            val updates = hashMapOf<String, Any>(
+                "ecdhPublicKey" to publicKey,
+                "ecdhPrivateKey" to privateKey
+            )
+            fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .update(updates)
+                .await()
+            true
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error saving ECDH keys", e)
+            false
+        }
+    }
+
+    suspend fun getECDHPublicKey(userId: String): String? {
+        return try {
+            val document = fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .get()
+                .await()
+            document.getString("ecdhPublicKey")
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error getting public key", e)
+            null
+        }
+    }
+
+    suspend fun getUserECDHPrivateKey(userId: String): String? {
+        return try {
+            val document = fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .get()
+                .await()
+            document.getString("ecdhPrivateKey")
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error getting private key", e)
+            null
+        }
+    }
+
 }
