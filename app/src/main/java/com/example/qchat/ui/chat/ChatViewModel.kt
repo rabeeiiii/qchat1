@@ -339,16 +339,23 @@ class ChatViewModel @Inject constructor(
             if (senderId.isEmpty() || fileBytes == null) return@launch
 
             val fileName = "document_${System.currentTimeMillis()}.pdf"
+            
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
+                Log.e("ChatViewModel", "Failed to get shared secret, generating new key")
+                AesUtils.generateAESKey()
+            }
 
             uploadDocumentToFirebase(fileBytes, fileName, { documentUrl ->
-                val aesKey = AesUtils.generateAESKey()
-                val encryptedDocument = AesUtils.encryptBytes(fileBytes, aesKey)
+                val documentMessage = "DOCUMENT||$documentUrl||$fileName"
+
+
+                val encryptedMessage = AesUtils.encryptMessage(documentMessage, aesKey)
                 val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
 
                 val messageMap = hashMapOf(
                     Constant.KEY_SENDER_ID to senderId,
                     Constant.KEY_RECEIVER_ID to receiverUser.id,
-                    Constant.KEY_ENCRYPTED_MESSAGE to Base64.encodeToString(encryptedDocument, Base64.NO_WRAP),
+                    Constant.KEY_ENCRYPTED_MESSAGE to encryptedMessage,
                     Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
                     Constant.KEY_MESSAGE_TYPE to Constant.MESSAGE_TYPE_DOCUMENT,
                     Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp(),
@@ -362,7 +369,7 @@ class ChatViewModel @Inject constructor(
                         updateRecentConversation(
                             senderId = senderId,
                             receiverUser = receiverUser,
-                            lastMessage = "[Document Sent] $fileName",
+                            lastMessage = "[Document] $fileName",
                             messageType = Constant.MESSAGE_TYPE_DOCUMENT,
                             aesKeyBase64 = aesKeyBase64
                         )
@@ -623,6 +630,19 @@ class ChatViewModel @Inject constructor(
                             messageType = messageType,
                             dateTime = timestamp.getReadableDate(),
                             date = timestamp
+                        )
+                    }
+                    Constant.MESSAGE_TYPE_DOCUMENT -> {
+                        val documentUrl = document.getString("documentUrl") ?: return@mapNotNull null
+                        val documentName = document.getString("documentName") ?: "Document"
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = documentUrl,
+                            documentName = documentName,
+                            dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
+                            date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
+                            messageType = Constant.MESSAGE_TYPE_DOCUMENT
                         )
                     }
                     else -> null
