@@ -13,6 +13,7 @@ import android.widget.TextView
 import androidx.fragment.app.Fragment
 import com.bumptech.glide.Glide
 import com.example.qchat.R
+import com.google.android.material.bottomnavigation.BottomNavigationView
 
 class StoryViewFragment : Fragment(R.layout.fragment_story_view) {
     private lateinit var progressBar: ProgressBar
@@ -94,8 +95,13 @@ class StoryViewFragment : Fragment(R.layout.fragment_story_view) {
         }.start()
     }
 
+    private fun restoreBottomNavigation() {
+        activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.visibility = View.VISIBLE
+    }
+
     override fun onDestroyView() {
         super.onDestroyView()
+        restoreBottomNavigation()
         countDownTimer?.cancel()
     }
 }

@@ -31,6 +31,7 @@ import com.example.qchat.ui.registration.RegistrationActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.decodeToBitmap
 import com.example.qchat.utils.toast
+import com.google.android.material.bottomnavigation.BottomNavigationView
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -141,6 +142,7 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
 
     private fun navigateToStoryView(story: Story) {
+        activity?.findViewById<BottomNavigationView>(R.id.bottomNavigation)?.visibility = View.GONE
         val bundle = Bundle().apply {
             putString("photoUrl", story.photo)
             putString("profilePicture", story.userProfilePicture)
