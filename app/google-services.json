@@ -1,6 +1,7 @@
 {
   "project_info": {
     "project_number": "439078212139",
+    "firebase_url": "https://qchat-bd937-default-rtdb.firebaseio.com",
     "project_id": "qchat-bd937",
     "storage_bucket": "qchat-bd937.firebasestorage.app"
   },

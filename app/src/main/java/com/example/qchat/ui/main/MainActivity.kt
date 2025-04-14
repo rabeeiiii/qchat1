@@ -18,7 +18,7 @@ import com.example.qchat.databinding.ActivityMainBinding
 import com.example.qchat.model.User
 import fragments.CallsFragment
 import fragments.ChatFragment
-import fragments.GroupsFragment
+import com.example.qchat.ui.groups.GroupsFragment
 import com.example.qchat.ui.settings.SettingsFragment
 
 @AndroidEntryPoint

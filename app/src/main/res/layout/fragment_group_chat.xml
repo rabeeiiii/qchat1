@@ -1,0 +1,177 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:animateLayoutChanges="true"
+    android:background="@color/chat_botombar">
+
+    <View
+        android:id="@+id/view2"
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:layout_marginBottom="7dp"
+        android:background="#AEAEAE"
+        app:layout_constraintBottom_toTopOf="@+id/editTextMessage" />
+
+    <View
+        android:id="@+id/headerBg"
+        android:layout_width="match_parent"
+        android:layout_height="75dp"
+        android:background="@color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="1dp"
+        android:background="@color/gray"
+        android:elevation="4dp"
+        app:layout_constraintTop_toBottomOf="@id/headerBg"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent" />
+
+    <ImageView
+        android:id="@+id/imageViewBack"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginTop="20dp"
+        android:contentDescription="Back"
+        android:src="@drawable/ic_back"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent" />
+
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/imageViewGroup"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
+        android:layout_marginStart="52dp"
+        android:layout_marginTop="16dp"
+        android:contentDescription="Group image"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:riv_oval="true" />
+
+    <TextView
+        android:id="@+id/textViewGroupName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="28dp"
+        android:layout_marginStart="28dp"
+        android:gravity="center"
+        android:textColor="@color/black"
+        android:textSize="16sp"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintHorizontal_bias="0.302"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:text="Group Name" />
+
+    <TextView
+        android:id="@+id/textViewMemberCount"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="12sp"
+        app:layout_constraintStart_toStartOf="@id/textViewGroupName"
+        app:layout_constraintTop_toBottomOf="@id/textViewGroupName"
+        tools:text="5 members" />
+
+    <ImageView
+        android:id="@+id/imageViewMore"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="More options"
+        android:src="@drawable/ic_more"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/textViewGroupName" />
+
+    <View
+        android:id="@+id/view"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:layout_marginBottom="7dp"
+        android:background="@drawable/background_content_top"
+        app:layout_constraintBottom_toTopOf="@+id/editTextMessage"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerBg" />
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/recyclerViewMessages"
+        android:layout_width="0dp"
+        android:layout_height="0dp"
+        android:clipToPadding="false"
+        android:orientation="vertical"
+        android:overScrollMode="never"
+        android:padding="15dp"
+        app:layoutManager="androidx.recyclerview.widget.LinearLayoutManager"
+        app:layout_constraintBottom_toBottomOf="@+id/view"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toBottomOf="@+id/headerBg"
+        app:stackFromEnd="true" />
+
+    <ProgressBar
+        android:id="@+id/progressBar"
+        android:layout_width="25dp"
+        android:layout_height="25dp"
+        app:layout_constraintBottom_toBottomOf="@+id/view"
+        app:layout_constraintEnd_toEndOf="@+id/view"
+        app:layout_constraintStart_toStartOf="@+id/view"
+        app:layout_constraintTop_toTopOf="@+id/view" />
+
+    <EditText
+        android:id="@+id/editTextMessage"
+        android:layout_width="0dp"
+        android:layout_height="48dp"
+        android:layout_weight="1"
+        android:background="@drawable/input_background"
+        android:gravity="center_vertical"
+        android:hint="QChat..."
+        android:inputType="text"
+        android:paddingLeft="10dp"
+        android:paddingRight="10dp"
+        android:textColor="@android:color/black"
+        android:textSize="14sp"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toStartOf="@+id/imageViewSend"
+        app:layout_constraintStart_toEndOf="@+id/imageViewAttachment"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintVertical_bias="0.976" />
+
+    <ImageView
+        android:id="@+id/imageViewAttachment"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_gravity="center_vertical"
+        android:layout_marginEnd="5dp"
+        android:contentDescription="Add attachment"
+        android:padding="4dp"
+        android:src="@drawable/ic_attachment"
+        app:layout_constraintBottom_toBottomOf="@+id/editTextMessage"
+        app:layout_constraintEnd_toStartOf="@+id/editTextMessage"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/editTextMessage"
+        app:layout_constraintVertical_bias="0.5" />
+
+    <ImageView
+        android:id="@+id/imageViewSend"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
+        android:layout_marginEnd="16dp"
+        android:contentDescription="Send message"
+        android:padding="4dp"
+        android:src="@drawable/send"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="@+id/editTextMessage"
+        app:layout_constraintVertical_bias="0.214" />
+
+</androidx.constraintlayout.widget.ConstraintLayout> 

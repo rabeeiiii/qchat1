@@ -26,12 +26,17 @@ import java.util.*
 import javax.crypto.SecretKey
 import javax.inject.Inject
 import kotlin.collections.HashMap
+import com.example.qchat.model.User
+import com.example.qchat.network.ApiService
+import com.example.qchat.utils.PreferenceManager
 
 class MainRepository @Inject constructor(
     private val fireStore: FirebaseFirestore,
     private val fireMessage: FirebaseMessaging,
     private val fcmApi:Api,
-    private val remoteHeader:HashMap<String,String>
+    private val remoteHeader:HashMap<String,String>,
+    private val apiService: ApiService,
+    private val preferenceManager: PreferenceManager
 ) {
 
     suspend fun updateToken(token: String, userId: String): Boolean {
@@ -322,5 +327,61 @@ class MainRepository @Inject constructor(
             Log.e("MainRepository", "Error generating shared secret: ${e.message}")
             null
         }
+    }
+
+    suspend fun getUsers(): Result<List<User>> = try {
+        val snapshot = fireStore.collection(Constant.KEY_COLLECTION_USERS).get().await()
+        val users = snapshot.documents.mapNotNull { doc ->
+            try {
+                // Manually create User object instead of using toObject
+                val user = User(
+                    name = doc.getString(Constant.KEY_NAME) ?: "",
+                    image = doc.getString(Constant.KEY_IMAGE),
+                    email = doc.getString(Constant.KEY_EMAIL),
+                    token = doc.getString(Constant.KEY_FCM_TOKEN),
+                    id = doc.id
+                )
+                android.util.Log.d("MainRepository", "Loaded user: ${user.name}, id: ${user.id}")
+                user
+            } catch (e: Exception) {
+                android.util.Log.e("MainRepository", "Error parsing user document: ${doc.id}", e)
+                null
+            }
+        }
+        android.util.Log.d("MainRepository", "Total users loaded: ${users.size}")
+        Result.success(users)
+    } catch (e: Exception) {
+        android.util.Log.e("MainRepository", "Error loading users", e)
+        Result.failure(e)
+    }
+
+    suspend fun getUsersByIds(userIds: List<String>): Result<List<User>> = try {
+        val users = mutableListOf<User>()
+        for (userId in userIds) {
+            try {
+                val doc = fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                    .document(userId)
+                    .get()
+                    .await()
+                
+                // Manually create User object
+                val user = User(
+                    name = doc.getString(Constant.KEY_NAME) ?: "",
+                    image = doc.getString(Constant.KEY_IMAGE),
+                    email = doc.getString(Constant.KEY_EMAIL),
+                    token = doc.getString(Constant.KEY_FCM_TOKEN),
+                    id = doc.id
+                )
+                users.add(user)
+                android.util.Log.d("MainRepository", "Loaded user by ID: ${user.name}, id: ${user.id}")
+            } catch (e: Exception) {
+                android.util.Log.e("MainRepository", "Error loading user with ID: $userId", e)
+            }
+        }
+        android.util.Log.d("MainRepository", "Total users loaded by IDs: ${users.size}")
+        Result.success(users)
+    } catch (e: Exception) {
+        android.util.Log.e("MainRepository", "Error in getUsersByIds", e)
+        Result.failure(e)
     }
 }

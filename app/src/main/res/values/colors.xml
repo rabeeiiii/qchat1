@@ -58,5 +58,6 @@
     <color name="white_obacity50">#80ffffff</color>
     <color name="white_obacity25">#bfffffff</color>
 
+    <color name="colorPrimary">#2196F3</color>
 
 </resources>

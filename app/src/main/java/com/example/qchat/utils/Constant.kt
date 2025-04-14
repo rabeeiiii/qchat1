@@ -59,4 +59,36 @@ object Constant {
 
     private const val MESSAGE_TYPE_SENT = 1
     private const val MESSAGE_TYPE_RECEIVED = 2
+
+    // Group Chat Constants
+    const val KEY_COLLECTION_GROUPS = "groups"
+    const val KEY_COLLECTION_GROUP_MESSAGES = "group_messages"
+    const val KEY_GROUP_ID = "groupId"
+    const val KEY_GROUP_NAME = "groupName"
+    const val KEY_GROUP_DESCRIPTION = "groupDescription"
+    const val KEY_GROUP_IMAGE = "groupImage"
+    const val KEY_GROUP_CREATED_BY = "createdBy"
+    const val KEY_GROUP_CREATED_AT = "createdAt"
+    const val KEY_GROUP_MEMBERS = "members"
+    const val KEY_GROUP_ADMINS = "admins"
+    const val KEY_GROUP_LAST_MESSAGE = "lastMessage"
+    const val KEY_GROUP_LAST_MESSAGE_TIME = "lastMessageTime"
+    const val KEY_GROUP_LAST_MESSAGE_SENDER = "lastMessageSender"
+    
+    // Group Message Constants
+    const val KEY_MESSAGE_SENDER_NAME = "senderName"
+    const val KEY_MESSAGE_ATTACHMENTS = "attachments"
+    const val KEY_MESSAGE_MENTIONS = "mentions"
+    const val KEY_MESSAGE_REPLY_TO = "replyTo"
+    const val KEY_MESSAGE_EDITED = "edited"
+    const val KEY_MESSAGE_EDITED_AT = "editedAt"
+    
+    // Group Actions
+    const val ACTION_GROUP_CREATED = "ACTION_GROUP_CREATED"
+    const val ACTION_GROUP_UPDATED = "ACTION_GROUP_UPDATED"
+    const val ACTION_GROUP_DELETED = "ACTION_GROUP_DELETED"
+    const val ACTION_MEMBER_ADDED = "ACTION_MEMBER_ADDED"
+    const val ACTION_MEMBER_REMOVED = "ACTION_MEMBER_REMOVED"
+    const val ACTION_ADMIN_ADDED = "ACTION_ADMIN_ADDED"
+    const val ACTION_ADMIN_REMOVED = "ACTION_ADMIN_REMOVED"
 }

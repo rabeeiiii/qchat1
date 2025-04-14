@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:id="@+id/nav_graph"
+    app:startDestination="@id/mainFragment">
+
+    <fragment
+        android:id="@+id/mainFragment"
+        android:name="com.example.qchat.ui.main.MainFragment"
+        android:label="MainFragment">
+        <action
+            android:id="@+id/action_mainFragment_to_chatFragment"
+            app:destination="@id/chatFragment" />
+        <action
+            android:id="@+id/action_mainFragment_to_groupsFragment"
+            app:destination="@id/groupsFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/chatFragment"
+        android:name="com.example.qchat.ui.chat.ChatFragment"
+        android:label="ChatFragment">
+        <argument
+            android:name="user"
+            app:argType="com.example.qchat.model.User" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/groupsFragment"
+        android:name="com.example.qchat.ui.groups.GroupsFragment"
+        android:label="GroupsFragment">
+        <action
+            android:id="@+id/action_groupsFragment_to_groupChatFragment"
+            app:destination="@id/groupChatFragment" />
+    </fragment>
+
+    <fragment
+        android:id="@+id/groupChatFragment"
+        android:name="com.example.qchat.ui.groups.GroupChatFragment"
+        android:label="GroupChatFragment">
+        <argument
+            android:name="group"
+            app:argType="com.example.qchat.model.Group" />
+    </fragment>
+
+</navigation> 

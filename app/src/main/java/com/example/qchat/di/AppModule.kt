@@ -7,6 +7,7 @@ import com.google.firebase.messaging.FirebaseMessaging
 import com.example.qchat.R
 import com.example.qchat.network.Api
 import com.example.qchat.utils.Constant
+import com.example.qchat.utils.PreferenceManager
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -35,6 +36,12 @@ object AppModule {
     @Singleton
     fun provideSharedPreferencesManager(@ApplicationContext context: Context): SharedPreferences {
         return context.getSharedPreferences(Constant.KEY_PREFERENCE_NAME, Context.MODE_PRIVATE)
+    }
+
+    @Provides
+    @Singleton
+    fun providePreferenceManager(@ApplicationContext context: Context): PreferenceManager {
+        return PreferenceManager(context)
     }
 
     @Provides
