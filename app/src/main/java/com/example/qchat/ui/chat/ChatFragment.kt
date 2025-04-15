@@ -169,15 +169,12 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             binding.pb.visibility = View.VISIBLE
 
             try {
-                // Generate thumbnail
                 val thumbnail = generateVideoThumbnail(uri)
-                
-                // Get video bytes
+
                 val videoBytes = withContext(Dispatchers.IO) {
                     context?.contentResolver?.openInputStream(uri)?.readBytes()
                 } ?: return@launch
 
-                // Compress thumbnail
                 val thumbnailBytes = ByteArrayOutputStream().apply {
                     thumbnail.compress(Bitmap.CompressFormat.JPEG, 80, this)
                 }.toByteArray()

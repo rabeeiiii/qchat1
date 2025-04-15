@@ -197,15 +197,12 @@ class ChatAdapter(
     class SendVideoViewHolder(val binding: ItemSendVideoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun setData(message: ChatMessage) {
             binding.apply {
-                // Load thumbnail
                 Glide.with(itemView.context)
                     .load(message.thumbnailUrl)
                     .into(binding.ivThumbnail)
 
-                // Set duration
-                binding.tvDuration.text = message.message.split("||")[3]
+                binding.tvDuration.text = message.videoDuration
 
-                // Set click listener to play video
                 binding.root.setOnClickListener {
                     openVideo(message.message.split("||")[1])
                 }
@@ -224,22 +221,18 @@ class ChatAdapter(
     class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) : RecyclerView.ViewHolder(binding.root) {
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             binding.apply {
-                // Load profile image
                 profileImage?.let {
                     ivProfile.setImageBitmap(it)
                 }
 
-                // Load thumbnail
                 Glide.with(itemView.context)
                     .load(message.thumbnailUrl)
                     .into(binding.ivThumbnail)
 
-                // Set duration
-                binding.tvDuration.text = message.message.split("||")[3]
+                binding.tvDuration.text = message.videoDuration
 
-                // Set click listener to play video
                 binding.root.setOnClickListener {
-                    openVideo(message.message.split("||")[1])
+                    openVideo(message.message)
                 }
             }
         }
@@ -411,6 +404,8 @@ class ChatAdapter(
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
 
+        Log.d("ChatAdapter", "Determining view type for message - senderId: ${message.senderId}, adapter senderId: $senderId, messageType: ${message.messageType}")
+
         return when {
             message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
                 if (message.senderId == senderId) {
@@ -426,7 +421,13 @@ class ChatAdapter(
                 if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
             }
             message.messageType == Constant.MESSAGE_TYPE_VIDEO -> {
-                if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
+                if (message.senderId == senderId) {
+                    Log.d("ChatAdapter", "Video message is SENT")
+                    VIEW_TYPE_SEND_VIDEO
+                } else {
+                    Log.d("ChatAdapter", "Video message is RECEIVED")
+                    VIEW_TYPE_RECEIVED_VIDEO
+                }
             }
             message.senderId == senderId -> VIEW_TYPE_SEND
             else -> VIEW_TYPE_RECEIVED

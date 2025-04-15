@@ -8,6 +8,7 @@ data class ChatMessage(
     val senderId:String,
     val receiverId:String,
     val thumbnailUrl: String? = null,
+    val videoDuration: String? = null,
     val documentName: String? = null,
     var message:String,
     val dateTime:String,

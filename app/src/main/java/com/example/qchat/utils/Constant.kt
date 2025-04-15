@@ -51,6 +51,7 @@ object Constant {
     const val VIEW_TYPE_RECEIVED_VIDEO = 10
     const val KEY_VIDEO_URL = "videoUrl"
     const val KEY_THUMBNAIL_URL = "thumbnailUrl"
+    const val KEY_VIDEO_DURATION = "videoDuration"
 
     const val VIEW_TYPE_SEND_DOCUMENT = 7
     const val VIEW_TYPE_RECEIVED_DOCUMENT = 8
