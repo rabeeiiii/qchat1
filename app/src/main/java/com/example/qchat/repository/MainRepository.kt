@@ -384,4 +384,32 @@ class MainRepository @Inject constructor(
         android.util.Log.e("MainRepository", "Error in getUsersByIds", e)
         Result.failure(e)
     }
+
+    suspend fun getUserById(userId: String): Result<User> {
+        return try {
+            val doc = fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .get()
+                .await()
+            
+            if (!doc.exists()) {
+                Result.failure(Exception("User not found"))
+            } else {
+                // Create User object
+                val user = User(
+                    name = doc.getString(Constant.KEY_NAME) ?: "",
+                    image = doc.getString(Constant.KEY_IMAGE),
+                    email = doc.getString(Constant.KEY_EMAIL),
+                    token = doc.getString(Constant.KEY_FCM_TOKEN),
+                    id = doc.id
+                )
+                
+                android.util.Log.d("MainRepository", "Loaded user: ${user.name}, id: ${user.id}")
+                Result.success(user)
+            }
+        } catch (e: Exception) {
+            android.util.Log.e("MainRepository", "Error loading user with ID: $userId", e)
+            Result.failure(e)
+        }
+    }
 }

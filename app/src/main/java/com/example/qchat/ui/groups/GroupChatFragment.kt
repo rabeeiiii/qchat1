@@ -14,6 +14,7 @@ import com.example.qchat.adapter.GroupMessagesAdapter
 import com.example.qchat.adapter.UsersAdapter
 import com.example.qchat.databinding.FragmentGroupChatBinding
 import com.example.qchat.model.Group
+import com.example.qchat.model.GroupMessage
 import com.example.qchat.model.User
 import com.example.qchat.utils.Constant
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
@@ -21,6 +22,7 @@ import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
+import android.util.Log
 
 @AndroidEntryPoint
 class GroupChatFragment : Fragment() {
@@ -29,11 +31,16 @@ class GroupChatFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: GroupViewModel by viewModels()
-    private lateinit var messagesAdapter: GroupMessagesAdapter
     private lateinit var group: Group
+    
+    // Set to keep track of message IDs we've already processed
+    private val processedMessageIds = mutableSetOf<String>()
 
     @Inject
     lateinit var usersAdapter: UsersAdapter
+    
+    @Inject
+    lateinit var messagesAdapter: GroupMessagesAdapter
 
     override fun onCreateView(
         inflater: LayoutInflater,
@@ -47,32 +54,50 @@ class GroupChatFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         group = arguments?.getSerializable("group") as Group
+        
+        // Log current user ID
+        val currentUserId = requireContext().getSharedPreferences(Constant.KEY_PREFERENCE_NAME, 0)
+            .getString(Constant.KEY_USER_ID, null)
+        Log.d("GroupChatFragment", "Current user ID: $currentUserId")
+        Log.d("GroupChatFragment", "Group ID: ${group.id}")
+        Log.d("GroupChatFragment", "Group members: ${group.members.joinToString()}")
+        
         setupRecyclerView()
         setupClickListeners()
         observeViewModel()
-        loadGroupMessages()
+        updateGroupInfo()
         hideUnnecessaryComponents()
+        loadGroupMessages()
+    }
+
+    override fun onResume() {
+        super.onResume()
+        
+        // Force reload messages when resuming
+        messagesAdapter.clearMessages()
+        loadGroupMessages()
+        
+        Log.d("GroupChatFragment", "Fragment resumed, reloading messages")
     }
 
     private fun hideUnnecessaryComponents() {
-        // Hide the create group FAB and other unnecessary components
+        
         activity?.findViewById<View>(R.id.fabCreateGroup)?.visibility = View.GONE
 
-        // Set full screen to properly hide background content
+        
 //        activity?.window?.decorView?.systemUiVisibility = (
 //            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
 //            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
 //        )
 //
-        // Add a root layout with solid background to prevent see-through
+        
         binding.root.setBackgroundResource(android.R.color.white)
 
-        // Log that we've hidden components
+        
         android.util.Log.d("GroupChatFragment", "Hiding unnecessary components")
     }
 
     private fun setupRecyclerView() {
-        messagesAdapter = GroupMessagesAdapter()
         binding.recyclerViewMessages.apply {
             adapter = messagesAdapter
             layoutManager = LinearLayoutManager(requireContext()).apply {
@@ -94,13 +119,24 @@ class GroupChatFragment : Fragment() {
             imageViewSend.setOnClickListener {
                 val message = editTextMessage.text?.toString()?.trim()
                 if (!message.isNullOrEmpty()) {
-                    viewModel.sendMessage(message, group.id)
+                    
+                    val tempId = "temp_${System.currentTimeMillis()}"
+                    
+                    
+                    viewModel.sendMessage(message, group.id) { newMessage ->
+                        
+                        val localMessage = newMessage.copy(id = tempId)
+                        
+                        
+                        messagesAdapter.addMessage(localMessage, binding.recyclerViewMessages)
+                        Log.d("GroupChatFragment", "Sent message with temp ID: $tempId")
+                    }
                     editTextMessage.text?.clear()
                 }
             }
 
             imageViewAttachment.setOnClickListener {
-                // TODO: Implement attachment functionality
+               
             }
         }
     }
@@ -108,33 +144,40 @@ class GroupChatFragment : Fragment() {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.groupMessages.collectLatest { messages ->
-                messagesAdapter.submitList(messages)
-                binding.recyclerViewMessages.scrollToPosition(messages.size - 1)
+                Log.d("GroupChatFragment", "Received ${messages.size} messages from Firebase")
+                
+                
+                messages.forEach { message ->
+                    Log.d("GroupChatFragment", "Message: id=${message.id}, sender=${message.senderId}, " +
+                            "content=${message.message}, time=${message.timestamp}")
+                }
+                
+                
+                val currentUserId = requireContext().getSharedPreferences(Constant.KEY_PREFERENCE_NAME, 0)
+                    .getString(Constant.KEY_USER_ID, null)
+                Log.d("GroupChatFragment", "Adapter's current user ID: $currentUserId")
+                
+                
+                messagesAdapter.addMessages(messages, binding.recyclerViewMessages)
             }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.error.collectLatest { errorMessage ->
-                // Show error message to user
-                // You can use Snackbar or Toast here
+                
+                Log.e("GroupChatFragment", "Error: $errorMessage")
             }
         }
     }
 
     private fun loadGroupMessages() {
         viewModel.loadGroupMessages(group.id)
-        updateGroupInfo()
     }
 
     private fun updateGroupInfo() {
         binding.apply {
             textViewGroupName.text = group.name
             textViewMemberCount.text = "${group.members.size} members"
-
-//            Glide.with(requireContext())
-//                .load(group.image)
-//                .circleCrop()
-//                .into(imageViewGroup)
         }
     }
 
@@ -153,17 +196,25 @@ class GroupChatFragment : Fragment() {
     }
 
     private fun showMembersList() {
+
+        viewModel.loadGroupMembers(group.id)
+        
         val membersView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_group_members, null)
 
         val recyclerView = membersView.findViewById<androidx.recyclerview.widget.RecyclerView>(R.id.recyclerViewMembers)
         recyclerView.layoutManager = LinearLayoutManager(requireContext())
+        
+       
+        viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.groupMembers.collectLatest { members ->
+                usersAdapter.submitList(members)
+            }
+        }
+        
         recyclerView.adapter = usersAdapter
 
-        // Load and display group members
-        viewModel.loadGroupMembers(group.id)
-
-        MaterialAlertDialogBuilder(requireContext(),R.style.MyApp_selectusersTheme)
+        MaterialAlertDialogBuilder(requireContext(), R.style.MyApp_selectusersTheme)
             .setTitle("Group Members")
             .setView(membersView)
             .setPositiveButton("Close", null)
@@ -174,11 +225,21 @@ class GroupChatFragment : Fragment() {
         val infoView = LayoutInflater.from(requireContext())
             .inflate(R.layout.dialog_group_info, null)
 
-        // Set group information
+        
         infoView.findViewById<android.widget.TextView>(R.id.textViewGroupName).text = group.name
         infoView.findViewById<android.widget.TextView>(R.id.textViewDescription).text = group.description
-        infoView.findViewById<android.widget.TextView>(R.id.textViewCreatedBy).text = "Created by: ${group.createdBy}"
         infoView.findViewById<android.widget.TextView>(R.id.textViewMemberCount).text = "${group.members.size} members"
+        
+       
+        viewLifecycleOwner.lifecycleScope.launch {
+            
+            val creatorTextView = infoView.findViewById<android.widget.TextView>(R.id.textViewCreatedBy)
+            creatorTextView.text = "Created by: Loading..."
+            
+            viewModel.getUserName(group.createdBy) { creatorName ->
+                creatorTextView.text = "Created by: $creatorName"
+            }
+        }
 
         MaterialAlertDialogBuilder(requireContext(),R.style.MyApp_selectusersTheme)
             .setTitle("Group Information")
@@ -204,6 +265,9 @@ class GroupChatFragment : Fragment() {
     }
 
     override fun onDestroyView() {
+       
+        messagesAdapter.clearMessages()
+        
         super.onDestroyView()
         _binding = null
     }

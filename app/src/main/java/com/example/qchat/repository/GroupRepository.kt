@@ -94,23 +94,32 @@ class GroupRepository @Inject constructor(
     }
 
     fun observeGroupMessages(groupId: String): Flow<List<GroupMessage>> = callbackFlow {
-        val subscription = groupMessagesCollection
-            .whereEqualTo(Constant.KEY_GROUP_ID, groupId)
-            .orderBy(Constant.KEY_TIMESTAMP, Query.Direction.ASCENDING)
-            .addSnapshotListener { snapshot, error ->
-                if (error != null) {
-                    Log.e("GroupRepository", "Error observing group messages: ${error.message}")
-                    return@addSnapshotListener
-                }
-
-                if (snapshot != null) {
-                    val messages = snapshot.documents.mapNotNull { doc ->
-                        doc.toObject(GroupMessage::class.java)
+        try {
+            // Option 1: Don't order by timestamp for now (will work without an index)
+            val subscription = groupMessagesCollection
+                .whereEqualTo(Constant.KEY_GROUP_ID, groupId)
+                .addSnapshotListener { snapshot, error ->
+                    if (error != null) {
+                        Log.e("GroupRepository", "Error observing group messages: ${error.message}")
+                        return@addSnapshotListener
                     }
-                    trySend(messages)
+
+                    if (snapshot != null) {
+                        val messages = snapshot.documents.mapNotNull { doc ->
+                            doc.toObject(GroupMessage::class.java)?.copy(id = doc.id)
+                        }
+                        // Sort the messages in-memory instead of in the query
+                        val sortedMessages = messages.sortedBy { it.timestamp }
+                        trySend(sortedMessages)
+                    }
                 }
-            }
-        awaitClose { subscription.remove() }
+            awaitClose { subscription.remove() }
+        } catch (e: Exception) {
+            Log.e("GroupRepository", "Exception in observeGroupMessages: ${e.message}")
+            // Send empty list if there's an error
+            trySend(emptyList())
+            close(e)
+        }
     }
 
     fun observeUserGroups(userId: String): Flow<List<Group>> = callbackFlow {

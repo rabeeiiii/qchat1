@@ -14,6 +14,7 @@ import kotlinx.coroutines.flow.*
 import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
+import android.util.Log
 
 @HiltViewModel
 class GroupViewModel @Inject constructor(
@@ -36,6 +37,9 @@ class GroupViewModel @Inject constructor(
 
     private val _error = MutableSharedFlow<String>()
     val error: SharedFlow<String> = _error.asSharedFlow()
+    
+    // Set to track processed message IDs to avoid duplicates
+    private val processedMessageIds = mutableSetOf<String>()
 
     init {
         loadUserGroups()
@@ -52,9 +56,21 @@ class GroupViewModel @Inject constructor(
 
     fun loadGroupMessages(groupId: String) {
         viewModelScope.launch {
-            groupRepository.observeGroupMessages(groupId)
-                .catch { e -> _error.emit(e.message ?: "Error loading messages") }
-                .collect { messages -> _groupMessages.value = messages }
+            try {
+                groupRepository.observeGroupMessages(groupId)
+                    .catch { e -> 
+                        Log.e("GroupViewModel", "Error loading messages: ${e.message}")
+                        _error.emit(e.message ?: "Error loading messages") 
+                    }
+                    .collect { messages -> 
+                        // Simply emit the messages and let the Fragment handle deduplication
+                        _groupMessages.value = messages
+                        Log.d("GroupViewModel", "Loaded ${messages.size} messages for group $groupId")
+                    }
+            } catch (e: Exception) {
+                Log.e("GroupViewModel", "Exception in loadGroupMessages: ${e.message}")
+                _error.emit(e.message ?: "Error loading messages")
+            }
         }
     }
 
@@ -113,7 +129,7 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun sendMessage(message: String, groupId: String) {
+    fun sendMessage(message: String, groupId: String, onMessageSent: ((GroupMessage) -> Unit)? = null) {
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
@@ -125,6 +141,10 @@ class GroupViewModel @Inject constructor(
                 message = message,
                 timestamp = Date()
             )
+
+            // Call onMessageSent immediately with the newly created message
+            // This allows the UI to update before waiting for Firebase
+            onMessageSent?.invoke(groupMessage)
 
             groupRepository.sendGroupMessage(groupMessage)
                 .onFailure { e ->
@@ -203,6 +223,23 @@ class GroupViewModel @Inject constructor(
                 .onFailure { e ->
                     _error.emit(e.message ?: "Error loading group")
                 }
+        }
+    }
+
+    fun getUserName(userId: String, callback: (String) -> Unit) {
+        viewModelScope.launch {
+            try {
+                mainRepository.getUserById(userId)
+                    .onSuccess { user -> 
+                        callback(user.name)
+                    }
+                    .onFailure { 
+                        callback("Unknown User")
+                    }
+            } catch (e: Exception) {
+                Log.e("GroupViewModel", "Error fetching user name: ${e.message}")
+                callback("Unknown User")
+            }
         }
     }
 } 
