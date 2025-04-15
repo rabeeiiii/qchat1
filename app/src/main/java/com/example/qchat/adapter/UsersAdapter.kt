@@ -1,11 +1,14 @@
 package com.example.qchat.adapter
 
+import android.util.Base64
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.qchat.R
 import com.example.qchat.databinding.ItemContainerUserBinding
 import com.example.qchat.model.User
 import javax.inject.Inject
@@ -35,10 +38,25 @@ class UsersAdapter @Inject constructor() : ListAdapter<User, UsersAdapter.UserVi
             binding.apply {
                 textName.text = user.name
                 textEmail.text = user.email
-                Glide.with(imageProfile.context)
-                    .load(user.image)
-                    .circleCrop()
-                    .into(imageProfile)
+                    try {
+                        // Handle both URL and base64 images
+
+                            // Assume it's base64 if not URL
+                            val imageBytes = Base64.decode(user.image, Base64.DEFAULT)
+                            Glide.with(imageProfile.context)
+                                .load(imageBytes)
+                                .circleCrop()
+                                .into(imageProfile)
+
+                    } catch (e: Exception) {
+                        Log.e("UsersAdapter", "Error loading image", e)
+                    }
+//
+//
+//                Glide.with(imageProfile.context)
+//                    .load(user.image)
+//                    .circleCrop()
+//                    .into(imageProfile)
 
                 val isSelected = selectedUsers.contains(user)
                 root.isSelected = isSelected
@@ -57,7 +75,7 @@ class UsersAdapter @Inject constructor() : ListAdapter<User, UsersAdapter.UserVi
                     } else {
                         selectedUsers.add(user)
                         root.isSelected = true
-                        root.setBackgroundResource(android.R.color.holo_blue_light)
+                        root.setBackgroundResource(R.color.light_gray)
                     }
                     onUserClick?.invoke(user)
                     android.util.Log.d("UsersAdapter", "User clicked: ${user.name}, selected: ${selectedUsers.contains(user)}")
