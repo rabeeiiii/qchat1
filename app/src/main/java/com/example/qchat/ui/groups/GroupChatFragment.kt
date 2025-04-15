@@ -57,16 +57,16 @@ class GroupChatFragment : Fragment() {
     private fun hideUnnecessaryComponents() {
         // Hide the create group FAB and other unnecessary components
         activity?.findViewById<View>(R.id.fabCreateGroup)?.visibility = View.GONE
-        
+
         // Set full screen to properly hide background content
-        activity?.window?.decorView?.systemUiVisibility = (
-            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
-            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
-        )
-        
+//        activity?.window?.decorView?.systemUiVisibility = (
+//            View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+//            or View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN
+//        )
+//
         // Add a root layout with solid background to prevent see-through
         binding.root.setBackgroundResource(android.R.color.white)
-        
+
         // Log that we've hidden components
         android.util.Log.d("GroupChatFragment", "Hiding unnecessary components")
     }
@@ -130,17 +130,17 @@ class GroupChatFragment : Fragment() {
         binding.apply {
             textViewGroupName.text = group.name
             textViewMemberCount.text = "${group.members.size} members"
-            
-            Glide.with(requireContext())
-                .load(group.image)
-                .circleCrop()
-                .into(imageViewGroup)
+
+//            Glide.with(requireContext())
+//                .load(group.image)
+//                .circleCrop()
+//                .into(imageViewGroup)
         }
     }
 
     private fun showGroupOptionsMenu() {
         val options = arrayOf("View Members", "Group Info", "Leave Group")
-        MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(),R.style.MyApp_selectusersTheme)
             .setTitle("Group Options")
             .setItems(options) { _, which ->
                 when (which) {
@@ -163,7 +163,7 @@ class GroupChatFragment : Fragment() {
         // Load and display group members
         viewModel.loadGroupMembers(group.id)
 
-        MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(),R.style.MyApp_selectusersTheme)
             .setTitle("Group Members")
             .setView(membersView)
             .setPositiveButton("Close", null)
@@ -180,7 +180,7 @@ class GroupChatFragment : Fragment() {
         infoView.findViewById<android.widget.TextView>(R.id.textViewCreatedBy).text = "Created by: ${group.createdBy}"
         infoView.findViewById<android.widget.TextView>(R.id.textViewMemberCount).text = "${group.members.size} members"
 
-        MaterialAlertDialogBuilder(requireContext())
+        MaterialAlertDialogBuilder(requireContext(),R.style.MyApp_selectusersTheme)
             .setTitle("Group Information")
             .setView(infoView)
             .setPositiveButton("Close", null)
