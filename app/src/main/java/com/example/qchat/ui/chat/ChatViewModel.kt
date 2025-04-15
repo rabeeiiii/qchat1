@@ -33,12 +33,17 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.pdf.PdfRenderer
+import android.media.MediaMetadataRetriever
 import android.net.Uri
 import android.os.ParcelFileDescriptor
 import com.example.qchat.utils.ECDHUtils
 import com.example.qchat.utils.ECDHUtils.getReceiverECDHKeys
 import com.example.qchat.utils.ECDHUtils.getSenderECDHKeys
 import com.google.firebase.storage.FirebaseStorage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
+import java.util.concurrent.TimeUnit
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
@@ -383,6 +388,103 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun uploadVideoToFirebase(videoBytes: ByteArray, thumbnailBytes: ByteArray, videoName: String, thumbName: String, onSuccess: (String, String) -> Unit, onFailure: (Exception) -> Unit) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        
+        // Upload video
+        val videoRef = storageRef.child("videos/$videoName")
+        val videoUploadTask = videoRef.putBytes(videoBytes)
+        
+        videoUploadTask.addOnSuccessListener {
+            videoRef.downloadUrl.addOnSuccessListener { videoUri ->
+                // Upload thumbnail
+                val thumbRef = storageRef.child("thumbnails/$thumbName")
+                val thumbUploadTask = thumbRef.putBytes(thumbnailBytes)
+                
+                thumbUploadTask.addOnSuccessListener {
+                    thumbRef.downloadUrl.addOnSuccessListener { thumbUri ->
+                        onSuccess(videoUri.toString(), thumbUri.toString())
+                    }
+                }.addOnFailureListener { exception ->
+                    onFailure(exception)
+                }
+            }
+        }.addOnFailureListener { exception ->
+            onFailure(exception)
+        }
+    }
+
+    fun sendVideo(videoBytes: ByteArray, thumbnailBytes: ByteArray, receiverUser: User) {
+        viewModelScope.launch {
+            val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+            if (senderId.isEmpty()) return@launch
+
+            val timestamp = System.currentTimeMillis()
+            val videoName = "video_${timestamp}.mp4"
+            val thumbName = "thumb_${timestamp}.jpg"
+
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
+                Log.e("ChatViewModel", "Failed to get shared secret, generating new key")
+                AesUtils.generateAESKey()
+            }
+
+            uploadVideoToFirebase(videoBytes, thumbnailBytes, videoName, thumbName,
+                { videoUrl, thumbUrl ->
+                    val videoInfo = "VIDEO||$videoUrl||$thumbUrl||${getVideoDuration(videoBytes)}"
+                    val encryptedMessage = AesUtils.encryptMessage(videoInfo, aesKey)
+                    val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
+
+                    val messageMap = hashMapOf(
+                        Constant.KEY_SENDER_ID to senderId,
+                        Constant.KEY_RECEIVER_ID to receiverUser.id,
+                        Constant.KEY_ENCRYPTED_MESSAGE to encryptedMessage,
+                        Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
+                        Constant.KEY_MESSAGE_TYPE to Constant.MESSAGE_TYPE_VIDEO,
+                        Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp(),
+                        Constant.KEY_VIDEO_URL to videoUrl,
+                        Constant.KEY_THUMBNAIL_URL to thumbUrl
+                    )
+
+                    repository.sendMessage(messageMap)
+                        .addOnSuccessListener {
+                            Log.d("ChatViewModel", "Video sent successfully")
+                            updateRecentConversation(
+                                senderId = senderId,
+                                receiverUser = receiverUser,
+                                lastMessage = "[Video]",
+                                messageType = Constant.MESSAGE_TYPE_VIDEO,
+                                aesKeyBase64 = aesKeyBase64
+                            )
+                        }
+                        .addOnFailureListener { e ->
+                            Log.e("ChatViewModel", "Failed to send video: ${e.message}")
+                        }
+                },
+                { exception ->
+                    Log.e("ChatViewModel", "Video upload failed: ${exception.message}")
+                }
+            )
+        }
+    }
+
+    private fun getVideoDuration(videoBytes: ByteArray): String {
+        return try {
+            val retriever = MediaMetadataRetriever()
+            val file = File.createTempFile("video", ".mp4", context.cacheDir).apply {
+                writeBytes(videoBytes)
+            }
+            retriever.setDataSource(file.path)
+            val durationMs = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0
+            file.delete()
+
+            String.format(Locale.US, "%02d:%02d",
+                TimeUnit.MILLISECONDS.toMinutes(durationMs),
+                TimeUnit.MILLISECONDS.toSeconds(durationMs) % 60)
+        } catch (e: Exception) {
+            "0:00"
+        }
+    }
+
     fun downloadAndRenderPdf(documentUrl: String, onSuccess: (Bitmap) -> Unit, onFailure: (Exception) -> Unit) {
         val tempFile = File(context.cacheDir, "document_${System.currentTimeMillis()}.pdf")
         val storageRef = FirebaseStorage.getInstance().getReferenceFromUrl(documentUrl)
@@ -580,7 +682,10 @@ class ChatViewModel @Inject constructor(
                 return@observeChat
             }
 
-            if (querySnapshot == null || querySnapshot.isEmpty) return@observeChat
+            if (querySnapshot == null || querySnapshot.isEmpty) {
+                chatObserver(emptyList())
+                return@observeChat
+            }
 
             val newMessages = querySnapshot.documents.mapNotNull { document ->
                 val messageId = document.id
@@ -643,6 +748,25 @@ class ChatViewModel @Inject constructor(
                             dateTime = document.getDate(Constant.KEY_TIMESTAMP)?.getReadableDate() ?: "",
                             date = document.getDate(Constant.KEY_TIMESTAMP) ?: Date(),
                             messageType = Constant.MESSAGE_TYPE_DOCUMENT
+                        )
+                    }
+                    Constant.MESSAGE_TYPE_VIDEO -> {
+                        val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                        val parts = decryptedMessage.split("||")
+                        if (parts.size != 4) return@mapNotNull null
+
+                        val videoUrl = parts[1]
+                        val thumbnailUrl = parts[2]
+                        val duration = parts[3]
+
+                        ChatMessage(
+                            senderId = senderId,
+                            receiverId = receiverId,
+                            message = decryptedMessage,
+                            thumbnailUrl = thumbnailUrl,
+                            dateTime = timestamp.getReadableDate(),
+                            date = timestamp,
+                            messageType = Constant.MESSAGE_TYPE_VIDEO
                         )
                     }
                     else -> null
