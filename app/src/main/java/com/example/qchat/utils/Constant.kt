@@ -46,6 +46,12 @@ object Constant {
     const val NOTIFICATION_CHANNEL_NAME = "message_channel"
     const val KEY_SECRET_KEY = "secret_key"
 
+    const val MESSAGE_TYPE_VIDEO = "video"
+    const val VIEW_TYPE_SEND_VIDEO = 9
+    const val VIEW_TYPE_RECEIVED_VIDEO = 10
+    const val KEY_VIDEO_URL = "videoUrl"
+    const val KEY_THUMBNAIL_URL = "thumbnailUrl"
+
     const val VIEW_TYPE_SEND_DOCUMENT = 7
     const val VIEW_TYPE_RECEIVED_DOCUMENT = 8
 

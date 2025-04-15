@@ -39,9 +39,14 @@ import javax.inject.Inject
 import android.Manifest
 import android.content.pm.PackageManager
 import android.location.Location
+import android.media.MediaMetadataRetriever
 import android.os.Looper
+import android.widget.Toast
 import androidx.core.location.LocationManagerCompat.getCurrentLocation
 import com.google.android.gms.location.*
+import android.media.MediaRecorder
+import android.media.MediaPlayer
+import java.io.File
 
 @AndroidEntryPoint
 class ChatFragment : Fragment(R.layout.chat_fragment) {
@@ -56,7 +61,7 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
     private lateinit var documentLauncher: ActivityResultLauncher<String>
-
+    private lateinit var videoLauncher: ActivityResultLauncher<String>
 
     private lateinit var fusedLocationClient: FusedLocationProviderClient
     private val locationRequest = LocationRequest.create().apply {
@@ -82,6 +87,17 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             Log.e("ChatFragment", "Location permission denied")
         }
     }
+
+    private var isReceiverAvailable = false
+    private var isRecording = false
+    private var mediaRecorder: MediaRecorder? = null
+    private var audioFile: File? = null
+    private var audioPlayer: MediaPlayer? = null
+    private var isPlaying = false
+    private var currentPlayingPosition = -1
+    private var videoUri: Uri? = null
+    private var videoDuration: Long = 0
+
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mainActivity = context as MainActivity
@@ -121,6 +137,12 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             }
         }
 
+        videoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { videoUri ->
+                handleVideoSelection(videoUri)
+            }
+        }
+
         getArgument()
         setClickListener()
         setRecyclerview()
@@ -140,6 +162,42 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
 
         setupPopMenu()
+    }
+
+    private fun handleVideoSelection(uri: Uri) {
+        lifecycleScope.launch {
+            binding.pb.visibility = View.VISIBLE
+
+            try {
+                // Generate thumbnail
+                val thumbnail = generateVideoThumbnail(uri)
+                
+                // Get video bytes
+                val videoBytes = withContext(Dispatchers.IO) {
+                    context?.contentResolver?.openInputStream(uri)?.readBytes()
+                } ?: return@launch
+
+                // Compress thumbnail
+                val thumbnailBytes = ByteArrayOutputStream().apply {
+                    thumbnail.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                }.toByteArray()
+
+                viewModel.sendVideo(videoBytes, thumbnailBytes, user)
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to process video", Toast.LENGTH_SHORT).show()
+                Log.e("ChatFragment", "Error processing video: ${e.message}")
+            } finally {
+                binding.pb.visibility = View.GONE
+            }
+        }
+    }
+
+    private fun generateVideoThumbnail(uri: Uri): Bitmap {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(context, uri)
+        val frame = retriever.frameAtTime
+        retriever.release()
+        return frame ?: throw Exception("Failed to generate thumbnail")
     }
 
     private fun uriToBitmap(uri: Uri): Bitmap? {
@@ -199,7 +257,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
     }
 
-
     private fun observeChat() {
         binding.pb.visibility = View.VISIBLE
 
@@ -241,8 +298,8 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private fun setupPopMenu() {
         val adapter = AttachmentAdapter(
             requireContext(),
-            arrayOf("Photos", "Camera", "Location", "Document"),
-            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.location, R.drawable.document)
+            arrayOf("Photos", "Camera", "Video", "Location", "Document"),
+            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.videocall, R.drawable.location, R.drawable.document)
         )
         binding.gridView.adapter = adapter
 
@@ -250,14 +307,20 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             when (position) {
                 0 -> openGallery()
                 1 -> openCamera()
-                2 -> openLocationPicker()
-                3 -> openDocumentPicker()
+                2 -> openVideoPicker()
+                3 -> openLocationPicker()
+                4 -> openDocumentPicker()
             }
             togglePopMenuVisibility()
         }
     }
+
     private fun openDocumentPicker() {
         documentLauncher.launch("application/*")
+    }
+
+    private fun openVideoPicker() {
+        videoLauncher.launch("video/*")
     }
 
     private fun handleDocumentSelection(uri: Uri) {
@@ -322,7 +385,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         val longitude = location.longitude
         viewModel.sendLocation(latitude, longitude, user)
     }
-
 
     interface ChatObserver {
         fun observeChat(newChat: List<ChatMessage>)

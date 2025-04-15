@@ -21,6 +21,8 @@ import com.example.qchat.databinding.ItemSendDocumentBinding
 import com.example.qchat.databinding.ItemSendLocationBinding
 import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
+import com.example.qchat.databinding.ItemSendVideoBinding
+import com.example.qchat.databinding.ItemReceivedVideoBinding
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
@@ -31,6 +33,8 @@ import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_LOCATION
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_DOCUMENT
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_VIDEO
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_VIDEO
 import java.util.*
 
 class ChatAdapter(
@@ -190,6 +194,64 @@ class ChatAdapter(
         }
     }
 
+    class SendVideoViewHolder(val binding: ItemSendVideoBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: ChatMessage) {
+            binding.apply {
+                // Load thumbnail
+                Glide.with(itemView.context)
+                    .load(message.thumbnailUrl)
+                    .into(binding.ivThumbnail)
+
+                // Set duration
+                binding.tvDuration.text = message.message.split("||")[3]
+
+                // Set click listener to play video
+                binding.root.setOnClickListener {
+                    openVideo(message.message.split("||")[1])
+                }
+            }
+        }
+
+        private fun openVideo(videoUrl: String) {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.parse(videoUrl), "video/*")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            binding.root.context.startActivity(intent)
+        }
+    }
+
+    class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) : RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: ChatMessage, profileImage: Bitmap?) {
+            binding.apply {
+                // Load profile image
+                profileImage?.let {
+                    ivProfile.setImageBitmap(it)
+                }
+
+                // Load thumbnail
+                Glide.with(itemView.context)
+                    .load(message.thumbnailUrl)
+                    .into(binding.ivThumbnail)
+
+                // Set duration
+                binding.tvDuration.text = message.message.split("||")[3]
+
+                // Set click listener to play video
+                binding.root.setOnClickListener {
+                    openVideo(message.message.split("||")[1])
+                }
+            }
+        }
+
+        private fun openVideo(videoUrl: String) {
+            val intent = Intent(Intent.ACTION_VIEW).apply {
+                setDataAndType(Uri.parse(videoUrl), "video/*")
+                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            }
+            binding.root.context.startActivity(intent)
+        }
+    }
 
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
         val uniqueMessages = newMessage.filterNot { newMsg ->
@@ -271,7 +333,24 @@ class ChatAdapter(
             VIEW_TYPE_RECEIVED_DOCUMENT -> {
                 ReceivedDocumentViewHolder(ItemReceivedDocumentBinding.inflate(LayoutInflater.from(parent.context), parent, false))
             }
-
+            VIEW_TYPE_SEND_VIDEO -> {
+                SendVideoViewHolder(
+                    ItemSendVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+            VIEW_TYPE_RECEIVED_VIDEO -> {
+                ReceivedVideoViewHolder(
+                    ItemReceivedVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -310,6 +389,14 @@ class ChatAdapter(
                 val receivedDocumentHolder = holder as ReceivedDocumentViewHolder
                 receivedDocumentHolder.setData(chatMessagesList[position], profileImage, holder.itemView.context)
             }
+            VIEW_TYPE_SEND_VIDEO -> {
+                val sendVideoHolder = holder as SendVideoViewHolder
+                sendVideoHolder.setData(chatMessagesList[position])
+            }
+            VIEW_TYPE_RECEIVED_VIDEO -> {
+                val receivedVideoHolder = holder as ReceivedVideoViewHolder
+                receivedVideoHolder.setData(chatMessagesList[position], profileImage)
+            }
         }
     }
 
@@ -337,6 +424,9 @@ class ChatAdapter(
             }
             message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
                 if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
+            }
+            message.messageType == Constant.MESSAGE_TYPE_VIDEO -> {
+                if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
             }
             message.senderId == senderId -> VIEW_TYPE_SEND
             else -> VIEW_TYPE_RECEIVED
