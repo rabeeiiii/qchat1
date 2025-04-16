@@ -13,5 +13,6 @@ data class Group(
     val admins: List<String> = listOf(),
     val lastMessage: String? = null,
     val lastMessageTime: Long = 0,
-    val lastMessageSender: String? = null
+    val lastMessageSender: String? = null,
+    val aesKey: String? = null
 ) : Serializable 

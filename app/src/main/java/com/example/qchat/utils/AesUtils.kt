@@ -76,6 +76,56 @@ object AesUtils {
         return ""
     }
 
+    fun encryptGroupMessage(plainText: String, secretKey: SecretKey): String {
+        try {
+            val iv = ByteArray(12)
+            SecureRandom().nextBytes(iv)
+
+            val cipher = Cipher.getInstance(AES_MODE)
+            val gcmSpec = GCMParameterSpec(TAG_LENGTH, iv)
+            cipher.init(Cipher.ENCRYPT_MODE, secretKey, gcmSpec)
+            val encryptedData = cipher.doFinal(plainText.toByteArray(Charsets.UTF_8))
+            val cipherTextWithIv = iv + encryptedData
+            val base64CipherText = Base64.encodeToString(cipherTextWithIv, Base64.NO_WRAP)
+            Log.d("AES", "Group Message Encryption successful: $base64CipherText")
+            return base64CipherText
+        } catch (e: Exception) {
+            Log.e("AES", "Group Message Encryption failed: ${e.message}")
+            e.printStackTrace()
+        }
+
+        return ""
+    }
+
+    fun decryptGroupMessage(encryptedText: String, secretKey: SecretKey): String {
+        try {
+            val cipherTextWithIv = Base64.decode(encryptedText, Base64.NO_WRAP)
+
+            if (cipherTextWithIv.size < 12) {
+                Log.e("AES", "Decryption failed: Encrypted text is too short to contain IV. EncryptedText: $encryptedText")
+                return ""
+            }
+
+            val iv = cipherTextWithIv.copyOfRange(0, 12)
+            val cipherText = cipherTextWithIv.copyOfRange(12, cipherTextWithIv.size)
+
+            val cipher = Cipher.getInstance(AES_MODE)
+            val gcmSpec = GCMParameterSpec(TAG_LENGTH, iv)
+            cipher.init(Cipher.DECRYPT_MODE, secretKey, gcmSpec)
+
+            val decryptedData = cipher.doFinal(cipherText)
+            val decryptedMessage = String(decryptedData)
+
+            if (decryptedMessage.isEmpty()) {
+                Log.e("AES", "Decryption failed: Message is empty. EncryptedText: $encryptedText")
+            }
+            return decryptedMessage
+        } catch (e: Exception) {
+            Log.e("AES", "Decryption failed for group message: ${e.message}. EncryptedText: $encryptedText", e)
+        }
+        return ""
+    }
+
 
     fun keyToBase64(key: SecretKey): String {
         return Base64.encodeToString(key.encoded, Base64.NO_WRAP)
