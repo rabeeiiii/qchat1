@@ -15,6 +15,7 @@ import kotlinx.coroutines.launch
 import java.util.*
 import javax.inject.Inject
 import android.util.Log
+import com.example.qchat.utils.AesUtils
 
 @HiltViewModel
 class GroupViewModel @Inject constructor(
@@ -37,8 +38,10 @@ class GroupViewModel @Inject constructor(
 
     private val _error = MutableSharedFlow<String>()
     val error: SharedFlow<String> = _error.asSharedFlow()
-    
-    // Set to track processed message IDs to avoid duplicates
+
+    private val _isLoadingMessages = MutableStateFlow(false)
+    val isLoadingMessages: StateFlow<Boolean> = _isLoadingMessages.asStateFlow()
+
     private val processedMessageIds = mutableSetOf<String>()
 
     init {
@@ -53,18 +56,37 @@ class GroupViewModel @Inject constructor(
                 .collect { groups -> _groups.value = groups }
         }
     }
-
     fun loadGroupMessages(groupId: String) {
         viewModelScope.launch {
             try {
+                _isLoadingMessages.value = true
+
                 groupRepository.observeGroupMessages(groupId)
-                    .catch { e -> 
+                    .catch { e ->
                         Log.e("GroupViewModel", "Error loading messages: ${e.message}")
-                        _error.emit(e.message ?: "Error loading messages") 
+                        _error.emit(e.message ?: "Error loading messages")
                     }
-                    .collect { messages -> 
-                        // Simply emit the messages and let the Fragment handle deduplication
-                        _groupMessages.value = messages
+                    .collect { messages ->
+                        val aesKey = groupRepository.getGroupAesKey(groupId)
+                        if (aesKey == null) {
+                            _error.emit("AES Key not found for group $groupId")
+                            return@collect
+                        }
+
+                        val decryptedMessages = messages.map { message ->
+                            try {
+                                val decryptedMessage = AesUtils.decryptGroupMessage(message.message, aesKey)
+                                message.copy(message = decryptedMessage)
+                            } catch (e: Exception) {
+                                Log.e("GroupViewModel", "Decryption failed: ${e.message}")
+                                message
+                            }
+                        }
+
+                        val sortedMessages = decryptedMessages.sortedBy { it.timestamp }
+                        _groupMessages.value = sortedMessages
+                        _isLoadingMessages.value = false
+
                         Log.d("GroupViewModel", "Loaded ${messages.size} messages for group $groupId")
                     }
             } catch (e: Exception) {
@@ -79,7 +101,6 @@ class GroupViewModel @Inject constructor(
             try {
                 mainRepository.getUsers()
                     .onSuccess { users -> 
-                        // Filter out current user
                         val currentUserId = pref.getString(Constant.KEY_USER_ID, null)
                         _groupMembers.value = users.filter { it.id != currentUserId }
                     }
@@ -110,18 +131,20 @@ class GroupViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
-
+            val aesKey = AesUtils.generateAESKey()
+            val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
             val group = Group(
                 name = name,
                 description = description,
                 createdBy = userId,
                 members = members + userId,
-                admins = listOf(userId)
+                admins = listOf(userId),
+                aesKey = aesKeyBase64
             )
-
             groupRepository.createGroup(group)
                 .onSuccess { groupId ->
-                    // Group created successfully
+                    Log.d("GroupViewModel", "Group created with ID: $groupId")
+                    groupRepository.updateGroupWithId(groupId, group)
                 }
                 .onFailure { e ->
                     _error.emit(e.message ?: "Error creating group")
@@ -133,23 +156,25 @@ class GroupViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: run {
+                Log.e("GroupViewModel", "Failed to get AES key for group $groupId")
+                return@launch
+            }
+            val encryptedMessage = AesUtils.encryptGroupMessage(message, aesKey)
 
             val groupMessage = GroupMessage(
                 groupId = groupId,
                 senderId = userId,
                 senderName = userName,
-                message = message,
+                message = encryptedMessage,
                 timestamp = Date()
             )
-
-            // Call onMessageSent immediately with the newly created message
-            // This allows the UI to update before waiting for Firebase
-            onMessageSent?.invoke(groupMessage)
-
-            groupRepository.sendGroupMessage(groupMessage)
+            groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
                 .onFailure { e ->
-                    _error.emit(e.message ?: "Error sending message")
+                    _error.emit(e.message ?: "Error sending group message")
                 }
+
+            onMessageSent?.invoke(groupMessage)
         }
     }
 
