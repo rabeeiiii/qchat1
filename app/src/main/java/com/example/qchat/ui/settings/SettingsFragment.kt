@@ -148,11 +148,21 @@ class SettingsFragment : Fragment() {
                 }
                 startActivity(intent)
             }
-            "Chat" -> { /* Handle Chat settings click */ }
-            "Notifications" -> { /* Handle Notifications settings click */ }
-            "Help" -> { /* Handle Help settings click */ }
-            "Storage and data" -> { /* Handle Storage and Data settings click */ }
-            "Invite a friend" -> { /* Handle Invite Friend click */ }
+            "Chat" -> {
+                startActivity(Intent(requireContext(), ChatSettingsActivity::class.java))
+            }
+            "Notifications" -> {
+                startActivity(Intent(requireContext(), NotificationsSettingsActivity::class.java))
+            }
+            "Help" -> {
+                startActivity(Intent(requireContext(), HelpSettingsActivity::class.java))
+            }
+            "Storage and data" -> {
+                startActivity(Intent(requireContext(), StorageSettingsActivity::class.java))
+            }
+            "Invite a friend" -> {
+                startActivity(Intent(requireContext(), InviteFriendActivity::class.java))
+            }
             "Sign Out" -> signOut()
         }
     }

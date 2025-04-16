@@ -48,6 +48,26 @@
 
         <activity android:name=".ui.profile.EditProfileActivity" />
 
+        <activity
+            android:name=".ui.settings.ChatSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.settings.NotificationsSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.settings.HelpSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.settings.StorageSettingsActivity"
+            android:exported="false" />
+
+        <activity
+            android:name=".ui.settings.InviteFriendActivity"
+            android:exported="false" />
+
         <service
             android:name=".fcmservice.MessagingService"
             android:exported="false">

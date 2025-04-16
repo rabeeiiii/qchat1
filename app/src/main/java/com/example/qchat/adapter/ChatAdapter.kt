@@ -204,7 +204,7 @@ class ChatAdapter(
                 binding.tvDuration.text = message.videoDuration
 
                 binding.root.setOnClickListener {
-                    openVideo(message.message.split("||")[1])
+                    openVideo(message.message)
                 }
             }
         }
