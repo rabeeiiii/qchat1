@@ -19,7 +19,7 @@
             app:destination="@id/chatFragment" />
         <action
             android:id="@+id/action_mainFragment_to_storyViewFragment"
-            app:destination="@id/storyViewFragment" /> <!-- Add action for story view -->
+            app:destination="@id/storyViewFragment" />
     </fragment>
 
     <!-- Users Fragment -->

@@ -203,6 +203,8 @@ class ChatAdapter(
                     .into(binding.ivThumbnail)
 
                 binding.tvDuration.text = message.videoDuration
+                binding.tvDateTime.text = message.dateTime
+
 
                 binding.root.setOnClickListener {
                     openVideo(message.message)
@@ -231,6 +233,7 @@ class ChatAdapter(
                     .into(binding.ivThumbnail)
 
                 binding.tvDuration.text = message.videoDuration
+                binding.tvDateTime.text = message.dateTime
 
                 binding.root.setOnClickListener {
                     openVideo(message.message)
@@ -443,7 +446,6 @@ class ChatAdapter(
         }
 
         private fun openDocument(url: String) {
-            // Open the document URL (maybe using a PDF viewer)
             val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
             intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
             binding.root.context.startActivity(intent)

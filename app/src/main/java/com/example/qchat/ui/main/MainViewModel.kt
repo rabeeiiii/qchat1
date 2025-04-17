@@ -176,7 +176,6 @@ class MainViewModel @Inject constructor(
                     val encryptedMessage = documentChange.document.getString(Constant.KEY_LAST_MESSAGE).orEmpty()
                     val encryptedAesKey = documentChange.document.getString(Constant.KEY_ENCRYPTED_AES_KEY).orEmpty()
 
-                    // 🔹 Decrypt message
                     val decryptedMessage = try {
                         val aesKey = AesUtils.base64ToKey(encryptedAesKey)
                         AesUtils.decryptMessage(encryptedMessage, aesKey)
@@ -195,6 +194,8 @@ class MainViewModel @Inject constructor(
                         "photo" -> "📷 Photo"
                         "location" -> "📍 Location"
                         "document" -> "📄 Document"
+                        "video" -> "\uD83D\uDCF9 Video"
+
                         else -> parts[0].trim()
                     }
 
