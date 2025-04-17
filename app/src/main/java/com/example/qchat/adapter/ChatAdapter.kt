@@ -24,6 +24,7 @@ import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.databinding.ItemSendVideoBinding
 import com.example.qchat.databinding.ItemReceivedVideoBinding
 import com.example.qchat.model.ChatMessage
+import com.example.qchat.ui.chat.VideoPlayerActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_DOCUMENT
@@ -210,12 +211,12 @@ class ChatAdapter(
         }
 
         private fun openVideo(videoUrl: String) {
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(videoUrl), "video/*")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
+                putExtra("videoUrl", videoUrl)
             }
-            binding.root.context.startActivity(intent)
+            itemView.context.startActivity(intent)
         }
+
     }
 
     class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) : RecyclerView.ViewHolder(binding.root) {
@@ -238,12 +239,12 @@ class ChatAdapter(
         }
 
         private fun openVideo(videoUrl: String) {
-            val intent = Intent(Intent.ACTION_VIEW).apply {
-                setDataAndType(Uri.parse(videoUrl), "video/*")
-                flags = Intent.FLAG_ACTIVITY_NEW_TASK
+            val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
+                putExtra("videoUrl", videoUrl)
             }
-            binding.root.context.startActivity(intent)
+            itemView.context.startActivity(intent)
         }
+
     }
 
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
@@ -421,13 +422,7 @@ class ChatAdapter(
                 if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
             }
             message.messageType == Constant.MESSAGE_TYPE_VIDEO -> {
-                if (message.senderId == senderId) {
-                    Log.d("ChatAdapter", "Video message is SENT")
-                    VIEW_TYPE_SEND_VIDEO
-                } else {
-                    Log.d("ChatAdapter", "Video message is RECEIVED")
-                    VIEW_TYPE_RECEIVED_VIDEO
-                }
+                if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
             }
             message.senderId == senderId -> VIEW_TYPE_SEND
             else -> VIEW_TYPE_RECEIVED

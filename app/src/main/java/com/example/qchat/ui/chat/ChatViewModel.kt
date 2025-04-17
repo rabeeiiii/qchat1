@@ -762,8 +762,9 @@ class ChatViewModel @Inject constructor(
                         ChatMessage(
                             senderId = senderId,
                             receiverId = receiverId,
-                            message = decryptedMessage,
+                            message = videoUrl,
                             thumbnailUrl = thumbnailUrl,
+                            videoDuration = duration,
                             dateTime = timestamp.getReadableDate(),
                             date = timestamp,
                             messageType = Constant.MESSAGE_TYPE_VIDEO
