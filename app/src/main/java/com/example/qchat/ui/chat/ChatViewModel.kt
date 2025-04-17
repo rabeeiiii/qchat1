@@ -319,8 +319,6 @@ class ChatViewModel @Inject constructor(
     }
 
 
-
-
     fun uploadDocumentToFirebase(fileBytes: ByteArray, fileName: String, onSuccess: (String) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference
         val documentRef = storageRef.child("documents/$fileName")
@@ -391,7 +389,6 @@ class ChatViewModel @Inject constructor(
     fun uploadVideoToFirebase(videoBytes: ByteArray, thumbnailBytes: ByteArray, videoName: String, thumbName: String, onSuccess: (String, String) -> Unit, onFailure: (Exception) -> Unit) {
         val storageRef = FirebaseStorage.getInstance().reference
         
-        // Upload video
         val videoRef = storageRef.child("videos/$videoName")
         val videoUploadTask = videoRef.putBytes(videoBytes)
         
