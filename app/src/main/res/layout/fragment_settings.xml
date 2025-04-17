@@ -71,9 +71,10 @@
                         android:textColor="@color/text_primary" />
 
                     <TextView
+                        android:id="@+id/status"
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:text="Footballer"
+                        android:text="Active"
                         android:textSize="14sp"
                         android:layout_marginTop="4dp"
                         android:fontFamily="@font/inter_regular"

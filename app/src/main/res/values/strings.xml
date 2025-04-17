@@ -50,6 +50,7 @@
     <string name="create_new_account">Create an Account ?</string>
     <string name="add_image">Choose Image</string>
     <string name="name">Name</string>
+    <string name="status">Status</string>
     <string name="confirm_password">Confirm Password</string>
 
     <string name="search_user">Search User</string>

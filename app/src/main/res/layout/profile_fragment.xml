@@ -17,6 +17,17 @@
         android:layout_centerHorizontal="true"
         android:scaleType="centerCrop" />
 
+    <ImageView
+        android:id="@+id/profilebackButton"
+        android:layout_width="24dp"
+        android:layout_height="24dp"
+        android:src="@drawable/ic_back"
+        android:contentDescription="Back"
+        android:layout_marginStart="16dp"
+        android:layout_marginTop="16dp"
+        app:tint="@android:color/white"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent"/>
     <View
         android:id="@+id/view3"
         android:layout_width="match_parent"

@@ -81,6 +81,7 @@ class EditProfileActivity : AppCompatActivity() {
 
     private fun loadUserData() {
         val userId = intent.getStringExtra("USER_ID") ?: return
+        val DEFAULT_STATUS = "Hey there! I'm using QChat" // Default status text
 
         fireStore.collection(Constant.KEY_COLLECTION_USERS)
             .document(userId)
@@ -90,9 +91,10 @@ class EditProfileActivity : AppCompatActivity() {
                     val name = document.getString(Constant.KEY_NAME) ?: ""
                     val email = document.getString(Constant.KEY_EMAIL) ?: ""
                     val imageBase64 = document.getString(Constant.KEY_IMAGE) ?: ""
-
+                    val status = document.getString(Constant.KEY_STATUS) ?: DEFAULT_STATUS
                     binding.etName.setText(name)
                     binding.etEmail.setText(email)
+                    binding.etstatus.setText(status)
 
                     // Decode and load Base64 image if it exists
                     if (imageBase64.isNotEmpty()) {
@@ -117,6 +119,7 @@ class EditProfileActivity : AppCompatActivity() {
         val email = binding.etEmail.text.toString().trim()
         val currentPassword = binding.etCurrentPassword.text.toString().trim()
         val newPassword = binding.etNewPassword.text.toString().trim()
+        val newstatus = binding.etstatus.text.toString().trim()
 
         if (name.isEmpty() || email.isEmpty()) {
             Toast.makeText(this, "Please fill all fields", Toast.LENGTH_SHORT).show()
@@ -136,7 +139,8 @@ class EditProfileActivity : AppCompatActivity() {
                 if (document.exists()) {
                     val updates = hashMapOf<String, Any>(
                         Constant.KEY_NAME to name,
-                        Constant.KEY_EMAIL to email
+                        Constant.KEY_EMAIL to email,
+                        Constant.KEY_STATUS to newstatus
                     )
 
                     // If a new image is selected, update the Base64 string in Firebase

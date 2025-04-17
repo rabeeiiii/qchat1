@@ -7,5 +7,7 @@ data class User(
     var image: String? = null,
     var email: String? = null,
     var token: String? = null,
-    val id: String = ""
+    val id: String = "",
+    var status: String = "Hey there! I'm using QChat"
+
 ): Serializable

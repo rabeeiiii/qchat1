@@ -84,7 +84,6 @@
                 android:layout_marginTop="8dp" />
 
             <!-- Name Field -->
-            <!-- Name Field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilName"
                 android:layout_width="0dp"
@@ -105,6 +104,7 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
             </com.google.android.material.textfield.TextInputLayout>
+
 
             <!-- Email Field -->
             <com.google.android.material.textfield.TextInputLayout
@@ -127,7 +127,28 @@
                     android:paddingStart="10dp"
                     android:paddingEnd="10dp" />
             </com.google.android.material.textfield.TextInputLayout>
+            <!--Status Field-->
 
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/tilstatus"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
+                app:layout_constraintTop_toBottomOf="@id/tilEmail"
+                app:layout_constraintStart_toStartOf="parent"
+                app:layout_constraintEnd_toEndOf="parent"
+                app:layout_constraintWidth_percent="0.8"
+                android:hint="@string/status"> <!-- Move hint here -->
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/etstatus"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textPersonName"
+                    android:paddingStart="10dp"
+                    android:paddingEnd="10dp"/>
+            </com.google.android.material.textfield.TextInputLayout>
             <!-- Current Password Field -->
             <com.google.android.material.textfield.TextInputLayout
                 android:id="@+id/tilCurrentPassword"
@@ -135,7 +156,7 @@
                 android:layout_height="wrap_content"
                 android:layout_marginTop="16dp"
                 style="@style/Widget.MaterialComponents.TextInputLayout.OutlinedBox"
-                app:layout_constraintTop_toBottomOf="@id/tilEmail"
+                app:layout_constraintTop_toBottomOf="@id/tilstatus"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
                 app:layout_constraintWidth_percent="0.8">

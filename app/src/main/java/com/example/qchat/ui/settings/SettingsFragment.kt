@@ -87,6 +87,19 @@ class SettingsFragment : Fragment() {
         setupToolbar(view)
         setupRecyclerView(view)
         updateUserDetails(view)
+        observeUserStatus(view) // Add this line
+
+    }
+
+    private fun observeUserStatus(view: View) {
+        val userId = sharedPreferences.getString(Constant.KEY_USER_ID, "") ?: ""
+
+        viewModel.getUserStatus(userId).observe(viewLifecycleOwner) { status ->
+            view.findViewById<TextView>(R.id.status).text = status ?: "Hey there! I'm using QChat!"
+        }
+
+        // Load initial user details
+        updateUserDetails(view)
     }
 
     private fun updateUserDetails(view: View) {
