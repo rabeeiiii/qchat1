@@ -57,6 +57,12 @@
         <argument
             android:name="user"
             app:argType="com.example.qchat.model.User" />
+        <action
+            android:id="@+id/actionProfileFragmentToChatFragment"
+            app:destination="@id/chatFragment"
+            app:popUpTo="@id/chatFragment"
+            app:popUpToInclusive="true" />
+
     </fragment>
 
     <!-- Story View Fragment -->

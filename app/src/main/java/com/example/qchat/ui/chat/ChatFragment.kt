@@ -116,9 +116,16 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         mainActivity.setBottomNavigationVisibility(View.VISIBLE)
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         binding = ChatFragmentBinding.bind(view)
+
+        binding.ivBack.setOnClickListener {
+            findNavController().popBackStack(R.id.mainFragment, false)
+        }
+
+
 
         galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
