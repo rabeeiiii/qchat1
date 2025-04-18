@@ -36,7 +36,7 @@ class SignUpViewModel @Inject constructor(
             userData[Constant.KEY_EMAIL] = email
             userData[Constant.KEY_PASSWORD] = hashedPassword
             userData[Constant.KEY_IMAGE] = image
-            userData[Constant.STATUS] = "Feeling Lucky!"
+            userData[Constant.STATUS] = "Hey there! I'm using QChat"
             when (val documentReference = registrationRepository.userSignUp(userData)) {
                 is Resource.Success -> {
                     documentReference.data?.let { userDocument ->
@@ -45,7 +45,7 @@ class SignUpViewModel @Inject constructor(
                         pref.putAny(Constant.KEY_NAME, name)
                         pref.putAny(Constant.KEY_EMAIL, email)
                         pref.putAny(Constant.KEY_IMAGE, image)
-                        pref.putAny(Constant.STATUS, "Feeling Lucky!")
+                        pref.putAny(Constant.STATUS, "Hey there! I'm using QChat")
                         _signUp.postValue(Resource.Success(true))
                         Log.d("SignUpViewModel", "User signed up successfully with hashed password.")
                     }

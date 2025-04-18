@@ -39,18 +39,19 @@ fun View.gone() {
     this.visibility = View.GONE
 }
 
-fun Bitmap.encodeToBase64(): String {
-    val previewWidth = 150
-    val previewHeight = this.height * previewWidth / this.width
-    val previewBitmap = Bitmap.createScaledBitmap(this, previewWidth, previewHeight, false)
+fun Bitmap.encodeToBase64(targetWidth: Int = 1024): String {
+    val targetHeight = (this.height * targetWidth) / this.width
+    // Scale with higher quality filtering
+    val scaledBitmap = Bitmap.createScaledBitmap(this, targetWidth, targetHeight, true)
+
     val byteArrayOutputStream = ByteArrayOutputStream()
-    previewBitmap.compress(Bitmap.CompressFormat.JPEG, 50, byteArrayOutputStream)
+    scaledBitmap.compress(Bitmap.CompressFormat.JPEG, 90, byteArrayOutputStream)
     return Base64.encodeToString(byteArrayOutputStream.toByteArray(), Base64.DEFAULT)
 }
 
-fun String.decodeToBitmap():Bitmap{
-    val byte = Base64.decode(this,Base64.DEFAULT)
-    return BitmapFactory.decodeByteArray(byte,0,byte.size)
+fun String.decodeToBitmap(): Bitmap {
+    val byte = Base64.decode(this, Base64.DEFAULT)
+    return BitmapFactory.decodeByteArray(byte, 0, byte.size)
 }
 
 fun SharedPreferences.putAny(key: String, value: Any) {
