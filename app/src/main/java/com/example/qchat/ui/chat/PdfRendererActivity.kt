@@ -1,9 +1,11 @@
 package com.example.qchat.ui.chat
 
 import android.graphics.Bitmap
+import android.graphics.Color
 import android.graphics.pdf.PdfRenderer
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
+import android.view.View
 import android.widget.ImageView
 import android.widget.LinearLayout
 import android.widget.Toast
@@ -18,6 +20,16 @@ class PdfRendererActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_pdf_renderer)
+
+        // Set status bar and navigation bar colors
+        window.statusBarColor = Color.BLACK
+        window.decorView.systemUiVisibility = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR
+        window.navigationBarColor = Color.BLACK
+
+        // Set up back button
+        findViewById<ImageView>(R.id.pdfbackButton).setOnClickListener {
+            finish()
+        }
 
         val documentUrl = intent.getStringExtra("documentUrl")
         val documentName = intent.getStringExtra("documentName") ?: "document.pdf"
@@ -55,7 +67,7 @@ class PdfRendererActivity : AppCompatActivity() {
             val renderer = PdfRenderer(fileDescriptor)
 
             val displayMetrics = resources.displayMetrics
-            val screenWidth = displayMetrics.widthPixels - (16 * displayMetrics.density).toInt() // 8dp padding on each side
+            val screenWidth = displayMetrics.widthPixels - (16 * displayMetrics.density).toInt()
 
             for (i in 0 until renderer.pageCount) {
                 val page = renderer.openPage(i)
@@ -76,7 +88,7 @@ class PdfRendererActivity : AppCompatActivity() {
                         LinearLayout.LayoutParams.MATCH_PARENT,
                         LinearLayout.LayoutParams.WRAP_CONTENT
                     ).apply {
-                        setMargins(0, 0, 0, (8 * displayMetrics.density).toInt()) // 8dp bottom margin
+                        setMargins(0, 0, 0, (8 * displayMetrics.density).toInt())
                     }
                     setImageBitmap(bitmap)
                     adjustViewBounds = true
