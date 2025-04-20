@@ -26,15 +26,12 @@ class ChatSettingsActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.switchBackup.setOnCheckedChangeListener { _, isChecked ->
-            // Save chat history preference
         }
 
         binding.switchPreview.setOnCheckedChangeListener { _, isChecked ->
-            // Save message preview preference
         }
 
         binding.switchMedia.setOnCheckedChangeListener { _, isChecked ->
-            // Save media visibility preference
         }
     }
 
