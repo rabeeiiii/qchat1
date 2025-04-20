@@ -3,7 +3,6 @@ package com.example.qchat.ui.settings
 import android.content.Intent
 import android.net.Uri
 import android.os.Bundle
-import android.view.View
 import androidx.appcompat.app.AppCompatActivity
 import com.example.qchat.databinding.ActivityHelpSettingsBinding
 import dagger.hilt.android.AndroidEntryPoint
@@ -29,118 +28,28 @@ class HelpSettingsActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.btnHelpCenter.setOnClickListener {
-            openHelpCenter()
+            openUrl("https://help.qchat.com")
         }
 
         binding.btnContactUs.setOnClickListener {
-            openContactUs()
+            openUrl("https://qchat.com/contact")
         }
 
         binding.btnPrivacyPolicy.setOnClickListener {
-            openPrivacyPolicy()
+            openUrl("https://qchat.com/privacy")
         }
 
         binding.btnTerms.setOnClickListener {
-            openTermsOfService()
+            openUrl("https://qchat.com/terms")
         }
 
         binding.btnFaq.setOnClickListener {
-            openFAQ()
+            openUrl("https://qchat.com/faq")
         }
     }
 
-    private fun openHelpCenter() {
-        // Animate button press
-        binding.btnHelpCenter.animate()
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(100)
-            .withEndAction {
-                binding.btnHelpCenter.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-            }
-            .start()
-
-        // Open help center URL
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://help.qchat.com"))
-        startActivity(intent)
-    }
-
-    private fun openContactUs() {
-        binding.btnContactUs.animate()
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(100)
-            .withEndAction {
-                binding.btnContactUs.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-            }
-            .start()
-
-        val intent = Intent(Intent.ACTION_SENDTO).apply {
-            data = Uri.parse("mailto:support@qchat.com")
-            putExtra(Intent.EXTRA_SUBJECT, "QChat Support Request")
-        }
-        startActivity(Intent.createChooser(intent, "Contact Support"))
-    }
-
-    private fun openPrivacyPolicy() {
-        binding.btnPrivacyPolicy.animate()
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(100)
-            .withEndAction {
-                binding.btnPrivacyPolicy.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-            }
-            .start()
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qchat.com/privacy"))
-        startActivity(intent)
-    }
-
-    private fun openTermsOfService() {
-        binding.btnTerms.animate()
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(100)
-            .withEndAction {
-                binding.btnTerms.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-            }
-            .start()
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qchat.com/terms"))
-        startActivity(intent)
-    }
-
-    private fun openFAQ() {
-        binding.btnFaq.animate()
-            .scaleX(0.95f)
-            .scaleY(0.95f)
-            .setDuration(100)
-            .withEndAction {
-                binding.btnFaq.animate()
-                    .scaleX(1f)
-                    .scaleY(1f)
-                    .setDuration(100)
-                    .start()
-            }
-            .start()
-
-        val intent = Intent(Intent.ACTION_VIEW, Uri.parse("https://qchat.com/faq"))
+    private fun openUrl(url: String) {
+        val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
         startActivity(intent)
     }
 
@@ -148,4 +57,4 @@ class HelpSettingsActivity : AppCompatActivity() {
         onBackPressed()
         return true
     }
-} 
+}

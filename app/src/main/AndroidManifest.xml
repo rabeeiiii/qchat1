@@ -47,6 +47,9 @@
             android:windowSoftInputMode="adjustResize" />
 
         <activity android:name=".ui.chat.VideoPlayerActivity"/>
+        <activity android:name=".ui.chat.PdfRendererActivity"/>
+        <activity android:name=".ui.chat.PhotoViewerActivity"/>
+
 
 
         <activity android:name=".ui.profile.EditProfileActivity" />

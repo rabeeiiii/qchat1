@@ -24,6 +24,8 @@ import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.databinding.ItemSendVideoBinding
 import com.example.qchat.databinding.ItemReceivedVideoBinding
 import com.example.qchat.model.ChatMessage
+import com.example.qchat.ui.chat.PdfRendererActivity
+import com.example.qchat.ui.chat.PhotoViewerActivity
 import com.example.qchat.ui.chat.VideoPlayerActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
@@ -84,13 +86,19 @@ class ChatAdapter(
 
         fun setData(message: ChatMessage) {
             try {
-                Log.d("SendPhotoViewHolder", "Photo Base64 (first 100 chars): ${message.message.take(100)}") // Log first 100 characters
+                Log.d(
+                    "SendPhotoViewHolder",
+                    "Photo Base64 (first 100 chars): ${message.message.take(100)}"
+                ) // Log first 100 characters
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
                 if (bitmap != null) {
                     binding.ivMessageImage.setImageBitmap(bitmap)
                     binding.tvDateTime.text = message.dateTime
+                    binding.ivMessageImage.setOnClickListener {
+                        openPhoto(message.message)
+                    }
                     Log.d("SendPhotoViewHolder", "Successfully decoded photo")
                 } else {
                     Log.e("SendPhotoViewHolder", "Failed to decode image!")
@@ -100,6 +108,12 @@ class ChatAdapter(
                 Log.e("SendPhotoViewHolder", "Error decoding photo message: ${e.message}")
             }
         }
+        private fun openPhoto(photoBase64: String) {
+            val intent = Intent(itemView.context, PhotoViewerActivity::class.java).apply {
+                putExtra("photoBase64", photoBase64)
+            }
+            itemView.context.startActivity(intent)
+        }
     }
 
     class ReceivedPhotoViewHolder(val binding: ItemReceivedPhotoBinding) :
@@ -107,7 +121,10 @@ class ChatAdapter(
 
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             try {
-                Log.d("ReceivedPhotoViewHolder", "Photo Base64 (first 100 chars): ${message.message.take(100)}")
+                Log.d(
+                    "ReceivedPhotoViewHolder",
+                    "Photo Base64 (first 100 chars): ${message.message.take(100)}"
+                )
 
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
@@ -116,6 +133,9 @@ class ChatAdapter(
                     binding.ivMessageImage.setImageBitmap(bitmap)
                     binding.tvDateTime.text = message.dateTime
                     profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+                    binding.ivMessageImage.setOnClickListener {
+                        openPhoto(message.message)
+                    }
                     Log.d("ReceivedPhotoViewHolder", "Successfully decoded received photo")
                 } else {
                     Log.e("ReceivedPhotoViewHolder", "Failed to decode received image!")
@@ -124,6 +144,12 @@ class ChatAdapter(
                 e.printStackTrace()
                 Log.e("ReceivedPhotoViewHolder", "Error decoding received photo: ${e.message}")
             }
+        }
+        private fun openPhoto(photoBase64: String) {
+            val intent = Intent(itemView.context, PhotoViewerActivity::class.java).apply {
+                putExtra("photoBase64", photoBase64)
+            }
+            itemView.context.startActivity(intent)
         }
     }
 
@@ -146,7 +172,8 @@ class ChatAdapter(
         private fun openLocationInMap(location: String) {
             val locationParts = location.split(",")
             if (locationParts.size == 2) {
-                val uri = Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val uri =
+                    Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.setPackage("com.google.android.apps.maps")
                 binding.root.context.startActivity(intent)
@@ -182,7 +209,8 @@ class ChatAdapter(
         private fun openLocationInMap(location: String) {
             val locationParts = location.split(",")
             if (locationParts.size == 2) {
-                val uri = Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val uri =
+                    Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
                 val intent = Intent(Intent.ACTION_VIEW, uri)
                 intent.setPackage("com.google.android.apps.maps")
                 binding.root.context.startActivity(intent)
@@ -195,7 +223,8 @@ class ChatAdapter(
         }
     }
 
-    class SendVideoViewHolder(val binding: ItemSendVideoBinding) : RecyclerView.ViewHolder(binding.root) {
+    class SendVideoViewHolder(val binding: ItemSendVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun setData(message: ChatMessage) {
             binding.apply {
                 Glide.with(itemView.context)
@@ -221,7 +250,8 @@ class ChatAdapter(
 
     }
 
-    class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) : RecyclerView.ViewHolder(binding.root) {
+    class ReceivedVideoViewHolder(val binding: ItemReceivedVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             binding.apply {
                 profileImage?.let {
@@ -279,6 +309,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_RECEIVED -> {
                 ReceivedMessageViewHolder(
                     ItemReceivedMessageBinding.inflate(
@@ -288,6 +319,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_SEND_PHOTO -> {
                 SendPhotoViewHolder(
                     ItemSendPhotoBinding.inflate(
@@ -297,6 +329,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_RECEIVED_PHOTO -> {
                 ReceivedPhotoViewHolder(
                     ItemReceivedPhotoBinding.inflate(
@@ -306,6 +339,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_SEND_LOCATION -> {
                 SendLocationViewHolder(
                     ItemSendLocationBinding.inflate(
@@ -315,6 +349,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_RECEIVED_LOCATION -> {
                 ReceivedLocationViewHolder(
                     ItemReceivedLocationBinding.inflate(
@@ -324,12 +359,27 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_SEND_DOCUMENT -> {
-                SendDocumentViewHolder(ItemSendDocumentBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+                SendDocumentViewHolder(
+                    ItemSendDocumentBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
             }
+
             VIEW_TYPE_RECEIVED_DOCUMENT -> {
-                ReceivedDocumentViewHolder(ItemReceivedDocumentBinding.inflate(LayoutInflater.from(parent.context), parent, false))
+                ReceivedDocumentViewHolder(
+                    ItemReceivedDocumentBinding.inflate(
+                        LayoutInflater.from(
+                            parent.context
+                        ), parent, false
+                    )
+                )
             }
+
             VIEW_TYPE_SEND_VIDEO -> {
                 SendVideoViewHolder(
                     ItemSendVideoBinding.inflate(
@@ -339,6 +389,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             VIEW_TYPE_RECEIVED_VIDEO -> {
                 ReceivedVideoViewHolder(
                     ItemReceivedVideoBinding.inflate(
@@ -348,6 +399,7 @@ class ChatAdapter(
                     )
                 )
             }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -358,38 +410,51 @@ class ChatAdapter(
                 val sendHolder = holder as SendMessageViewHolder
                 sendHolder.setData(chatMessagesList[position])
             }
+
             VIEW_TYPE_RECEIVED -> {
                 val receivedHolder = holder as ReceivedMessageViewHolder
                 receivedHolder.setData(chatMessagesList[position], profileImage)
             }
+
             VIEW_TYPE_SEND_PHOTO -> {
                 val sendPhotoHolder = holder as SendPhotoViewHolder
                 sendPhotoHolder.setData(chatMessagesList[position])
             }
+
             VIEW_TYPE_RECEIVED_PHOTO -> {
                 val receivedPhotoHolder = holder as ReceivedPhotoViewHolder
                 receivedPhotoHolder.setData(chatMessagesList[position], profileImage)
             }
+
             VIEW_TYPE_SEND_LOCATION -> {
                 val sendLocationHolder = holder as SendLocationViewHolder
                 sendLocationHolder.setData(chatMessagesList[position])
             }
+
             VIEW_TYPE_RECEIVED_LOCATION -> {
                 val receivedLocationHolder = holder as ReceivedLocationViewHolder
                 receivedLocationHolder.setData(chatMessagesList[position], profileImage)
             }
+
             VIEW_TYPE_SEND_DOCUMENT -> {
                 val sendDocumentHolder = holder as SendDocumentViewHolder
                 sendDocumentHolder.setData(chatMessagesList[position])
             }
+
             VIEW_TYPE_RECEIVED_DOCUMENT -> {
                 val receivedDocumentHolder = holder as ReceivedDocumentViewHolder
-                receivedDocumentHolder.setData(chatMessagesList[position], profileImage, holder.itemView.context)
+                receivedDocumentHolder.setData(
+                    chatMessagesList[position],
+                    profileImage,
+                    holder.itemView.context
+                )
             }
+
             VIEW_TYPE_SEND_VIDEO -> {
                 val sendVideoHolder = holder as SendVideoViewHolder
                 sendVideoHolder.setData(chatMessagesList[position])
             }
+
             VIEW_TYPE_RECEIVED_VIDEO -> {
                 val receivedVideoHolder = holder as ReceivedVideoViewHolder
                 receivedVideoHolder.setData(chatMessagesList[position], profileImage)
@@ -408,7 +473,10 @@ class ChatAdapter(
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
 
-        Log.d("ChatAdapter", "Determining view type for message - senderId: ${message.senderId}, adapter senderId: $senderId, messageType: ${message.messageType}")
+        Log.d(
+            "ChatAdapter",
+            "Determining view type for message - senderId: ${message.senderId}, adapter senderId: $senderId, messageType: ${message.messageType}"
+        )
 
         return when {
             message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
@@ -418,37 +486,43 @@ class ChatAdapter(
                     VIEW_TYPE_RECEIVED_PHOTO
                 }
             }
+
             message.messageType == Constant.MESSAGE_TYPE_DOCUMENT -> {
                 if (message.senderId == senderId) VIEW_TYPE_SEND_DOCUMENT else VIEW_TYPE_RECEIVED_DOCUMENT
             }
+
             message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
                 if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
             }
+
             message.messageType == Constant.MESSAGE_TYPE_VIDEO -> {
                 if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
             }
+
             message.senderId == senderId -> VIEW_TYPE_SEND
             else -> VIEW_TYPE_RECEIVED
         }
     }
-    class SendDocumentViewHolder(val binding: ItemSendDocumentBinding) : RecyclerView.ViewHolder(binding.root) {
+
+    class SendDocumentViewHolder(val binding: ItemSendDocumentBinding) :
+        RecyclerView.ViewHolder(binding.root) {
         fun setData(message: ChatMessage) {
             binding.apply {
-                binding.tvDocumentName.text = message.documentName ?: "Unnamed "
+                tvDocumentName.text = message.documentName ?: "Unnamed"
                 tvDateTime.text = message.dateTime
-                Glide.with(itemView.context)
-                    .load(message.message)
 
-                binding.root.setOnClickListener {
-                    openDocument(message.message)
+                root.setOnClickListener {
+                    openDocument(message.message, message.documentName ?: "document.pdf")
                 }
             }
         }
 
-        private fun openDocument(url: String) {
-            val intent = Intent(Intent.ACTION_VIEW, Uri.parse(url))
-            intent.flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-            binding.root.context.startActivity(intent)
+        private fun openDocument(documentUrl: String, documentName: String) {
+            val intent = Intent(itemView.context, PdfRendererActivity::class.java).apply {
+                putExtra("documentUrl", documentUrl)
+                putExtra("documentName", documentName)
+            }
+            itemView.context.startActivity(intent)
         }
     }
 
@@ -462,25 +536,19 @@ class ChatAdapter(
                 }
                 tvDocumentName.text = message.documentName ?: "Document"
                 tvDateTime.text = message.dateTime
+
                 root.setOnClickListener {
-                    message.message.takeIf { it.isNotEmpty() }?.let { url ->
-                        openDocument(url, context)
-                    }
+                    openDocument(message.message, message.documentName ?: "document.pdf", context)
                 }
             }
         }
 
-        private fun openDocument(url: String, context: Context) {
-            try {
-                val intent = Intent(Intent.ACTION_VIEW).apply {
-                    data = Uri.parse(url)
-                    flags = Intent.FLAG_ACTIVITY_NO_HISTORY
-                    setDataAndType(Uri.parse(url), "application/pdf")
-                }
-                context.startActivity(intent)
-            } catch (e: Exception) {
-                Log.e("ReceivedDocument", "Error opening document", e)
+        private fun openDocument(documentUrl: String, documentName: String, context: Context) {
+            val intent = Intent(context, PdfRendererActivity::class.java).apply {
+                putExtra("documentUrl", documentUrl)
+                putExtra("documentName", documentName)
             }
+            context.startActivity(intent)
         }
     }
 }

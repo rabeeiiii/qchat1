@@ -26,19 +26,15 @@ class NotificationsSettingsActivity : AppCompatActivity() {
 
     private fun setupClickListeners() {
         binding.switchMessageNotifications.setOnCheckedChangeListener { _, isChecked ->
-            // Save message notifications preference
         }
 
         binding.switchGroupNotifications.setOnCheckedChangeListener { _, isChecked ->
-            // Save group notifications preference
         }
 
         binding.switchSound.setOnCheckedChangeListener { _, isChecked ->
-            // Save sound preference
         }
 
         binding.switchVibration.setOnCheckedChangeListener { _, isChecked ->
-            // Save vibration preference
         }
     }
 
