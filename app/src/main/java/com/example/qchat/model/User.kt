@@ -8,6 +8,6 @@ data class User(
     var email: String? = null,
     var token: String? = null,
     val id: String = "",
-    var status: String = "Hey there! I'm using QChat"
+    var status: String = "Just joined QChat — let's talk!"
 
 ): Serializable

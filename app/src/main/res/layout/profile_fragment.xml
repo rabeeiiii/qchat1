@@ -74,7 +74,7 @@
             app:cornerRadius="8dp"
             app:elevation="4dp"
             app:icon="@drawable/call2"
-            app:iconGravity="textStart"
+            app:iconGravity="top"
             app:iconTint="@android:color/black" />
 
         <com.google.android.material.button.MaterialButton
@@ -87,7 +87,7 @@
             app:cornerRadius="8dp"
             app:elevation="4dp"
             app:icon="@drawable/videocall"
-            app:iconGravity="textStart"
+            app:iconGravity="top"
             app:iconTint="@android:color/black" />
 
         <com.google.android.material.button.MaterialButton
@@ -100,19 +100,7 @@
             app:elevation="4dp"
             android:text="mute"
             app:icon="@drawable/silence"
-            app:iconGravity="textStart"
-            app:iconTint="@android:color/black" />
-
-        <com.google.android.material.button.MaterialButton
-            android:id="@+id/search_button"
-            android:layout_width="56dp"
-            android:layout_height="56dp"
-            android:text="search"
-            app:backgroundTint="@android:color/white"
-            app:cornerRadius="8dp"
-            app:elevation="4dp"
-            app:icon="@drawable/ic_search"
-            app:iconGravity="textStart"
+            app:iconGravity="top"
             app:iconTint="@android:color/black" />
 
     </LinearLayout>
@@ -182,39 +170,6 @@
 
         </LinearLayout>
 
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:gravity="center_vertical"
-            android:background="@android:color/white"
-            android:elevation="2dp"
-            android:layout_marginBottom="4dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/pen"
-                android:contentDescription="@string/nickname_icon"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Nickname"
-                android:textSize="16sp"
-                android:textColor="#000000"
-                android:layout_marginStart="16dp"/>
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:contentDescription="@string/arrow_icon"
-                android:src="@drawable/chevron"
-                android:layout_marginStart="250dp"/>
-
-        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"
@@ -247,39 +202,6 @@
                 android:src="@drawable/chevron"
                 android:layout_marginStart="245dp"
                 android:contentDescription="@string/arrow_icon"/>
-
-        </LinearLayout>
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="56dp"
-            android:orientation="horizontal"
-            android:paddingStart="16dp"
-            android:paddingEnd="16dp"
-            android:gravity="center_vertical"
-            android:background="@android:color/white"
-            android:elevation="2dp">
-
-            <ImageView
-                android:layout_width="24dp"
-                android:layout_height="24dp"
-                android:src="@drawable/spam"
-                android:contentDescription="@string/report_spam_icon"/>
-
-            <TextView
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:text="Report Spam"
-                android:textSize="16sp"
-                android:textColor="#ff0000"
-                android:layout_marginStart="16dp"/>
-
-            <ImageView
-                android:layout_width="16dp"
-                android:layout_height="16dp"
-                android:contentDescription="@string/arrow_icon"
-                android:src="@drawable/chevron"
-                android:layout_marginStart="225dp" />
 
         </LinearLayout>
 

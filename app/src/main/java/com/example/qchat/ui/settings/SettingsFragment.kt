@@ -63,7 +63,7 @@ class SettingsFragment : Fragment() {
             "Network usage, storage usage"
         ),
         SettingItem(
-            R.drawable.ic_invite,
+            R.drawable.plus_grey,
             "Invite a friend",
             "Share this app with friends"
         ),
@@ -95,7 +95,7 @@ class SettingsFragment : Fragment() {
         val userId = sharedPreferences.getString(Constant.KEY_USER_ID, "") ?: ""
 
         viewModel.getUserStatus(userId).observe(viewLifecycleOwner) { status ->
-            view.findViewById<TextView>(R.id.status).text = status ?: "Hey there! I'm using QChat!"
+            view.findViewById<TextView>(R.id.status).text = status ?: "Just joined QChat — let's talk!"
         }
 
         // Load initial user details
