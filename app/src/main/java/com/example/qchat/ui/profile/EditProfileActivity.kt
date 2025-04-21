@@ -39,12 +39,11 @@ class EditProfileActivity : AppCompatActivity() {
     private var imageUri: Uri? = null
     private var encodedImage: String? = null
 
-    // Launcher for image picker
     private val imagePickerLauncher =
         registerForActivityResult(ActivityResultContracts.StartActivityForResult()) { result ->
             if (result.resultCode == RESULT_OK) {
                 result.data?.data?.let { uri ->
-                    imageUri = uri // Store the URI
+                    imageUri = uri
                     Glide.with(this)
                         .load(uri)
                         .placeholder(android.R.drawable.ic_menu_gallery)
@@ -59,10 +58,8 @@ class EditProfileActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         window.statusBarColor = resources.getColor(R.color.black, theme)
-        // Load current user data
         loadUserData()
 
-        // Click listeners
         binding.btnChangePhoto.setOnClickListener {
             openImagePicker()
         }
@@ -72,16 +69,16 @@ class EditProfileActivity : AppCompatActivity() {
         }
 
         binding.btnCancel.setOnClickListener {
-            finish() // Close the activity and return to previous screen
+            finish()
         }
         binding.ivBack.setOnClickListener {
-            onBackPressedDispatcher.onBackPressed() // Navigates back
+            onBackPressedDispatcher.onBackPressed()
         }
     }
 
     private fun loadUserData() {
         val userId = intent.getStringExtra("USER_ID") ?: return
-        val DEFAULT_STATUS = "Hey there! I'm using QChat" // Default status text
+        val DEFAULT_STATUS = "Just joined QChat — let's talk!"
 
         fireStore.collection(Constant.KEY_COLLECTION_USERS)
             .document(userId)
@@ -96,7 +93,6 @@ class EditProfileActivity : AppCompatActivity() {
                     binding.etEmail.setText(email)
                     binding.etstatus.setText(status)
 
-                    // Decode and load Base64 image if it exists
                     if (imageBase64.isNotEmpty()) {
                         val bitmap = decodeBase64ToBitmap(imageBase64)
                         binding.ivProfileImage.setImageBitmap(bitmap)
@@ -126,12 +122,10 @@ class EditProfileActivity : AppCompatActivity() {
             return
         }
 
-        // If a new image is selected, encode it to Base64
         if (imageUri != null) {
             encodedImage = encodeImageToBase64(imageUri!!)
         }
 
-        // Fetch user document before updating password
         fireStore.collection(Constant.KEY_COLLECTION_USERS)
             .document(userId)
             .get()
@@ -143,16 +137,13 @@ class EditProfileActivity : AppCompatActivity() {
                         Constant.KEY_STATUS to newstatus
                     )
 
-                    // If a new image is selected, update the Base64 string in Firebase
                     if (!encodedImage.isNullOrEmpty()) {
                         updates[Constant.KEY_IMAGE] = encodedImage!!
                     }
 
-                    // Check if password change is requested
                     if (currentPassword.isNotEmpty() && newPassword.isNotEmpty()) {
                         val storedHashedPassword = document.getString(Constant.KEY_PASSWORD) ?: ""
 
-                        // Verify current password
                         if (BCrypt.checkpw(currentPassword, storedHashedPassword)) {
                             val newHashedPassword = BCrypt.hashpw(newPassword, BCrypt.gensalt())
                             updates[Constant.KEY_PASSWORD] = newHashedPassword
@@ -162,7 +153,6 @@ class EditProfileActivity : AppCompatActivity() {
                         }
                     }
 
-                    // Update Firebase with new profile data
                     lifecycleScope.launch {
                         val isUpdated = mainRepository.updateUserProfile(userId, updates)
                         if (isUpdated) {
@@ -193,12 +183,10 @@ class EditProfileActivity : AppCompatActivity() {
             val inputStream: InputStream? = contentResolver.openInputStream(uri)
             val bitmap = BitmapFactory.decodeStream(inputStream)
 
-            // Compress the image to reduce its size
             val outputStream = ByteArrayOutputStream()
             bitmap.compress(Bitmap.CompressFormat.JPEG, 70, outputStream) // Compress quality to 70%
             val byteArray: ByteArray = outputStream.toByteArray()
 
-            // Encode the compressed image to Base64
             Base64.encodeToString(byteArray, Base64.DEFAULT)
         } catch (e: FileNotFoundException) {
             e.printStackTrace()

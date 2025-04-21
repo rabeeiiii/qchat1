@@ -118,26 +118,37 @@
         android:padding="8dp"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <ImageView
+        <androidx.appcompat.widget.AppCompatImageView
             android:id="@+id/imageViewAttachment"
-            android:layout_width="40dp"
-            android:layout_height="40dp"
-            android:src="@drawable/ic_attachment"
-            android:padding="8dp"/>
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_gravity="center_vertical"
+            android:layout_marginEnd="5dp"
+            android:src="@drawable/add"
+            app:layout_constraintBottom_toBottomOf="@+id/etMessage"
+            app:layout_constraintEnd_toStartOf="@+id/etMessage"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintTop_toTopOf="@+id/etMessage"
+            app:layout_constraintVertical_bias="0.5" />
 
         <EditText
             android:id="@+id/editTextMessage"
-            android:layout_width="0dp"
-            android:layout_height="wrap_content"
+            android:layout_width="285dp"
+            android:layout_height="48dp"
             android:layout_weight="1"
-            android:layout_marginHorizontal="8dp"
-            android:layout_gravity="center_vertical"
-            android:minHeight="40dp"
             android:background="@drawable/input_background"
-            android:hint="Type a message..."
-            android:inputType="textMultiLine"
-            android:maxLines="3"
-            android:padding="12dp"/>
+            android:gravity="center_vertical"
+            android:hint="QChat...."
+            android:inputType="text"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            android:textColor="@android:color/black"
+            android:textSize="14sp"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintEnd_toStartOf="@+id/ivSend"
+            app:layout_constraintStart_toEndOf="@+id/ivAdd"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintVertical_bias="0.976" />
 
         <ImageView
             android:id="@+id/imageViewSend"

@@ -55,7 +55,7 @@ class ProfileFragment : Fragment(R.layout.profile_fragment) {
                 if (document.exists()) {
                     val name = document.getString("name") ?: ""
                     val email = document.getString("email") ?: ""
-                    val status = document.getString("status") ?: "Hey there! I'm using QChat" // Default value for status
+                    val status = document.getString("status") ?: "Just joined QChat — let's talk!"
 
                     userName.text = name
                     userStatus.text = status
