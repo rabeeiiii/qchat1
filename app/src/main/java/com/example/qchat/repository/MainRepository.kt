@@ -1,5 +1,6 @@
 package com.example.qchat.repository
 
+import android.content.SharedPreferences
 import android.net.Uri
 import android.util.Base64
 import android.util.Log
@@ -29,14 +30,15 @@ import kotlin.collections.HashMap
 import com.example.qchat.model.User
 import com.example.qchat.network.ApiService
 import com.example.qchat.utils.PreferenceManager
+import com.example.qchat.model.BlockedUser
 
 class MainRepository @Inject constructor(
     private val fireStore: FirebaseFirestore,
     private val fireMessage: FirebaseMessaging,
     private val fcmApi:Api,
     private val remoteHeader:HashMap<String,String>,
+    private val pref: SharedPreferences,
     private val apiService: ApiService,
-    private val preferenceManager: PreferenceManager
 ) {
 
     suspend fun updateToken(token: String, userId: String): Boolean {
@@ -411,5 +413,124 @@ class MainRepository @Inject constructor(
             android.util.Log.e("MainRepository", "Error loading user with ID: $userId", e)
             Result.failure(e)
         }
+    }
+
+    fun blockUser(currentUserId: String, blockedUser: BlockedUser, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        if (currentUserId.isEmpty()) {
+            Log.e("MainRepository", "Current user ID is empty")
+            onFailure(Exception("Current user ID is empty"))
+            return
+        }
+
+        Log.d("MainRepository", "Attempting to block user: ${blockedUser.blockedUserName} (${blockedUser.blockedUserId})")
+        Log.d("MainRepository", "Current user ID: $currentUserId")
+
+        // First, ensure the user document exists
+        fireStore.collection(Constant.KEY_COLLECTION_USERS)
+            .document(currentUserId)
+            .get()
+            .addOnSuccessListener { userDoc ->
+                if (!userDoc.exists()) {
+                    Log.e("MainRepository", "Current user document does not exist")
+                    onFailure(Exception("User not found"))
+                    return@addOnSuccessListener
+                }
+
+                // Create the blocked_users collection and add the blocked user
+                fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                    .document(currentUserId)
+                    .collection("blocked_users")
+                    .document(blockedUser.blockedUserId)
+                    .set(blockedUser)
+                    .addOnSuccessListener {
+                        Log.d("MainRepository", "Successfully blocked user: ${blockedUser.blockedUserName}")
+                        onSuccess()
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("MainRepository", "Failed to block user: ${e.message}", e)
+                        onFailure(e)
+                    }
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainRepository", "Failed to verify user: ${e.message}", e)
+                onFailure(e)
+            }
+    }
+
+    fun unblockUser(currentUserId: String, blockedUserId: String, onSuccess: () -> Unit, onFailure: (Exception) -> Unit) {
+        if (currentUserId.isEmpty()) {
+            Log.e("MainRepository", "Current user ID is empty")
+            onFailure(Exception("Current user ID is empty"))
+            return
+        }
+
+        Log.d("MainRepository", "Attempting to unblock user: $blockedUserId")
+        Log.d("MainRepository", "Current user ID: $currentUserId")
+
+        fireStore.collection(Constant.KEY_COLLECTION_USERS)
+            .document(currentUserId)
+            .collection("blocked_users")
+            .document(blockedUserId)
+            .delete()
+            .addOnSuccessListener {
+                Log.d("MainRepository", "Successfully unblocked user: $blockedUserId")
+                onSuccess()
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainRepository", "Failed to unblock user: ${e.message}", e)
+                onFailure(e)
+            }
+    }
+
+    fun isUserBlocked(currentUserId: String, blockedUserId: String, onResult: (Boolean) -> Unit) {
+        if (currentUserId.isEmpty()) {
+            Log.e("MainRepository", "Current user ID is empty")
+            onResult(false)
+            return
+        }
+
+        Log.d("MainRepository", "Checking if user is blocked: $blockedUserId")
+        Log.d("MainRepository", "Current user ID: $currentUserId")
+
+        fireStore.collection(Constant.KEY_COLLECTION_USERS)
+            .document(currentUserId)
+            .collection("blocked_users")
+            .document(blockedUserId)
+            .get()
+            .addOnSuccessListener { document ->
+                val isBlocked = document.exists()
+                Log.d("MainRepository", "User block status: $isBlocked")
+                onResult(isBlocked)
+            }
+            .addOnFailureListener { e ->
+                Log.e("MainRepository", "Error checking block status: ${e.message}", e)
+                onResult(false)
+            }
+    }
+
+    fun getBlockedUsers(currentUserId: String, onResult: (List<BlockedUser>) -> Unit) {
+        if (currentUserId.isEmpty()) {
+            onResult(emptyList())
+            return
+        }
+
+        fireStore.collection(Constant.KEY_COLLECTION_USERS)
+            .document(currentUserId)
+            .collection("blocked_users")
+            .get()
+            .addOnSuccessListener { documents ->
+                val blockedUsers = documents.mapNotNull { document ->
+                    document.toObject(BlockedUser::class.java)
+                }
+                onResult(blockedUsers)
+            }
+            .addOnFailureListener {
+                onResult(emptyList())
+            }
+    }
+
+    fun getCurrentUserId(): String {
+        val currentUserId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+        return currentUserId
     }
 }

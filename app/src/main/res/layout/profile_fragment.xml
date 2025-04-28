@@ -180,7 +180,11 @@
             android:gravity="center_vertical"
             android:background="@android:color/white"
             android:elevation="2dp"
-            android:layout_marginBottom="4dp">
+            android:layout_marginBottom="4dp"
+            android:id="@+id/blockUserButton"
+            android:clickable="true"
+            android:focusable="true"
+            android:foreground="?android:attr/selectableItemBackground">
 
             <ImageView
                 android:layout_width="24dp"
@@ -191,6 +195,7 @@
             <TextView
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
+                android:id="@+id/blockUserText"
                 android:text="Block User"
                 android:textSize="16sp"
                 android:textColor="#ff0000"
