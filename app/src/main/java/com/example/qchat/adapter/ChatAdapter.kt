@@ -28,6 +28,7 @@ import com.example.qchat.ui.chat.PdfRendererActivity
 import com.example.qchat.ui.chat.PhotoViewerActivity
 import com.example.qchat.ui.chat.VideoPlayerActivity
 import com.example.qchat.utils.Constant
+import com.example.qchat.utils.Constant.VIEW_TYPE_BLOCKED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_DOCUMENT
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
@@ -300,6 +301,11 @@ class ChatAdapter(
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
+            VIEW_TYPE_BLOCKED -> {
+                val view = LayoutInflater.from(parent.context)
+                    .inflate(R.layout.item_blocked_message, parent, false)
+                BlockedMessageViewHolder(view)
+            }
             VIEW_TYPE_SEND -> {
                 SendMessageViewHolder(
                     ItemSendMessageBinding.inflate(
@@ -405,60 +411,18 @@ class ChatAdapter(
     }
 
     override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        when (getItemViewType(position)) {
-            VIEW_TYPE_SEND -> {
-                val sendHolder = holder as SendMessageViewHolder
-                sendHolder.setData(chatMessagesList[position])
-            }
-
-            VIEW_TYPE_RECEIVED -> {
-                val receivedHolder = holder as ReceivedMessageViewHolder
-                receivedHolder.setData(chatMessagesList[position], profileImage)
-            }
-
-            VIEW_TYPE_SEND_PHOTO -> {
-                val sendPhotoHolder = holder as SendPhotoViewHolder
-                sendPhotoHolder.setData(chatMessagesList[position])
-            }
-
-            VIEW_TYPE_RECEIVED_PHOTO -> {
-                val receivedPhotoHolder = holder as ReceivedPhotoViewHolder
-                receivedPhotoHolder.setData(chatMessagesList[position], profileImage)
-            }
-
-            VIEW_TYPE_SEND_LOCATION -> {
-                val sendLocationHolder = holder as SendLocationViewHolder
-                sendLocationHolder.setData(chatMessagesList[position])
-            }
-
-            VIEW_TYPE_RECEIVED_LOCATION -> {
-                val receivedLocationHolder = holder as ReceivedLocationViewHolder
-                receivedLocationHolder.setData(chatMessagesList[position], profileImage)
-            }
-
-            VIEW_TYPE_SEND_DOCUMENT -> {
-                val sendDocumentHolder = holder as SendDocumentViewHolder
-                sendDocumentHolder.setData(chatMessagesList[position])
-            }
-
-            VIEW_TYPE_RECEIVED_DOCUMENT -> {
-                val receivedDocumentHolder = holder as ReceivedDocumentViewHolder
-                receivedDocumentHolder.setData(
-                    chatMessagesList[position],
-                    profileImage,
-                    holder.itemView.context
-                )
-            }
-
-            VIEW_TYPE_SEND_VIDEO -> {
-                val sendVideoHolder = holder as SendVideoViewHolder
-                sendVideoHolder.setData(chatMessagesList[position])
-            }
-
-            VIEW_TYPE_RECEIVED_VIDEO -> {
-                val receivedVideoHolder = holder as ReceivedVideoViewHolder
-                receivedVideoHolder.setData(chatMessagesList[position], profileImage)
-            }
+        when (holder) {
+            is BlockedMessageViewHolder -> holder.bind(chatMessagesList[position])
+            is SendMessageViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedMessageViewHolder -> holder.setData(chatMessagesList[position], profileImage)
+            is SendPhotoViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedPhotoViewHolder -> holder.setData(chatMessagesList[position], profileImage)
+            is SendLocationViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedLocationViewHolder -> holder.setData(chatMessagesList[position], profileImage)
+            is SendDocumentViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedDocumentViewHolder -> holder.setData(chatMessagesList[position], profileImage, holder.itemView.context)
+            is SendVideoViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedVideoViewHolder -> holder.setData(chatMessagesList[position], profileImage)
         }
     }
 
@@ -472,35 +436,28 @@ class ChatAdapter(
 
     override fun getItemViewType(position: Int): Int {
         val message = chatMessagesList[position]
-
-        Log.d(
-            "ChatAdapter",
-            "Determining view type for message - senderId: ${message.senderId}, adapter senderId: $senderId, messageType: ${message.messageType}"
-        )
+        Log.d("ChatAdapter", "Determining view type for message - senderId: ${message.senderId}, adapter senderId: $senderId, messageType: ${message.messageType}")
 
         return when {
-            message.messageType == Constant.MESSAGE_TYPE_PHOTO -> {
-                if (message.senderId == senderId) {
-                    VIEW_TYPE_SEND_PHOTO
-                } else {
-                    VIEW_TYPE_RECEIVED_PHOTO
+            message.messageType == "blocked" -> VIEW_TYPE_BLOCKED
+            message.senderId == senderId -> {
+                when (message.messageType) {
+                    Constant.MESSAGE_TYPE_PHOTO -> VIEW_TYPE_SEND_PHOTO
+                    Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_SEND_LOCATION
+                    Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_SEND_DOCUMENT
+                    Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_SEND_VIDEO
+                    else -> VIEW_TYPE_SEND
                 }
             }
-
-            message.messageType == Constant.MESSAGE_TYPE_DOCUMENT -> {
-                if (message.senderId == senderId) VIEW_TYPE_SEND_DOCUMENT else VIEW_TYPE_RECEIVED_DOCUMENT
+            else -> {
+                when (message.messageType) {
+                    Constant.MESSAGE_TYPE_PHOTO -> VIEW_TYPE_RECEIVED_PHOTO
+                    Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_RECEIVED_LOCATION
+                    Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_RECEIVED_DOCUMENT
+                    Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_RECEIVED_VIDEO
+                    else -> VIEW_TYPE_RECEIVED
+                }
             }
-
-            message.messageType == Constant.MESSAGE_TYPE_LOCATION -> {
-                if (message.senderId == senderId) VIEW_TYPE_SEND_LOCATION else VIEW_TYPE_RECEIVED_LOCATION
-            }
-
-            message.messageType == Constant.MESSAGE_TYPE_VIDEO -> {
-                if (message.senderId == senderId) VIEW_TYPE_SEND_VIDEO else VIEW_TYPE_RECEIVED_VIDEO
-            }
-
-            message.senderId == senderId -> VIEW_TYPE_SEND
-            else -> VIEW_TYPE_RECEIVED
         }
     }
 

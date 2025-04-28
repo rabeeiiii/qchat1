@@ -58,6 +58,8 @@ object Constant {
     const val VIEW_TYPE_SEND_DOCUMENT = 7
     const val VIEW_TYPE_RECEIVED_DOCUMENT = 8
 
+    const val VIEW_TYPE_BLOCKED = 11
+
     const val KEY_SIGNATURE = "signature"
     const val KEY_PUBLIC_KEY = "publicKey"
 
