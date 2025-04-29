@@ -195,6 +195,7 @@ class MainViewModel @Inject constructor(
                         "location" -> "📍 Location"
                         "document" -> "📄 Document"
                         "video" -> "\uD83D\uDCF9 Video"
+                        "audio" -> "\uD83C\uDF99\uFE0F Audio"
 
                         else -> parts[0].trim()
                     }

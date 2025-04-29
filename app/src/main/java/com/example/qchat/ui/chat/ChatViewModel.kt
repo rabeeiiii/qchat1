@@ -257,6 +257,73 @@ class ChatViewModel @Inject constructor(
         }
     }
 
+    fun sendAudio(audioBytes: ByteArray, receiverUser: User) {
+        viewModelScope.launch {
+            val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
+            if (senderId.isEmpty()) return@launch
+
+            val timestamp = System.currentTimeMillis()
+            val audioName = "audio_$timestamp.3gp"
+
+            val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
+                Log.e("ChatViewModel", "Failed to get shared secret, generating new key")
+                AesUtils.generateAESKey()
+            }
+
+            uploadAudioToFirebase(audioBytes, audioName, { audioUrl ->
+                val audioInfo = "AUDIO||$audioUrl"
+                val encryptedMessage = AesUtils.encryptMessage(audioInfo, aesKey)
+                val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
+
+                val messageMap = hashMapOf(
+                    Constant.KEY_SENDER_ID to senderId,
+                    Constant.KEY_RECEIVER_ID to receiverUser.id,
+                    Constant.KEY_ENCRYPTED_MESSAGE to encryptedMessage,
+                    Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
+                    Constant.KEY_MESSAGE_TYPE to "audio",
+                    Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp()
+                )
+
+                repository.sendMessage(messageMap)
+                    .addOnSuccessListener {
+                        Log.d("ChatViewModel", "Audio sent successfully")
+                        updateRecentConversation(
+                            senderId = senderId,
+                            receiverUser = receiverUser,
+                            lastMessage = "[Voice Message]",
+                            messageType = "audio",
+                            aesKeyBase64 = aesKeyBase64
+                        )
+                    }
+                    .addOnFailureListener { e ->
+                        Log.e("ChatViewModel", "Failed to send audio: ${e.message}")
+                    }
+            }, { exception ->
+                Log.e("ChatViewModel", "Audio upload failed: ${exception.message}")
+            })
+        }
+    }
+
+    private fun uploadAudioToFirebase(
+        audioBytes: ByteArray,
+        audioName: String,
+        onSuccess: (String) -> Unit,
+        onFailure: (Exception) -> Unit
+    ) {
+        val storageRef = FirebaseStorage.getInstance().reference
+        val audioRef = storageRef.child("audio/$audioName")
+
+        val uploadTask = audioRef.putBytes(audioBytes)
+        uploadTask.addOnSuccessListener {
+            audioRef.downloadUrl.addOnSuccessListener { uri ->
+                onSuccess(uri.toString())
+            }
+        }.addOnFailureListener { exception ->
+            onFailure(exception)
+        }
+    }
+
+
     private fun updateRecentConversation(
         senderId: String,
         receiverUser: User,
@@ -917,6 +984,22 @@ class ChatViewModel @Inject constructor(
                                     messageType = Constant.MESSAGE_TYPE_VIDEO
                                 )
                             }
+
+                            Constant.MESSAGE_TYPE_AUDIO -> {
+                                val decryptedAudio = AesUtils.decryptMessage(encryptedMessage, aesKey)
+                                val parts = decryptedAudio.split("||")
+                                if (parts.size != 2 || parts[0] != "AUDIO") return@mapNotNull null
+
+                                ChatMessage(
+                                    senderId = senderId,
+                                    receiverId = receiverId,
+                                    message = parts[1], // audio URL
+                                    messageType = Constant.MESSAGE_TYPE_AUDIO,
+                                    dateTime = timestamp.getReadableDate(),
+                                    date = timestamp
+                                )
+                            }
+
 
                             else -> null
                         }

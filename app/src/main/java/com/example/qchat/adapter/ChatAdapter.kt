@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
 import android.net.Uri
 import android.util.Base64
 import android.util.Log
@@ -13,6 +14,7 @@ import android.view.ViewGroup
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.qchat.R
+import com.example.qchat.databinding.ItemReceivedAudioBinding
 import com.example.qchat.databinding.ItemReceivedDocumentBinding
 import com.example.qchat.databinding.ItemReceivedLocationBinding
 import com.example.qchat.databinding.ItemReceivedMessageBinding
@@ -23,6 +25,7 @@ import com.example.qchat.databinding.ItemSendMessageBinding
 import com.example.qchat.databinding.ItemSendPhotoBinding
 import com.example.qchat.databinding.ItemSendVideoBinding
 import com.example.qchat.databinding.ItemReceivedVideoBinding
+import com.example.qchat.databinding.ItemSendAudioBinding
 import com.example.qchat.model.ChatMessage
 import com.example.qchat.ui.chat.PdfRendererActivity
 import com.example.qchat.ui.chat.PhotoViewerActivity
@@ -30,6 +33,7 @@ import com.example.qchat.ui.chat.VideoPlayerActivity
 import com.example.qchat.utils.Constant
 import com.example.qchat.utils.Constant.VIEW_TYPE_BLOCKED
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_AUDIO
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_DOCUMENT
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND
@@ -39,6 +43,7 @@ import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_DOCUMENT
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_VIDEO
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_VIDEO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_AUDIO
 import java.util.*
 
 class ChatAdapter(
@@ -281,6 +286,171 @@ class ChatAdapter(
 
     }
 
+    class SendAudioViewHolder(val binding: ItemSendAudioBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        private var mediaPlayer: MediaPlayer? = null
+        private var isPlaying = false
+        private var audioDuration = 0
+        private var updateProgressRunnable: Runnable? = null
+
+        fun setData(message: ChatMessage) {
+            binding.tvDateTime.text = message.dateTime
+
+            binding.btnPlayAudio.setOnClickListener {
+                if (!isPlaying) {
+                    startPlaying(message.message)
+                } else {
+                    stopPlaying()
+                }
+            }
+        }
+
+        private fun startPlaying(audioUrl: String) {
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioUrl)
+                    prepare()
+                    start()
+                    audioDuration = duration
+                    setOnCompletionListener {
+                        stopPlaying()
+                    }
+                }
+
+                isPlaying = true
+                binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
+
+                startUpdatingProgress()
+            } catch (e: Exception) {
+                Log.e("SendAudioViewHolder", "Playback failed: ${e.message}")
+            }
+        }
+
+        private fun stopPlaying() {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+
+            isPlaying = false
+            binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
+
+            stopUpdatingProgress()
+
+            // Reset dot position and timer if needed
+            binding.progressDot.translationX = 0f
+            binding.tvAudioDuration.text = "00:00"
+        }
+
+        private fun startUpdatingProgress() {
+            updateProgressRunnable = object : Runnable {
+                override fun run() {
+                    mediaPlayer?.let { player ->
+                        val currentPosition = player.currentPosition
+                        val progress = (currentPosition.toFloat() / audioDuration.toFloat())
+                        val totalWidth = binding.audioWaveform.width.toFloat()
+
+                        binding.progressDot.translationX = totalWidth * progress
+
+                        val minutes = currentPosition / 1000 / 60
+                        val seconds = (currentPosition / 1000) % 60
+                        binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+                        binding.root.postDelayed(this, 500)
+                    }
+                }
+            }
+            binding.root.post(updateProgressRunnable!!)
+        }
+
+        private fun stopUpdatingProgress() {
+            updateProgressRunnable?.let { binding.root.removeCallbacks(it) }
+        }
+    }
+
+
+    class ReceivedAudioViewHolder(val binding: ItemReceivedAudioBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        private var mediaPlayer: MediaPlayer? = null
+        private var isPlaying = false
+        private var audioDuration = 0
+        private var updateProgressRunnable: Runnable? = null
+
+        fun setData(message: ChatMessage, profileImage: Bitmap?) {
+            binding.tvDateTime.text = message.dateTime
+            profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+
+            binding.btnPlayAudio.setOnClickListener {
+                if (!isPlaying) {
+                    startPlaying(message.message)
+                } else {
+                    stopPlaying()
+                }
+            }
+        }
+
+        private fun startPlaying(audioUrl: String) {
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioUrl)
+                    prepare()
+                    start()
+                    audioDuration = duration
+                    setOnCompletionListener {
+                        stopPlaying()
+                    }
+                }
+
+                isPlaying = true
+                binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
+
+                startUpdatingProgress()
+            } catch (e: Exception) {
+                Log.e("ReceivedAudioViewHolder", "Playback failed: ${e.message}")
+            }
+        }
+
+        private fun stopPlaying() {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+
+            isPlaying = false
+            binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
+
+            stopUpdatingProgress()
+
+            binding.progressDot.translationX = 0f
+            binding.tvAudioDuration.text = "00:00"
+        }
+
+        private fun startUpdatingProgress() {
+            updateProgressRunnable = object : Runnable {
+                override fun run() {
+                    mediaPlayer?.let { player ->
+                        val currentPosition = player.currentPosition
+                        val progress = (currentPosition.toFloat() / audioDuration.toFloat())
+                        val totalWidth = binding.audioWaveform.width.toFloat()
+
+                        binding.progressDot.translationX = totalWidth * progress
+
+                        val minutes = currentPosition / 1000 / 60
+                        val seconds = (currentPosition / 1000) % 60
+                        binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+                        binding.root.postDelayed(this, 500)
+                    }
+                }
+            }
+            binding.root.post(updateProgressRunnable!!)
+        }
+
+        private fun stopUpdatingProgress() {
+            updateProgressRunnable?.let { binding.root.removeCallbacks(it) }
+        }
+    }
+
     fun addMessage(newMessage: List<ChatMessage>, rvChat: RecyclerView) {
         val uniqueMessages = newMessage.filterNot { newMsg ->
             chatMessagesList.any { it.date == newMsg.date && it.message == newMsg.message }
@@ -406,6 +576,19 @@ class ChatAdapter(
                 )
             }
 
+            VIEW_TYPE_SEND_AUDIO -> {
+                SendAudioViewHolder(
+                    ItemSendAudioBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_AUDIO -> {
+                ReceivedAudioViewHolder(
+                    ItemReceivedAudioBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                )
+            }
+
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -423,6 +606,9 @@ class ChatAdapter(
             is ReceivedDocumentViewHolder -> holder.setData(chatMessagesList[position], profileImage, holder.itemView.context)
             is SendVideoViewHolder -> holder.setData(chatMessagesList[position])
             is ReceivedVideoViewHolder -> holder.setData(chatMessagesList[position], profileImage)
+            is SendAudioViewHolder -> holder.setData(chatMessagesList[position])
+            is ReceivedAudioViewHolder -> holder.setData(chatMessagesList[position], profileImage)
+
         }
     }
 
@@ -446,6 +632,7 @@ class ChatAdapter(
                     Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_SEND_LOCATION
                     Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_SEND_DOCUMENT
                     Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_SEND_VIDEO
+                    Constant.MESSAGE_TYPE_AUDIO -> VIEW_TYPE_SEND_AUDIO
                     else -> VIEW_TYPE_SEND
                 }
             }
@@ -455,9 +642,11 @@ class ChatAdapter(
                     Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_RECEIVED_LOCATION
                     Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_RECEIVED_DOCUMENT
                     Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_RECEIVED_VIDEO
+                    Constant.MESSAGE_TYPE_AUDIO -> VIEW_TYPE_RECEIVED_AUDIO // ✅ FIXED!
                     else -> VIEW_TYPE_RECEIVED
                 }
             }
+
         }
     }
 

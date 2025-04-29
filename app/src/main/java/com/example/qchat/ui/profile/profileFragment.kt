@@ -13,6 +13,7 @@ import android.widget.EditText
 import android.widget.TextView
 import android.widget.ImageView
 import android.widget.Toast
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.navigation.fragment.findNavController
 import com.example.qchat.R
@@ -134,21 +135,37 @@ class ProfileFragment : Fragment(R.layout.profile_fragment) {
     }
 
     private fun showBlockConfirmationDialog() {
-        val isBlocked = blockUserText.text == "Unblock User"
-        val action = if (isBlocked) "unblock" else "block"
-        
-        AlertDialog.Builder(requireContext())
+        val isCurrentlyBlocked = blockUserText.text == "Unblock User"
+        val willBlock = !isCurrentlyBlocked
+        val action = if (willBlock) "block" else "unblock"
+
+        val dialog = AlertDialog.Builder(requireContext(), R.style.MyApp_selectusersTheme)
             .setTitle("Confirm $action")
             .setMessage("Are you sure you want to $action this user?")
-            .setPositiveButton(action.capitalize()) { _, _ ->
-                if (isBlocked) {
-                    unblockUser()
-                } else {
-                    blockUser()
-                }
-            }
+            .setPositiveButton(action.capitalize(), null) // We'll handle click manually
             .setNegativeButton("Cancel", null)
-            .show()
+            .create()
+
+        dialog.setOnShowListener {
+            val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
+            positiveButton.setOnClickListener {
+                if (willBlock) {
+                    blockUser()
+                } else {
+                    unblockUser()
+                }
+                dialog.dismiss()
+            }
+            // Set text color dynamically: Red for blocking, Blue for unblocking
+            positiveButton.setTextColor(
+                if (willBlock)
+                    ContextCompat.getColor(requireContext(), R.color.red)
+                else
+                    ContextCompat.getColor(requireContext(), R.color.signal_blue)
+            )
+        }
+
+        dialog.show()
     }
 
     private fun blockUser() {

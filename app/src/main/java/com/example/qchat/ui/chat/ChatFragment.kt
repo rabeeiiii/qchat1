@@ -78,6 +78,16 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
     }
 
+    private val requestAudioPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startRecording()
+        } else {
+            Toast.makeText(requireContext(), "Microphone permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private val requestLocationPermission = registerForActivityResult(
         ActivityResultContracts.RequestPermission()
     ) { isGranted ->
@@ -97,6 +107,11 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private var currentPlayingPosition = -1
     private var videoUri: Uri? = null
     private var videoDuration: Long = 0
+    private var recordingState: RecordingState = RecordingState.IDLE
+
+    private enum class RecordingState {
+        IDLE, RECORDING, RECORDED
+    }
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -286,6 +301,14 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             viewModel.sendMessage(binding.etMessage.text.trim().toString(), user)
             binding.etMessage.text.clear()
         }
+        binding.ivVoiceMessage.setOnClickListener {
+            when (recordingState) {
+                RecordingState.IDLE -> startRecording()
+                RecordingState.RECORDING -> stopRecording()
+                RecordingState.RECORDED -> sendAudioRecording()
+            }
+        }
+
     }
 
     private fun setRecyclerview() {
@@ -298,6 +321,65 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
             layoutManager = LinearLayoutManager(context).apply { stackFromEnd = true }
         }
     }
+    private fun startRecording() {
+        try {
+            audioFile = File(requireContext().cacheDir, "audio_message_${System.currentTimeMillis()}.3gp")
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setOutputFile(audioFile?.absolutePath)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                prepare()
+                start()
+            }
+            isRecording = true
+            recordingState = RecordingState.RECORDING
+
+            // Change UI to stop button (recording)
+            binding.ivVoiceMessage.setImageResource(R.drawable.stop)
+            binding.tvRecordingIndicator.visibility = View.VISIBLE
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun stopRecording() {
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            isRecording = false
+            recordingState = RecordingState.RECORDED
+
+            // Change UI to send button (ready to send)
+            binding.ivVoiceMessage.setImageResource(R.drawable.send_voice)
+            binding.tvRecordingIndicator.visibility = View.GONE
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Failed to stop recording: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun sendAudioRecording() {
+        if (audioFile != null && audioFile!!.exists()) {
+            val audioBytes = audioFile!!.readBytes()
+            viewModel.sendAudio(audioBytes, user)
+        }
+
+        // After sending, reset UI
+        binding.etMessage.visibility = View.VISIBLE
+        binding.ivSend.visibility = View.VISIBLE
+        binding.ivAdd.visibility = View.VISIBLE
+
+        binding.ivVoiceMessage.setImageResource(R.drawable.ic_mic)
+        recordingState = RecordingState.IDLE
+    }
+
 
     private fun setupPopMenu() {
         val adapter = AttachmentAdapter(
