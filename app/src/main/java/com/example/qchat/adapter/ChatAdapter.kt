@@ -11,6 +11,7 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.qchat.R
@@ -92,26 +93,22 @@ class ChatAdapter(
 
         fun setData(message: ChatMessage) {
             try {
-                Log.d(
-                    "SendPhotoViewHolder",
-                    "Photo Base64 (first 100 chars): ${message.message.take(100)}"
-                ) // Log first 100 characters
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
                 if (bitmap != null) {
-                    binding.ivMessageImage.setImageBitmap(bitmap)
+                    binding.ivMessageImage.apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds = true
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
                     binding.tvDateTime.text = message.dateTime
                     binding.ivMessageImage.setOnClickListener {
                         openPhoto(message.message)
                     }
-                    Log.d("SendPhotoViewHolder", "Successfully decoded photo")
-                } else {
-                    Log.e("SendPhotoViewHolder", "Failed to decode image!")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("SendPhotoViewHolder", "Error decoding photo message: ${e.message}")
             }
         }
         private fun openPhoto(photoBase64: String) {
@@ -127,28 +124,23 @@ class ChatAdapter(
 
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
             try {
-                Log.d(
-                    "ReceivedPhotoViewHolder",
-                    "Photo Base64 (first 100 chars): ${message.message.take(100)}"
-                )
-
                 val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
                 val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
 
                 if (bitmap != null) {
-                    binding.ivMessageImage.setImageBitmap(bitmap)
+                    binding.ivMessageImage.apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds = true
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
                     binding.tvDateTime.text = message.dateTime
                     profileImage?.let { binding.ivProfile.setImageBitmap(it) }
                     binding.ivMessageImage.setOnClickListener {
                         openPhoto(message.message)
                     }
-                    Log.d("ReceivedPhotoViewHolder", "Successfully decoded received photo")
-                } else {
-                    Log.e("ReceivedPhotoViewHolder", "Failed to decode received image!")
                 }
             } catch (e: Exception) {
                 e.printStackTrace()
-                Log.e("ReceivedPhotoViewHolder", "Error decoding received photo: ${e.message}")
             }
         }
         private fun openPhoto(photoBase64: String) {
