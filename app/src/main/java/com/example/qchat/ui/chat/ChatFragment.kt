@@ -413,9 +413,23 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         val contentResolver = requireContext().contentResolver
         val inputStream = contentResolver.openInputStream(uri)
         val fileBytes = inputStream?.readBytes()
+        val fileName = getFileNameFromUri(uri)
+
         fileBytes?.let {
-            viewModel.sendDocument(it, user)
+            viewModel.sendDocument(it, user, fileName)
         }
+    }
+
+    private fun getFileNameFromUri(uri: Uri): String {
+        var name = "document.pdf"
+        val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val index = it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                if (index >= 0) name = it.getString(index)
+            }
+        }
+        return name
     }
 
     fun openDocumentFromUrl(documentUrl: String) {

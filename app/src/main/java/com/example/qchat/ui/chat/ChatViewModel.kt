@@ -462,12 +462,10 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendDocument(fileBytes: ByteArray?, receiverUser: User) {
+    fun sendDocument(fileBytes: ByteArray?, receiverUser: User, fileName: String) {
         viewModelScope.launch {
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty() || fileBytes == null) return@launch
-
-            val fileName = "document_${System.currentTimeMillis()}.pdf"
 
             val aesKey = repository.getSharedSecret(senderId, receiverUser.id) ?: run {
                 Log.e("ChatViewModel", "Failed to get shared secret, generating new key")
@@ -476,7 +474,6 @@ class ChatViewModel @Inject constructor(
 
             uploadDocumentToFirebase(fileBytes, fileName, { documentUrl ->
                 val documentMessage = "DOCUMENT||$documentUrl||$fileName"
-
 
                 val encryptedMessage = AesUtils.encryptMessage(documentMessage, aesKey)
                 val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
