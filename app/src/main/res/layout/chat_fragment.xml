@@ -13,7 +13,7 @@
         android:id="@+id/view2"
         android:layout_width="match_parent"
         android:layout_height="1dp"
-        android:layout_marginBottom="7dp"
+        android:layout_marginBottom="10dp"
         android:background="#AEAEAE"
         app:layout_constraintBottom_toTopOf="@+id/etMessage" />
 
@@ -34,8 +34,8 @@
     <!-- Recording indicator -->
     <TextView
         android:id="@+id/tvRecordingIndicator"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
+        android:layout_width="30dp"
+        android:layout_height="30dp"
         android:text="Recording..."
         android:textColor="@color/red"
         android:visibility="gone"
@@ -56,7 +56,7 @@
 
     <androidx.appcompat.widget.AppCompatImageView
         android:id="@+id/ivAdd"
-        android:layout_width="30dp"
+        android:layout_width="25dp"
         android:layout_height="30dp"
         android:layout_marginStart="10dp"
         android:layout_marginEnd="5dp"
@@ -66,8 +66,8 @@
         app:layout_constraintTop_toTopOf="@id/etMessage" />
     <EditText
         android:id="@+id/etMessage"
-        android:layout_width="275dp"
-        android:layout_height="48dp"
+        android:layout_width="255dp"
+        android:layout_height="43dp"
         android:layout_weight="1"
         android:background="@drawable/input_background"
         android:gravity="center_vertical"
@@ -81,7 +81,7 @@
         app:layout_constraintEnd_toStartOf="@+id/ivSend"
         app:layout_constraintStart_toEndOf="@+id/ivAdd"
         app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintVertical_bias="0.976" />
+        app:layout_constraintVertical_bias="0.985" />
 
 
     <LinearLayout
@@ -213,8 +213,8 @@
         android:id="@+id/tvName"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_marginTop="28dp"
-        android:layout_marginStart="28dp"
+        android:layout_marginTop="22dp"
+        android:layout_marginStart="45dp"
         android:gravity="center"
         android:textColor="@color/black"
         android:textSize="16sp"
