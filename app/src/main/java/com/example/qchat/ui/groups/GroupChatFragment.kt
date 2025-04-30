@@ -23,6 +23,9 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import androidx.core.content.ContentProviderCompat.requireContext
+import com.example.qchat.utils.decodeToBitmap
+import kotlinx.coroutines.flow.distinctUntilChanged
 
 @AndroidEntryPoint
 class GroupChatFragment : Fragment() {
@@ -54,14 +57,11 @@ class GroupChatFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         group = arguments?.getSerializable("group") as Group
-        
-        // Log current user ID
-        val currentUserId = requireContext().getSharedPreferences(Constant.KEY_PREFERENCE_NAME, 0)
-            .getString(Constant.KEY_USER_ID, null)
-        Log.d("GroupChatFragment", "Current user ID: $currentUserId")
-        Log.d("GroupChatFragment", "Group ID: ${group.id}")
-        Log.d("GroupChatFragment", "Group members: ${group.members.joinToString()}")
-        
+
+        // ✅ Clear old messages from both adapter and ViewModel
+        messagesAdapter.clearMessages()
+        viewModel.clearGroupMessages()
+
         setupRecyclerView()
         setupClickListeners()
         observeViewModel()
@@ -70,11 +70,12 @@ class GroupChatFragment : Fragment() {
         loadGroupMessages()
     }
 
+
     override fun onResume() {
         super.onResume()
         
         // Force reload messages when resuming
-        messagesAdapter.clearMessages()
+//        messagesAdapter.clearMessages()
         loadGroupMessages()
         
         Log.d("GroupChatFragment", "Fragment resumed, reloading messages")
@@ -82,7 +83,6 @@ class GroupChatFragment : Fragment() {
 
     private fun hideUnnecessaryComponents() {
         
-        activity?.findViewById<View>(R.id.fabCreateGroup)?.visibility = View.GONE
 
         
 //        activity?.window?.decorView?.systemUiVisibility = (
@@ -121,16 +121,17 @@ class GroupChatFragment : Fragment() {
                 if (!message.isNullOrEmpty()) {
                     
                     val tempId = "temp_${System.currentTimeMillis()}"
-                    
-                    
+
+
                     viewModel.sendMessage(message, group.id) { newMessage ->
-                        
-                        val localMessage = newMessage.copy(id = tempId)
-                        
-                        
+                        val localMessage = newMessage.copy(
+                            id = tempId,
+                            message = message // show decrypted plain text immediately
+                        )
                         messagesAdapter.addMessage(localMessage, binding.recyclerViewMessages)
-                        Log.d("GroupChatFragment", "Sent message with temp ID: $tempId")
                     }
+
+
                     editTextMessage.text?.clear()
                 }
             }
@@ -143,32 +144,27 @@ class GroupChatFragment : Fragment() {
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.groupMessages.collectLatest { messages ->
-                Log.d("GroupChatFragment", "Received ${messages.size} messages from Firebase")
-                
-                
-                messages.forEach { message ->
-                    Log.d("GroupChatFragment", "Message: id=${message.id}, sender=${message.senderId}, " +
-                            "content=${message.message}, time=${message.timestamp}")
-                }
-                
-                
-                val currentUserId = requireContext().getSharedPreferences(Constant.KEY_PREFERENCE_NAME, 0)
-                    .getString(Constant.KEY_USER_ID, null)
-                Log.d("GroupChatFragment", "Adapter's current user ID: $currentUserId")
-                
-                
-                messagesAdapter.addMessages(messages, binding.recyclerViewMessages)
+            viewModel.isLoadingMessages.collectLatest { isLoading ->
+                Log.d("GroupChatFragment", "Loading state: $isLoading")
+                binding.loadingOverlay.visibility = if (isLoading) View.VISIBLE else View.GONE
             }
         }
 
         viewLifecycleOwner.lifecycleScope.launch {
+            viewModel.groupMessages
+                .collectLatest { messages ->
+                    Log.d("GroupChatFragment", "Received ${messages.size} messages")
+                    messagesAdapter.addMessages(messages, binding.recyclerViewMessages)
+                }
+        }
+
+        viewLifecycleOwner.lifecycleScope.launch {
             viewModel.error.collectLatest { errorMessage ->
-                
                 Log.e("GroupChatFragment", "Error: $errorMessage")
             }
         }
     }
+
 
     private fun loadGroupMessages() {
         viewModel.loadGroupMessages(group.id)
@@ -178,6 +174,17 @@ class GroupChatFragment : Fragment() {
         binding.apply {
             textViewGroupName.text = group.name
             textViewMemberCount.text = "${group.members.size} members"
+
+            if (!group.image.isNullOrEmpty()) {
+                try {
+                    val bitmap = group.image!!.decodeToBitmap() // using your extension
+                    insideimageViewGroup.setImageBitmap(bitmap)
+                } catch (e: Exception) {
+                    insideimageViewGroup.setImageResource(R.drawable.group) // fallback
+                }
+            } else {
+                insideimageViewGroup.setImageResource(R.drawable.group)
+            }
         }
     }
 

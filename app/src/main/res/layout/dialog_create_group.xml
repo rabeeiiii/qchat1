@@ -4,11 +4,32 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:orientation="vertical"
-    android:padding="24dp">
+    android:padding="24dp"
+    android:gravity="center_horizontal">
 
+    <ImageView
+        android:id="@+id/imageViewGroupPhoto"
+        android:layout_width="100dp"
+        android:layout_height="100dp"
+        android:scaleType="centerCrop"
+        android:background="@drawable/circle_background"
+        android:layout_gravity="center"
+        android:contentDescription="Group photo" />
+
+    <Button
+        android:id="@+id/buttonSelectImage"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Choose Photo"
+        android:layout_marginTop="16dp"
+        android:layout_gravity="center_horizontal" />
+
+
+    <!-- Group Name -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
+        android:layout_marginTop="16dp"
         android:hint="Group Name"
         app:boxBackgroundMode="none"
         android:background="@drawable/text_input_underline">
@@ -21,6 +42,7 @@
             android:maxLines="1" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <!-- Group Description -->
     <com.google.android.material.textfield.TextInputLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

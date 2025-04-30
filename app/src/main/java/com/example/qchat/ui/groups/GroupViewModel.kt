@@ -50,26 +50,55 @@ class GroupViewModel @Inject constructor(
 
     private fun loadUserGroups() {
         val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return
+
         viewModelScope.launch {
             groupRepository.observeUserGroups(userId)
                 .catch { e -> _error.emit(e.message ?: "Error loading groups") }
-                .collect { groups -> _groups.value = groups }
+                .collect { groups ->
+                    val decryptedGroups = groups.map { group ->
+                        val key = groupRepository.getGroupAesKey(group.id)
+                        val decryptedLastMessage = try {
+                            if (!group.lastMessage.isNullOrEmpty() && key != null) {
+                                AesUtils.decryptGroupMessage(group.lastMessage, key)
+                            } else {
+                                group.lastMessage
+                            }
+                        } catch (e: Exception) {
+                            Log.e("GroupViewModel", "Failed to decrypt group ${group.id}: ${e.message}")
+                            group.lastMessage // Fallback to encrypted if failed
+                        }
+
+                        group.copy(lastMessage = decryptedLastMessage)
+                    }
+
+                    _groups.value = decryptedGroups
+                }
         }
     }
+
+
+
+    fun clearGroupMessages() {
+        _groupMessages.value = emptyList()
+    }
+
     fun loadGroupMessages(groupId: String) {
         viewModelScope.launch {
             try {
-                _isLoadingMessages.value = true
+                _isLoadingMessages.value = true // ✅ SHOW loader here first
+                _groupMessages.value = emptyList() // optional clear before
 
                 groupRepository.observeGroupMessages(groupId)
                     .catch { e ->
                         Log.e("GroupViewModel", "Error loading messages: ${e.message}")
+                        _isLoadingMessages.value = false // ✅ HIDE on error
                         _error.emit(e.message ?: "Error loading messages")
                     }
                     .collect { messages ->
                         val aesKey = groupRepository.getGroupAesKey(groupId)
                         if (aesKey == null) {
                             _error.emit("AES Key not found for group $groupId")
+                            _isLoadingMessages.value = false
                             return@collect
                         }
 
@@ -85,12 +114,11 @@ class GroupViewModel @Inject constructor(
 
                         val sortedMessages = decryptedMessages.sortedBy { it.timestamp }
                         _groupMessages.value = sortedMessages
-                        _isLoadingMessages.value = false
-
-                        Log.d("GroupViewModel", "Loaded ${messages.size} messages for group $groupId")
+                        _isLoadingMessages.value = false // ✅ HIDE loader after load
                     }
             } catch (e: Exception) {
                 Log.e("GroupViewModel", "Exception in loadGroupMessages: ${e.message}")
+                _isLoadingMessages.value = false // ✅ Always hide on catch
                 _error.emit(e.message ?: "Error loading messages")
             }
         }
@@ -127,11 +155,12 @@ class GroupViewModel @Inject constructor(
         }
     }
 
-    fun createGroup(name: String, description: String, members: List<String>) {
-        viewModelScope.launch {
+    fun createGroup(name: String, description: String, members: List<String>, imageBase64: String?)
+    {        viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = AesUtils.generateAESKey()
+
             val aesKeyBase64 = AesUtils.keyToBase64(aesKey)
             val group = Group(
                 name = name,
@@ -139,7 +168,8 @@ class GroupViewModel @Inject constructor(
                 createdBy = userId,
                 members = members + userId,
                 admins = listOf(userId),
-                aesKey = aesKeyBase64
+                aesKey = aesKeyBase64,
+                image = imageBase64
             )
             groupRepository.createGroup(group)
                 .onSuccess { groupId ->

@@ -6,8 +6,10 @@ import androidx.recyclerview.widget.DiffUtil
 import androidx.recyclerview.widget.ListAdapter
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
+import com.example.qchat.R
 import com.example.qchat.databinding.ItemGroupBinding
 import com.example.qchat.model.Group
+import com.example.qchat.utils.decodeToBitmap
 import com.example.qchat.utils.getReadableDate
 import java.text.SimpleDateFormat
 import java.util.*
@@ -45,8 +47,22 @@ class GroupsAdapter(
         fun bind(group: Group) {
             binding.apply {
                 textViewGroupName.text = group.name
-                textViewLastMessage.text = group.lastMessage ?: "No messages yet"
-                
+
+                textViewLastMessage.text = try {
+                    if (!group.lastMessage.isNullOrEmpty() && group.aesKey != null) {
+                        val secretKey = com.example.qchat.utils.AesUtils.base64ToKey(group.aesKey!!)
+                        com.example.qchat.utils.AesUtils.decryptGroupMessage(
+                            group.lastMessage,
+                            secretKey
+                        )
+                    } else {
+                        "No messages yet"
+                    }
+                } catch (e: Exception) {
+                    "Encrypted message"
+                }
+
+
                 // Format the last message time
                 val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
                 textViewLastMessageTime.text = if (group.lastMessageTime > 0) {
@@ -55,14 +71,27 @@ class GroupsAdapter(
                     ""
                 }
 
-                // Load group image using Glide
-                Glide.with(imageViewGroup)
-                    .load(group.image)
-                    .circleCrop()
-                    .into(imageViewGroup)
+                if (!group.image.isNullOrEmpty()) {
+                    try {
+                        val bitmap =
+                            group.image.decodeToBitmap() // uses your existing extension function
+                        imageViewGroup.setImageBitmap(bitmap)
+                    } catch (e: Exception) {
+                        imageViewGroup.setImageResource(R.drawable.group) // fallback
+                    }
+                } else {
+                    imageViewGroup.setImageResource(R.drawable.group)
+                }
             }
         }
-    }
+
+//                // Load group image using Glide
+//                Glide.with(imageViewGroup)
+//                    .load(group.image)
+//                    .circleCrop()
+//                    .into(imageViewGroup)
+            }
+
 
     private class GroupDiffCallback : DiffUtil.ItemCallback<Group>() {
         override fun areItemsTheSame(oldItem: Group, newItem: Group): Boolean {

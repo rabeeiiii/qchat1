@@ -34,15 +34,18 @@
 
     <!-- Group Avatar -->
     <com.makeramen.roundedimageview.RoundedImageView
-        android:id="@+id/imageViewGroup"
-        android:layout_width="40dp"
-        android:layout_height="40dp"
-        android:layout_marginStart="20dp"
-        android:layout_marginTop="23dp"
-        android:src="@drawable/group"
-        android:visibility="visible"
-        app:layout_constraintStart_toEndOf="@+id/imageViewBack"
-        app:layout_constraintTop_toTopOf="parent"/>
+        android:id="@+id/insideimageViewGroup"
+        android:layout_width="44dp"
+        android:layout_height="44dp"
+        android:layout_marginStart="52dp"
+        android:layout_marginTop="20dp"
+        android:scaleType="centerCrop"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        app:riv_oval="true"
+        tools:src="@drawable/ic_info" />
+
+
 
     <!-- Group Name and Members -->
     <TextView
@@ -59,14 +62,14 @@
         android:ellipsize="end"
         android:maxLines="1"
         app:layout_constraintEnd_toStartOf="@+id/imageViewMore"
-        app:layout_constraintStart_toEndOf="@+id/imageViewGroup"
+        app:layout_constraintStart_toEndOf="@+id/insideimageViewGroup"
         app:layout_constraintTop_toTopOf="parent"/>
 
     <TextView
         android:id="@+id/textViewMemberCount"
         android:layout_width="0dp"
         android:layout_height="wrap_content"
-        android:layout_marginTop="4dp"
+        android:layout_marginTop="1dp"
         android:text="4 members"
         android:textColor="@color/gray"
         android:textSize="14sp"
@@ -133,7 +136,7 @@
 
         <EditText
             android:id="@+id/editTextMessage"
-            android:layout_width="285dp"
+            android:layout_width="0dp"
             android:layout_height="48dp"
             android:layout_weight="1"
             android:background="@drawable/input_background"
@@ -164,4 +167,28 @@
             app:layout_constraintTop_toTopOf="@+id/editTextMessage" />
     </LinearLayout>
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <!-- Loading Overlay (Centered ProgressBar) -->
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/loadingOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent">
+
+        <ProgressBar
+            android:id="@+id/grouppb"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:indeterminate="true"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="parent" />
+    </androidx.constraintlayout.widget.ConstraintLayout>
+
+
+
+    </androidx.constraintlayout.widget.ConstraintLayout>

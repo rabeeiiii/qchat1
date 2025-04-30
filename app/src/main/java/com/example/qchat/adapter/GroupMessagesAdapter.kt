@@ -149,16 +149,22 @@ class GroupMessagesAdapter @Inject constructor(
             }
         }
     }
-    
+
     override fun submitList(list: List<GroupMessage>?) {
         if (list == null) {
+            clearMessages()
             super.submitList(null)
             return
         }
-        
-        // Use our addMessages method which handles deduplication
+
+        // Explicitly clear before adding new if it's a completely different group
+        if (list.any() && messagesList.any() && list[0].groupId != messagesList[0].groupId) {
+            clearMessages()
+        }
+
         addMessages(list)
     }
+
 
     override fun getItemViewType(position: Int): Int {
         val message = getItem(position)
@@ -256,7 +262,8 @@ class GroupMessagesAdapter @Inject constructor(
         messagesList.clear()
         messageIds.clear()
         tempMessageSignatures.clear()
-        submitList(emptyList())
+        super.submitList(emptyList()) // Use super to wipe the diff util state
         Log.d("GroupMessagesAdapter", "Messages cleared")
     }
+
 } 

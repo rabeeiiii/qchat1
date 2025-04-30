@@ -1,11 +1,16 @@
 package com.example.qchat.ui.groups
 
+import android.app.Activity
 import android.app.AlertDialog
+import android.content.Intent
 import android.os.Bundle
+import android.provider.MediaStore
 import android.view.Gravity
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageView
 import android.widget.LinearLayout
 import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
@@ -18,6 +23,8 @@ import com.example.qchat.adapter.UsersAdapter
 import com.example.qchat.databinding.FragmentGroupsBinding
 import com.example.qchat.model.Group
 import com.example.qchat.model.User
+import com.example.qchat.utils.encodeToBase64
+import com.example.qchat.utils.toast
 import com.google.android.material.dialog.MaterialAlertDialogBuilder
 import com.google.android.material.textfield.TextInputEditText
 import dagger.hilt.android.AndroidEntryPoint
@@ -33,6 +40,13 @@ class GroupsFragment : Fragment() {
 
     private val viewModel: GroupViewModel by viewModels()
     private lateinit var groupsAdapter: GroupsAdapter
+
+    private var selectedGroupPhotoBase64: String? = null
+    private var imageViewGroupPhoto: ImageView? = null
+
+    companion object {
+        private const val REQUEST_IMAGE_PICK = 101
+    }
 
     @Inject
     lateinit var usersAdapter: UsersAdapter
@@ -84,9 +98,11 @@ class GroupsFragment : Fragment() {
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.groups.collectLatest { groups ->
-                groupsAdapter.submitList(groups)
+                groupsAdapter.submitList(null) // clear the old list (optional but safe)
+                groupsAdapter.submitList(groups) // this should now include decrypted messages
             }
         }
+
 
         viewLifecycleOwner.lifecycleScope.launch {
             viewModel.groupMembers.collectLatest { users ->
@@ -106,12 +122,25 @@ class GroupsFragment : Fragment() {
     }
     private fun showCreateGroupDialog() {
         val dialogView = LayoutInflater.from(requireContext())
-            .inflate(com.example.qchat.R.layout.dialog_create_group, null)
+            .inflate(R.layout.dialog_create_group, null)
+
+        imageViewGroupPhoto = dialogView.findViewById(R.id.imageViewGroupPhoto)
+        val buttonSelectImage = dialogView.findViewById<Button>(R.id.buttonSelectImage)
+
+        buttonSelectImage.setOnClickListener {
+            val intent = Intent(Intent.ACTION_PICK).apply {
+                type = "image/*"
+            }
+            startActivityForResult(intent, REQUEST_IMAGE_PICK)
+        }
+
+        val nameInput = dialogView.findViewById<TextInputEditText>(R.id.editTextGroupName)
+        val descriptionInput = dialogView.findViewById<TextInputEditText>(R.id.editTextGroupDescription)
 
         val dialog = MaterialAlertDialogBuilder(requireContext(), R.style.MyApp_DialogTheme)
             .setTitle("Create New Group")
             .setView(dialogView)
-            .setPositiveButton("Next", null) // Set to null first
+            .setPositiveButton("Next", null)
             .setNegativeButton("Cancel", null)
             .create()
 
@@ -119,20 +148,15 @@ class GroupsFragment : Fragment() {
             val positiveButton = dialog.getButton(AlertDialog.BUTTON_POSITIVE)
             val negativeButton = dialog.getButton(AlertDialog.BUTTON_NEGATIVE)
 
-            // Apply margins programmatically
-            (negativeButton.layoutParams as? LinearLayout.LayoutParams)?.apply {
-                marginEnd = resources.getDimensionPixelSize(R.dimen.button_margin_end)
-            }
-
             positiveButton.setOnClickListener {
-                val nameInput = dialogView.findViewById<TextInputEditText>(com.example.qchat.R.id.editTextGroupName)
-                val descriptionInput = dialogView.findViewById<TextInputEditText>(com.example.qchat.R.id.editTextGroupDescription)
                 val name = nameInput.text?.toString()?.trim()
                 val description = descriptionInput.text?.toString()?.trim()
 
                 if (!name.isNullOrEmpty()) {
                     showMemberSelectionDialog(name, description ?: "")
                     dialog.dismiss()
+                } else {
+                    requireContext().toast("Group name is required")
                 }
             }
 
@@ -143,6 +167,17 @@ class GroupsFragment : Fragment() {
 
         dialog.show()
     }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == REQUEST_IMAGE_PICK && resultCode == Activity.RESULT_OK && data?.data != null) {
+            val uri = data.data
+            val bitmap = MediaStore.Images.Media.getBitmap(requireActivity().contentResolver, uri)
+            selectedGroupPhotoBase64 = bitmap.encodeToBase64()
+            imageViewGroupPhoto?.setImageBitmap(bitmap)
+        }
+    }
+
     private fun showMemberSelectionDialog(groupName: String, groupDescription: String) {
         // Create the dialog view
         val memberSelectionView = LayoutInflater.from(requireContext())
@@ -170,7 +205,7 @@ class GroupsFragment : Fragment() {
                 val selectedUsers = usersAdapter.getSelectedUsers()
                 android.util.Log.d("GroupsFragment", "Selected ${selectedUsers.size} users for group creation")
                 if (selectedUsers.isNotEmpty()) {
-                    viewModel.createGroup(groupName, groupDescription, selectedUsers.map { it.id })
+                    viewModel.createGroup(groupName, groupDescription, selectedUsers.map { it.id } , selectedGroupPhotoBase64)
                 } else {
                     com.google.android.material.snackbar.Snackbar.make(
                         binding.root,
