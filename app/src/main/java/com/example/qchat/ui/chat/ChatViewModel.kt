@@ -257,7 +257,7 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendAudio(audioBytes: ByteArray, receiverUser: User) {
+    fun sendAudio(audioBytes: ByteArray, receiverUser: User,durationInMillis: Long) {
         viewModelScope.launch {
             val senderId = pref.getString(Constant.KEY_USER_ID, null).orEmpty()
             if (senderId.isEmpty()) return@launch
@@ -281,7 +281,9 @@ class ChatViewModel @Inject constructor(
                     Constant.KEY_ENCRYPTED_MESSAGE to encryptedMessage,
                     Constant.KEY_ENCRYPTED_AES_KEY to aesKeyBase64,
                     Constant.KEY_MESSAGE_TYPE to "audio",
-                    Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp()
+                    Constant.KEY_TIMESTAMP to FieldValue.serverTimestamp(),
+                    "audioDurationInMillis" to durationInMillis
+
                 )
 
                 repository.sendMessage(messageMap)
@@ -987,15 +989,19 @@ class ChatViewModel @Inject constructor(
                                 val parts = decryptedAudio.split("||")
                                 if (parts.size != 2 || parts[0] != "AUDIO") return@mapNotNull null
 
+                                val durationMillis = document.getLong("audioDurationInMillis") ?: 0L
+
                                 ChatMessage(
                                     senderId = senderId,
                                     receiverId = receiverId,
                                     message = parts[1], // audio URL
                                     messageType = Constant.MESSAGE_TYPE_AUDIO,
                                     dateTime = timestamp.getReadableDate(),
-                                    date = timestamp
+                                    date = timestamp,
+                                    audioDurationInMillis = durationMillis
                                 )
                             }
+
 
 
                             else -> null

@@ -19,5 +19,7 @@ data class ChatMessage(
     var unreadCount: Int = 0,
     val messageType: String = Constant.MESSAGE_TYPE_TEXT,
     val signature: String = "",
-    val publicKey: String = ""
-)
+    val publicKey: String = "",
+    val audioDurationInMillis: Long? = null,
+
+    )

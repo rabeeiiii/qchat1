@@ -337,7 +337,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
             // Change UI to stop button (recording)
             binding.ivVoiceMessage.setImageResource(R.drawable.stop)
-            binding.tvRecordingIndicator.visibility = View.VISIBLE
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -357,7 +356,6 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
 
             // Change UI to send button (ready to send)
             binding.ivVoiceMessage.setImageResource(R.drawable.send_voice)
-            binding.tvRecordingIndicator.visibility = View.GONE
 
         } catch (e: Exception) {
             e.printStackTrace()
@@ -368,8 +366,8 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
     private fun sendAudioRecording() {
         if (audioFile != null && audioFile!!.exists()) {
             val audioBytes = audioFile!!.readBytes()
-            viewModel.sendAudio(audioBytes, user)
-        }
+            val durationMillis = getAudioDuration(audioFile!!)
+            viewModel.sendAudio(audioBytes, user, durationMillis)        }
 
         // After sending, reset UI
         binding.etMessage.visibility = View.VISIBLE
@@ -380,7 +378,17 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         recordingState = RecordingState.IDLE
     }
 
-
+    private fun getAudioDuration(file: File): Long {
+        return try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(file.absolutePath)
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
+            retriever.release()
+            duration
+        } catch (e: Exception) {
+            0L
+        }
+    }
     private fun setupPopMenu() {
         val adapter = AttachmentAdapter(
             requireContext(),

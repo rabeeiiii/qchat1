@@ -277,17 +277,22 @@ class ChatAdapter(
         }
 
     }
-
     class SendAudioViewHolder(val binding: ItemSendAudioBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         private var mediaPlayer: MediaPlayer? = null
         private var isPlaying = false
-        private var audioDuration = 0
         private var updateProgressRunnable: Runnable? = null
+        private var audioDuration: Long = 0L
 
         fun setData(message: ChatMessage) {
+            // Display the pre-fetched duration
+            audioDuration = message.audioDurationInMillis ?: 0L
             binding.tvDateTime.text = message.dateTime
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
 
             binding.btnPlayAudio.setOnClickListener {
                 if (!isPlaying) {
@@ -304,15 +309,11 @@ class ChatAdapter(
                     setDataSource(audioUrl)
                     prepare()
                     start()
-                    audioDuration = duration
-                    setOnCompletionListener {
-                        stopPlaying()
-                    }
+                    setOnCompletionListener { stopPlaying() }
                 }
 
                 isPlaying = true
                 binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
-
                 startUpdatingProgress()
             } catch (e: Exception) {
                 Log.e("SendAudioViewHolder", "Playback failed: ${e.message}")
@@ -326,12 +327,13 @@ class ChatAdapter(
 
             isPlaying = false
             binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
-
             stopUpdatingProgress()
 
-            // Reset dot position and timer if needed
             binding.progressDot.translationX = 0f
-            binding.tvAudioDuration.text = "00:00"
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
         }
 
         private fun startUpdatingProgress() {
@@ -340,9 +342,7 @@ class ChatAdapter(
                     mediaPlayer?.let { player ->
                         val currentPosition = player.currentPosition
                         val progress = (currentPosition.toFloat() / audioDuration.toFloat())
-                        val totalWidth = binding.audioWaveform.width.toFloat()
-
-                        binding.progressDot.translationX = totalWidth * progress
+                        binding.progressDot.translationX = binding.audioWaveform.width * progress
 
                         val minutes = currentPosition / 1000 / 60
                         val seconds = (currentPosition / 1000) % 60
@@ -360,18 +360,23 @@ class ChatAdapter(
         }
     }
 
-
     class ReceivedAudioViewHolder(val binding: ItemReceivedAudioBinding) :
         RecyclerView.ViewHolder(binding.root) {
 
         private var mediaPlayer: MediaPlayer? = null
         private var isPlaying = false
-        private var audioDuration = 0
         private var updateProgressRunnable: Runnable? = null
+        private var audioDuration: Long = 0L
 
         fun setData(message: ChatMessage, profileImage: Bitmap?) {
-            binding.tvDateTime.text = message.dateTime
             profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+            binding.tvDateTime.text = message.dateTime
+
+            // Display the pre-fetched duration
+            audioDuration = message.audioDurationInMillis ?: 0L
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
 
             binding.btnPlayAudio.setOnClickListener {
                 if (!isPlaying) {
@@ -388,15 +393,11 @@ class ChatAdapter(
                     setDataSource(audioUrl)
                     prepare()
                     start()
-                    audioDuration = duration
-                    setOnCompletionListener {
-                        stopPlaying()
-                    }
+                    setOnCompletionListener { stopPlaying() }
                 }
 
                 isPlaying = true
                 binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
-
                 startUpdatingProgress()
             } catch (e: Exception) {
                 Log.e("ReceivedAudioViewHolder", "Playback failed: ${e.message}")
@@ -410,11 +411,13 @@ class ChatAdapter(
 
             isPlaying = false
             binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
-
             stopUpdatingProgress()
 
             binding.progressDot.translationX = 0f
-            binding.tvAudioDuration.text = "00:00"
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
         }
 
         private fun startUpdatingProgress() {
@@ -423,9 +426,7 @@ class ChatAdapter(
                     mediaPlayer?.let { player ->
                         val currentPosition = player.currentPosition
                         val progress = (currentPosition.toFloat() / audioDuration.toFloat())
-                        val totalWidth = binding.audioWaveform.width.toFloat()
-
-                        binding.progressDot.translationX = totalWidth * progress
+                        binding.progressDot.translationX = binding.audioWaveform.width * progress
 
                         val minutes = currentPosition / 1000 / 60
                         val seconds = (currentPosition / 1000) % 60
