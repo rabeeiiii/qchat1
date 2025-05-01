@@ -13,10 +13,19 @@
         tools:layout="@layout/main_fragment" >
         <action
             android:id="@+id/action_mainFragment_to_usersFragment"
-            app:destination="@id/usersFragment" />
+            app:destination="@id/usersFragment"
+            app:enterAnim="@anim/slide_in_left"
+            app:exitAnim="@anim/slide_out_right"
+            app:popEnterAnim="@anim/slide_in_right"
+            app:popExitAnim="@anim/slide_out_left"/>
         <action
             android:id="@+id/action_mainFragment_to_chatFragment"
-            app:destination="@id/chatFragment" />
+            app:destination="@id/chatFragment"
+            app:enterAnim="@anim/slide_in_right"
+            app:exitAnim="@anim/slide_out_left"
+            app:popEnterAnim="@anim/slide_in_left"
+            app:popExitAnim="@anim/slide_out_right" />
+
         <action
             android:id="@+id/action_mainFragment_to_storyViewFragment"
             app:destination="@id/storyViewFragment" />

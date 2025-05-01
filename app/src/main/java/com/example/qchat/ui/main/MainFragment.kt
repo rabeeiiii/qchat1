@@ -172,9 +172,9 @@ class MainFragment : Fragment(R.layout.main_fragment) {
         binding.ivedit.setOnClickListener {
             findNavController().navigate(R.id.action_mainFragment_to_usersFragment)
         }
-        binding.ivMore.setOnClickListener {
-            showMoreMenu()
-        }
+//        binding.ivMore.setOnClickListener {
+//            showMoreMenu()
+//        }
 
         binding.newstory.setOnClickListener {
             galleryLauncher.launch("image/*")
@@ -214,17 +214,17 @@ class MainFragment : Fragment(R.layout.main_fragment) {
 
     }
 
-    fun showMoreMenu() {
-        val moreMenu = PopupMenu(requireContext(), binding.ivMore)
-        moreMenu.inflate(R.menu.menu_more)
-        moreMenu.setOnMenuItemClickListener {
-            if (it.itemId == R.id.action_sign_out){
-                signOut()
-                return@setOnMenuItemClickListener true
-            }
-            false
-        }
-        moreMenu.show()
-    }
+//    fun showMoreMenu() {
+//        val moreMenu = PopupMenu(requireContext(), binding.ivMore)
+//        moreMenu.inflate(R.menu.menu_more)
+//        moreMenu.setOnMenuItemClickListener {
+//            if (it.itemId == R.id.action_sign_out){
+//                signOut()
+//                return@setOnMenuItemClickListener true
+//            }
+//            false
+//        }
+//        moreMenu.show()
+//    }
 
 }
