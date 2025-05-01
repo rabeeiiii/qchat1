@@ -88,6 +88,6 @@
     <string name="new_password">New Password</string>
     <string name="new_messages">New Message</string>
 
-
+    <string name="default_notification_channel_id">fcm_default_channel</string>
 
 </resources>
