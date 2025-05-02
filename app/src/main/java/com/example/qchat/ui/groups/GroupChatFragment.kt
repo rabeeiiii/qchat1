@@ -1,6 +1,12 @@
 package com.example.qchat.ui.groups
 
+import android.graphics.Bitmap
+import android.graphics.ImageDecoder
+import android.media.MediaMetadataRetriever
+import android.net.Uri
 import android.os.Bundle
+import android.provider.MediaStore
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
@@ -23,9 +29,16 @@ import kotlinx.coroutines.flow.collectLatest
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 import android.util.Log
+import android.widget.Toast
+import androidx.activity.result.ActivityResultLauncher
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContentProviderCompat.requireContext
+import com.example.qchat.adapter.AttachmentAdapter
 import com.example.qchat.utils.decodeToBitmap
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.withContext
+import java.io.ByteArrayOutputStream
 
 @AndroidEntryPoint
 class GroupChatFragment : Fragment() {
@@ -35,6 +48,10 @@ class GroupChatFragment : Fragment() {
 
     private val viewModel: GroupViewModel by viewModels()
     private lateinit var group: Group
+
+    private lateinit var galleryLauncher: ActivityResultLauncher<String>
+    private lateinit var documentLauncher: ActivityResultLauncher<String>
+    private lateinit var videoLauncher: ActivityResultLauncher<String>
     
     // Set to keep track of message IDs we've already processed
     private val processedMessageIds = mutableSetOf<String>()
@@ -68,6 +85,36 @@ class GroupChatFragment : Fragment() {
         updateGroupInfo()
         hideUnnecessaryComponents()
         loadGroupMessages()
+
+        galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                val bitmap = uriToBitmap(uri)
+                bitmap?.let {
+                    encodeBitmapToBase64(it) { encodedImage ->
+                        viewModel.sendGroupPhoto(encodedImage, group.id)
+                    }
+                }
+            }
+        }
+
+        documentLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
+            uri?.let {
+                handleDocumentSelection(it)
+            }
+        }
+
+        videoLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri ->
+            uri?.let { videoUri ->
+                handleVideoSelection(videoUri)
+            }
+        }
+
+
+        binding.imageViewAttachment.setOnClickListener {
+            togglePopMenuVisibility()
+        }
+
+
     }
 
 
@@ -80,6 +127,162 @@ class GroupChatFragment : Fragment() {
         
         Log.d("GroupChatFragment", "Fragment resumed, reloading messages")
     }
+
+    private fun setupPopMenu() {
+        val adapter = AttachmentAdapter(
+            requireContext(),
+            arrayOf("Photos", "Camera", "Video", "Location", "Document"),
+            arrayOf(R.drawable.gallery, R.drawable.camera, R.drawable.videocall, R.drawable.location, R.drawable.document)
+        )
+        binding.gridView.adapter = adapter
+
+        binding.gridView.setOnItemClickListener { _, _, position, _ ->
+            when (position) {
+                0 -> openGallery()
+                1 -> {}
+                2 -> openVideoPicker()
+                3 -> {}
+                4 -> openDocumentPicker()
+            }
+            togglePopMenuVisibility()
+        }
+    }
+
+    private fun togglePopMenuVisibility() {
+        if (binding.popMenuLayout.visibility == View.VISIBLE) {
+            binding.popMenuLayout.visibility = View.GONE
+        } else {
+            binding.popMenuLayout.visibility = View.VISIBLE
+            setupPopMenu()
+        }
+    }
+
+
+    private fun openDocumentPicker() {
+        documentLauncher.launch("application/*")
+    }
+
+    private fun openVideoPicker() {
+        videoLauncher.launch("video/*")
+    }
+    private fun openGallery() {
+        galleryLauncher.launch("image/*")
+    }
+
+    private fun handleDocumentSelection(uri: Uri) {
+        val contentResolver = requireContext().contentResolver
+        val inputStream = contentResolver.openInputStream(uri)
+        val fileBytes = inputStream?.readBytes()
+        val fileName = getFileNameFromUri(uri)
+
+        fileBytes?.let {
+            viewModel.sendGroupDocument(it, fileName, group.id)
+        }
+    }
+
+    private fun getFileNameFromUri(uri: Uri): String {
+        var name = "document.pdf"
+        val cursor = requireContext().contentResolver.query(uri, null, null, null, null)
+        cursor?.use {
+            if (it.moveToFirst()) {
+                val index = it.getColumnIndex(MediaStore.MediaColumns.DISPLAY_NAME)
+                if (index >= 0) name = it.getString(index)
+            }
+        }
+        return name
+    }
+
+
+    private fun handleVideoSelection(uri: Uri) {
+        lifecycleScope.launch {
+
+            try {
+                val thumbnail = generateVideoThumbnail(uri)
+
+                val videoBytes = withContext(Dispatchers.IO) {
+                    context?.contentResolver?.openInputStream(uri)?.readBytes()
+                } ?: return@launch
+
+                val thumbnailBytes = ByteArrayOutputStream().apply {
+                    thumbnail.compress(Bitmap.CompressFormat.JPEG, 80, this)
+                }.toByteArray()
+
+                val retriever = MediaMetadataRetriever()
+                retriever.setDataSource(requireContext(), uri)
+                val durationMillis = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0
+                val durationFormatted = String.format("%02d:%02d", durationMillis / 60000, (durationMillis / 1000) % 60)
+                retriever.release()
+
+                viewModel.sendGroupVideo(videoBytes, thumbnailBytes, group.id, durationFormatted)
+
+            } catch (e: Exception) {
+                Toast.makeText(context, "Failed to process video", Toast.LENGTH_SHORT).show()
+                Log.e("GroupChatFragment", "Error processing video: ${e.message}")
+            }
+        }
+    }
+
+
+    private fun generateVideoThumbnail(uri: Uri): Bitmap {
+        val retriever = MediaMetadataRetriever()
+        retriever.setDataSource(context, uri)
+        val frame = retriever.frameAtTime
+        retriever.release()
+        return frame ?: throw Exception("Failed to generate thumbnail")
+    }
+
+    private fun uriToBitmap(uri: Uri): Bitmap? {
+        return try {
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.P) {
+                val source = ImageDecoder.createSource(requireContext().contentResolver, uri)
+                ImageDecoder.decodeBitmap(source)
+            } else {
+                @Suppress("DEPRECATION")
+                MediaStore.Images.Media.getBitmap(requireContext().contentResolver, uri)
+            }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            null
+        }
+    }
+
+    private fun encodeBitmapToBase64(bitmap: Bitmap, callback: (String) -> Unit) {
+        lifecycleScope.launch {
+            withContext(Dispatchers.Default) {
+                val resizedBitmap = resizeBitmap(bitmap, 800, 800)
+                val byteArrayOutputStream = ByteArrayOutputStream()
+                resizedBitmap.compress(Bitmap.CompressFormat.JPEG, 80, byteArrayOutputStream)
+                val byteArray = byteArrayOutputStream.toByteArray()
+                val encodedImage = Base64.encodeToString(byteArray, Base64.DEFAULT)
+                withContext(Dispatchers.Main) {
+                    callback(encodedImage)
+                }
+            }
+        }
+    }
+
+    private fun resizeBitmap(bitmap: Bitmap, maxWidth: Int, maxHeight: Int): Bitmap {
+        val width = bitmap.width
+        val height = bitmap.height
+
+        if (width <= maxWidth && height <= maxHeight) return bitmap
+
+        val aspectRatio = width.toFloat() / height.toFloat()
+        val targetWidth: Int
+        val targetHeight: Int
+
+        if (aspectRatio > 1) {
+            targetWidth = maxWidth
+            targetHeight = (maxWidth / aspectRatio).toInt()
+        } else {
+            targetHeight = maxHeight
+            targetWidth = (maxHeight * aspectRatio).toInt()
+        }
+
+        return Bitmap.createScaledBitmap(bitmap, targetWidth, targetHeight, true)
+    }
+
+
 
     private fun hideUnnecessaryComponents() {
         

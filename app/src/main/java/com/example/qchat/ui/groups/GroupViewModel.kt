@@ -17,6 +17,7 @@ import javax.inject.Inject
 import android.util.Log
 import com.example.qchat.utils.AesUtils
 import com.example.qchat.network.NotificationService
+import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 
@@ -89,13 +90,12 @@ class GroupViewModel @Inject constructor(
     fun loadGroupMessages(groupId: String) {
         viewModelScope.launch {
             try {
-                _isLoadingMessages.value = true // ✅ SHOW loader here first
-                _groupMessages.value = emptyList() // optional clear before
+                _isLoadingMessages.value = true
+                _groupMessages.value = emptyList()
 
                 groupRepository.observeGroupMessages(groupId)
                     .catch { e ->
-                        Log.e("GroupViewModel", "Error loading messages: ${e.message}")
-                        _isLoadingMessages.value = false // ✅ HIDE on error
+                        _isLoadingMessages.value = false
                         _error.emit(e.message ?: "Error loading messages")
                     }
                     .collect { messages ->
@@ -106,27 +106,64 @@ class GroupViewModel @Inject constructor(
                             return@collect
                         }
 
-                        val decryptedMessages = messages.map { message ->
+                        val parsedMessages = messages.map { message ->
                             try {
-                                val decryptedMessage = AesUtils.decryptGroupMessage(message.message, aesKey)
-                                message.copy(message = decryptedMessage)
+                                val decrypted = AesUtils.decryptGroupMessage(message.message, aesKey)
+
+                                when (message.messageType) {
+                                    Constant.MESSAGE_TYPE_TEXT -> {
+                                        val parts = decrypted.split("||")
+                                        if (parts.size == 2) {
+                                            message.copy(message = parts[0])
+                                        } else message.copy(message = decrypted)
+                                    }
+
+                                    Constant.MESSAGE_TYPE_DOCUMENT -> {
+                                        val parts = decrypted.split("||")
+                                        if (parts.size >= 3) {
+                                            message.copy(
+                                                message = parts[1], // URL
+                                                documentName = parts[2]
+                                            )
+                                        } else message.copy(message = decrypted)
+                                    }
+
+                                    Constant.MESSAGE_TYPE_VIDEO -> {
+                                        val parts = decrypted.split("||")
+                                        if (parts.size >= 4) {
+                                            message.copy(
+                                                message = parts[1], // Video URL
+                                                thumbnailUrl = parts[2],
+                                                videoDuration = parts[3]
+                                            )
+                                        } else message.copy(message = decrypted)
+                                    }
+
+                                    Constant.MESSAGE_TYPE_AUDIO -> {
+                                        val parts = decrypted.split("||")
+                                        if (parts.size >= 2) {
+                                            message.copy(message = parts[1])
+                                        } else message.copy(message = decrypted)
+                                    }
+
+                                    else -> message.copy(message = decrypted)
+                                }
                             } catch (e: Exception) {
                                 Log.e("GroupViewModel", "Decryption failed: ${e.message}")
                                 message
                             }
                         }
 
-                        val sortedMessages = decryptedMessages.sortedBy { it.timestamp }
-                        _groupMessages.value = sortedMessages
-                        _isLoadingMessages.value = false // ✅ HIDE loader after load
+                        _groupMessages.value = parsedMessages.sortedBy { it.timestamp }
+                        _isLoadingMessages.value = false
                     }
             } catch (e: Exception) {
-                Log.e("GroupViewModel", "Exception in loadGroupMessages: ${e.message}")
-                _isLoadingMessages.value = false // ✅ Always hide on catch
+                _isLoadingMessages.value = false
                 _error.emit(e.message ?: "Error loading messages")
             }
         }
     }
+
 
     fun loadUsers() {
         viewModelScope.launch {
@@ -339,4 +376,107 @@ class GroupViewModel @Inject constructor(
             }
         }
     }
+
+    fun sendGroupPhoto(encodedImage: String, groupId: String) {
+        viewModelScope.launch {
+            val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
+            val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+
+            val encrypted = AesUtils.encryptGroupMessage(encodedImage, aesKey)
+
+            val groupMessage = GroupMessage(
+                groupId = groupId,
+                senderId = userId,
+                senderName = userName,
+                message = encrypted,
+                messageType = Constant.MESSAGE_TYPE_PHOTO,
+                timestamp = Date()
+            )
+
+            groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+        }
+    }
+
+    fun sendGroupVideo(videoBytes: ByteArray, thumbnailBytes: ByteArray, groupId: String, duration: String) {
+        viewModelScope.launch {
+            val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
+            val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+
+            val timestamp = System.currentTimeMillis()
+            val videoPath = "group_videos/video_$timestamp.mp4"
+            val thumbPath = "group_thumbs/thumb_$timestamp.jpg"
+
+            val storage = FirebaseStorage.getInstance().reference
+            val videoRef = storage.child(videoPath)
+            val thumbRef = storage.child(thumbPath)
+
+            videoRef.putBytes(videoBytes).addOnSuccessListener {
+                videoRef.downloadUrl.addOnSuccessListener { videoUri ->
+                    thumbRef.putBytes(thumbnailBytes).addOnSuccessListener {
+                        thumbRef.downloadUrl.addOnSuccessListener { thumbUri ->
+                            val message = "VIDEO||$videoUri||$thumbUri||$duration"
+                            val encrypted = AesUtils.encryptGroupMessage(message, aesKey)
+
+                            val groupMessage = GroupMessage(
+                                groupId = groupId,
+                                senderId = userId,
+                                senderName = userName,
+                                message = encrypted,
+                                messageType = Constant.MESSAGE_TYPE_VIDEO,
+                                thumbnailUrl = thumbUri.toString(),
+                                videoDuration = duration,
+                                timestamp = Date()
+                            )
+                            viewModelScope.launch {
+                                groupRepository.sendGroupMessage(
+                                    groupMessage,
+                                    AesUtils.keyToBase64(aesKey)
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    fun sendGroupDocument(fileBytes: ByteArray, fileName: String, groupId: String) {
+        viewModelScope.launch {
+            val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
+            val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+
+            val docPath = "group_documents/${System.currentTimeMillis()}_$fileName"
+            val docRef = FirebaseStorage.getInstance().reference.child(docPath)
+
+            docRef.putBytes(fileBytes).addOnSuccessListener {
+                docRef.downloadUrl.addOnSuccessListener { uri ->
+                    val message = "DOCUMENT||${uri}||$fileName"
+                    val encrypted = AesUtils.encryptGroupMessage(message, aesKey)
+
+                    val groupMessage = GroupMessage(
+                        groupId = groupId,
+                        senderId = userId,
+                        senderName = userName,
+                        message = encrypted,
+                        messageType = Constant.MESSAGE_TYPE_DOCUMENT,
+                        documentName = fileName,
+                        timestamp = Date()
+                    )
+                    viewModelScope.launch {
+                        groupRepository.sendGroupMessage(
+                            groupMessage,
+                            AesUtils.keyToBase64(aesKey)
+                        )
+                    }
+                }
+            }
+        }
+    }
+
+
+
+
 } 
