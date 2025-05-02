@@ -48,8 +48,16 @@ class SettingsViewModel@Inject constructor(
 
     init {
         viewModelScope.launch {
-            pref.getString(Constant.KEY_USER_ID, null)
-                ?.let { repository.updateToken(repository.getToken(), it) }
+            try {
+                val token = repository.getToken()
+                val userId = pref.getString(Constant.KEY_USER_ID, null)
+                if (userId != null && token.isNotEmpty()) {
+                    repository.updateToken(token, userId)
+                    Log.d("SettingsViewModel", "FCM token updated successfully")
+                }
+            } catch (e: Exception) {
+                Log.e("SettingsViewModel", "Error updating FCM token: ${e.message}")
+            }
         }
     }
     fun signOut(): LiveData<Boolean> {

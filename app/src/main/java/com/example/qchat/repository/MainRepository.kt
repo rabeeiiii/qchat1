@@ -187,8 +187,24 @@ class MainRepository @Inject constructor(
 
     }
 
+    suspend fun getUserFcmToken(userId: String): String? {
+        return try {
+            val document = fireStore.collection(Constant.KEY_COLLECTION_USERS)
+                .document(userId)
+                .get()
+                .await()
+            document.getString(Constant.KEY_FCM_TOKEN)
+        } catch (e: Exception) {
+            Log.e("MainRepository", "Error getting FCM token: ${e.message}")
+            null
+        }
+    }
+
     suspend fun sendNotification(messageBody: MessageBody): Response<JsonObject> {
-        return fcmApi.sendMessage(messageBody =  messageBody, header = remoteHeader)
+        return fcmApi.sendMessage(
+            bearerToken = remoteHeader["Authorization"] ?: "",
+            messageBody = messageBody
+        )
     }
 
     suspend fun updateUserProfile(userId: String, updates: Map<String, Any>): Boolean {
