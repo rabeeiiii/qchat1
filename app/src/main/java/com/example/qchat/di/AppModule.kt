@@ -44,15 +44,6 @@ object AppModule {
         return PreferenceManager(context)
     }
 
-    @Provides
-    @Singleton
-    fun provideFcmApi() =
-        Retrofit.Builder()
-            .baseUrl(Constant.FCM_BASE_URL)
-            .addConverterFactory(GsonConverterFactory.create())
-            .build()
-            .create(Api::class.java)
-
     @Singleton
     @Provides
     fun provideRemoteMsgHeaders(@ApplicationContext context: Context) =
