@@ -7,8 +7,8 @@ import androidx.lifecycle.viewModelScope
 import com.google.firebase.firestore.*
 import com.google.firebase.firestore.EventListener
 import com.example.qchat.model.ChatMessage
-import com.example.qchat.model.Data
 import com.example.qchat.model.MessageBody
+import com.example.qchat.model.Notification
 import com.example.qchat.model.User
 import com.example.qchat.repository.MainRepository
 import com.example.qchat.utils.AesUtils
@@ -46,13 +46,14 @@ import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.CountDownLatch
+import com.example.qchat.network.NotificationService
 
 @HiltViewModel
 class ChatViewModel @Inject constructor(
     private val repository: MainRepository,
     private val pref: SharedPreferences,
-    @ApplicationContext private val context: Context
-
+    @ApplicationContext private val context: Context,
+    private val notificationService: NotificationService
 ) : ViewModel() {
 
     var conversionId = ""
@@ -183,24 +184,47 @@ class ChatViewModel @Inject constructor(
         return isBlocked
     }
 
+    private suspend fun sendNotificationToReceiver(message: String, receiverUser: User) {
+        try {
+            val receiverToken = repository.getUserFcmToken(receiverUser.id)
+            if (receiverToken != null) {
+                withContext(Dispatchers.IO) {
+                    notificationService.sendNotification(
+                        fcmToken = receiverToken,
+                        title = "New message from ${pref.getString(Constant.KEY_NAME, "")}",
+                        body = message,
+                        data = mapOf(
+                            "type" to "message",
+                            "senderId" to (pref.getString(Constant.KEY_USER_ID, null) ?: ""),
+                            "conversionId" to conversionId
+                        )
+                    ).onFailure { e ->
+                        Log.e("ChatViewModel", "Failed to send notification: ${e.message}")
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("ChatViewModel", "Error sending notification: ${e.message}")
+        }
+    }
+
     fun sendMessage(message: String, receiverUser: User) {
         viewModelScope.launch {
             val senderId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
-
+            Log.d("ChatViewModel", "Starting to send message to: ${receiverUser.name}")
 
             var isBlocked = false
             var isBlockedByReceiver = false
 
-
             repository.isUserBlocked(senderId, receiverUser.id) { blocked ->
                 isBlocked = blocked
+                Log.d("ChatViewModel", "Block status check: isBlocked=$isBlocked")
             }
-
 
             repository.isUserBlocked(receiverUser.id, senderId) { blocked ->
                 isBlockedByReceiver = blocked
+                Log.d("ChatViewModel", "Block status check: isBlockedByReceiver=$isBlockedByReceiver")
             }
-
 
             if (isBlocked) {
                 Log.e("ChatViewModel", "Cannot send message to blocked user")
@@ -242,7 +266,11 @@ class ChatViewModel @Inject constructor(
 
             repository.sendMessage(messageMap)
                 .addOnSuccessListener {
-                    Log.d("ChatViewModel", "Message sent successfully")
+                    Log.d("ChatViewModel", "Message sent successfully, preparing to send notification")
+                    // Send notification after successful message send
+                    viewModelScope.launch {
+                        sendNotificationToReceiver(message, receiverUser)
+                    }
                     updateRecentConversation(
                         senderId = senderId,
                         receiverUser = receiverUser,
@@ -783,25 +811,6 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    private fun sendNotificationToReceiver(message: String, receiverUser: User) {
-        val messageBody = MessageBody(
-            data = Data(
-                userId = pref.getString(Constant.KEY_USER_ID, null).orEmpty(),
-                name = pref.getString(Constant.KEY_NAME, null).orEmpty(),
-                fcmToken = receiverUser.token.orEmpty(),
-                message = message
-            ),
-            regIs = listOf(receiverUser.token.orEmpty())
-        )
-
-        viewModelScope.launch {
-            val response = repository.sendNotification(messageBody)
-            if (!response.isSuccessful) {
-                Log.e("ChatViewModel", "Failed to send notification.")
-            }
-        }
-    }
-
 
     private fun conversionOnCompleteListener() = OnCompleteListener<QuerySnapshot> { task ->
         if (task.isSuccessful && task.result != null && task.result?.documents?.size!! > 0) {
@@ -1033,9 +1042,5 @@ class ChatViewModel @Inject constructor(
         }
     }
 
-    fun sendNotification(messageBody: MessageBody) = viewModelScope.launch {
-        val response = repository.sendNotification(messageBody)
-        if (response.isSuccessful) {
-        }
-    }
+   
 }

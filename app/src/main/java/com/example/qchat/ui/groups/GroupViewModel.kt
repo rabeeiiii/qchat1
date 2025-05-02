@@ -16,12 +16,16 @@ import java.util.*
 import javax.inject.Inject
 import android.util.Log
 import com.example.qchat.utils.AesUtils
+import com.example.qchat.network.NotificationService
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 @HiltViewModel
 class GroupViewModel @Inject constructor(
     private val groupRepository: GroupRepository,
     private val mainRepository: MainRepository,
-    private val pref: SharedPreferences
+    private val pref: SharedPreferences,
+    private val notificationService: NotificationService
 ) : ViewModel() {
 
     private val _groups = MutableStateFlow<List<Group>>(emptyList())
@@ -200,11 +204,49 @@ class GroupViewModel @Inject constructor(
                 timestamp = Date()
             )
             groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                .onSuccess { messageId ->
+                    Log.d("GroupViewModel", "Message sent successfully, preparing to send notifications")
+                    // Send notifications to all group members except the sender
+                    sendNotificationsToGroupMembers(groupId, message, userName)
+                    onMessageSent?.invoke(groupMessage)
+                }
                 .onFailure { e ->
                     _error.emit(e.message ?: "Error sending group message")
                 }
+        }
+    }
 
-            onMessageSent?.invoke(groupMessage)
+    private suspend fun sendNotificationsToGroupMembers(groupId: String, message: String, senderName: String) {
+        try {
+            // Get all group members
+            val group = groupRepository.getGroup(groupId).getOrNull() ?: return
+            val currentUserId = pref.getString(Constant.KEY_USER_ID, null) ?: return
+
+            // Send notification to each member except the sender
+            group.members.forEach { memberId ->
+                if (memberId != currentUserId) {
+                    withContext(Dispatchers.IO) {
+                        val memberToken = mainRepository.getUserFcmToken(memberId)
+                        if (memberToken != null) {
+                            notificationService.sendNotification(
+                                fcmToken = memberToken,
+                                title = "New message in ${group.name}",
+                                body = "$senderName: $message",
+                                data = mapOf(
+                                    "type" to "group_message",
+                                    "groupId" to groupId,
+                                    "senderId" to currentUserId,
+                                    "senderName" to senderName
+                                )
+                            ).onFailure { e ->
+                                Log.e("GroupViewModel", "Failed to send notification to $memberId: ${e.message}")
+                            }
+                        }
+                    }
+                }
+            }
+        } catch (e: Exception) {
+            Log.e("GroupViewModel", "Error sending group notifications: ${e.message}")
         }
     }
 

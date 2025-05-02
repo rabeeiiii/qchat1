@@ -6,7 +6,6 @@ plugins {
     id("androidx.navigation.safeargs.kotlin")
     id("dagger.hilt.android.plugin")
     id("com.google.gms.google-services")
-
 }
 
 android {
@@ -48,19 +47,39 @@ android {
 
     buildFeatures {
         buildConfig = true
-        dataBinding = true // Enable Data Binding
-        viewBinding = true // Enable View Binding (optional but recommended)
+        dataBinding = true
+        viewBinding = true
     }
 
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17 // Updated to Java 17
+        sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
 
     kotlinOptions {
-        jvmTarget = "17" // Align Kotlin JVM target with Java version
+        jvmTarget = "17"
+    }
+
+    kapt {
+        correctErrorTypes = true
+    }
+
+    packaging {
+        resources {
+            exclude("META-INF/{AL2.0,LGPL2.1}")
+            exclude("META-INF/DEPENDENCIES")
+            exclude("META-INF/LICENSE")
+            exclude("META-INF/LICENSE.txt")
+            exclude("META-INF/license.txt")
+            exclude("META-INF/NOTICE")
+            exclude("META-INF/NOTICE.txt")
+            exclude("META-INF/notice.txt")
+            exclude("META-INF/ASL2.0")
+            exclude("META-INF/*.kotlin_module")
+        }
     }
 }
+
 dependencies {
     // Core AndroidX libraries
     implementation("androidx.core:core-ktx:1.12.0")
@@ -103,43 +122,45 @@ dependencies {
     // Coroutines
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.7.3")
 
-    // Material EditText
-//    implementation("com.rengwuxian.materialedittext:library:2.1.4")
-
     // Retrofit and OkHttp
     implementation("com.squareup.retrofit2:retrofit:2.9.0")
     implementation("com.squareup.retrofit2:converter-gson:2.9.0")
     implementation("com.squareup.okhttp3:logging-interceptor:4.11.0")
 
-    //splash screen
+    // Splash screen
     implementation("androidx.core:core-splashscreen:1.0.0")
 
-    implementation ("androidx.recyclerview:recyclerview:1.3.0")
+    implementation("androidx.recyclerview:recyclerview:1.3.0")
 
-    //makeramen
-    implementation ("com.makeramen:roundedimageview:2.3.0")
+    // RoundedImageView
+    implementation("com.makeramen:roundedimageview:2.3.0")
 
-    //dagger
-    implementation ("com.google.dagger:hilt-android:2.47")
+    // Dagger Hilt
+    implementation("com.google.dagger:hilt-android:2.47")
     kapt("com.google.dagger:hilt-android-compiler:2.47")
 
-    implementation ("com.github.bumptech.glide:glide:4.12.0")
-    annotationProcessor ("com.github.bumptech.glide:compiler:4.12.0")
+    // Picasso
+    implementation("com.squareup.picasso:picasso:2.71828")
 
-    implementation ("com.squareup.picasso:picasso:2.71828")
-
-    implementation ("com.google.android.gms:play-services-auth:20.7.0")
-
+    // Google Play Services
+    implementation("com.google.android.gms:play-services-auth:20.7.0")
     implementation("com.google.android.gms:play-services-location:21.0.1")
 
-    implementation ("org.mindrot:jbcrypt:0.4")
-    implementation ("androidx.media3:media3-exoplayer:1.3.1")
-    implementation ("androidx.media3:media3-ui:1.3.1")
+    // Security
+    implementation("org.mindrot:jbcrypt:0.4")
 
+    // Media
+    implementation("androidx.media3:media3-exoplayer:1.3.1")
+    implementation("androidx.media3:media3-ui:1.3.1")
 
+<<<<<<< Updated upstream
     implementation("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation ("com.mesibo.api:webrtc:1.0.5")
 
+=======
+    // Google Auth
+    implementation("com.google.auth:google-auth-library-oauth2-http:1.17.0")
+>>>>>>> Stashed changes
 }
