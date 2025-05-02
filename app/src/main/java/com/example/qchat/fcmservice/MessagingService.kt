@@ -30,6 +30,44 @@ class MessagingService : FirebaseMessagingService() {
         super.onMessageReceived(remoteMessage)
         Log.d("FCM", "onMessageReceived: ${remoteMessage.notification?.body}")
 
+        val messageType = remoteMessage.data["type"]
+        if (messageType == "group_message") {
+            handleGroupMessage(remoteMessage)
+        } else {
+            handleIndividualMessage(remoteMessage)
+        }
+    }
+
+    private fun handleGroupMessage(remoteMessage: RemoteMessage) {
+        val groupId = remoteMessage.data["groupId"] ?: return
+        val senderId = remoteMessage.data["senderId"] ?: return
+        val senderName = remoteMessage.data["senderName"] ?: return
+        val message = remoteMessage.notification?.body ?: return
+
+        val user = User(
+            name = senderName,
+            id = senderId,
+            token = null
+        )
+
+        val intent = Intent(this, MainActivity::class.java).apply {
+            action = Constant.ACTION_SHOW_CHAT_FRAGMENT
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TASK
+            putExtra(Constant.KEY_USER, user)
+            putExtra(Constant.KEY_GROUP_ID, groupId)
+        }
+
+        val contentIntent = PendingIntent.getActivity(
+            this,
+            0,
+            intent,
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
+        )
+
+        sendNotification(user, message, contentIntent)
+    }
+
+    private fun handleIndividualMessage(remoteMessage: RemoteMessage) {
         val encryptedMessage = remoteMessage.data[Constant.KEY_MESSAGE] ?: ""
         val user = getUser(remoteMessage)
         val publicKeyString = remoteMessage.data["public_key"]?.toByteArray()
@@ -44,9 +82,7 @@ class MessagingService : FirebaseMessagingService() {
 
         if (publicKeyString != null && signatureString != null && aesKeyBase64.isNotEmpty()) {
             val aesKey = AesUtils.base64ToKey(aesKeyBase64)
-
             val decryptedMessage = AesUtils.decryptMessage(encryptedMessage, aesKey)
-
             val isVerified = CryptoUtils.verifySignature(publicKeyString, decryptedMessage.toByteArray(), signatureString)
 
             if (isVerified) {
@@ -80,7 +116,6 @@ class MessagingService : FirebaseMessagingService() {
         )
 
     private fun sendNotification(user: User, message: String, contentIntent: PendingIntent) {
-
         val notificationId = Random.nextInt()
 
         val notificationBuilder = NotificationCompat.Builder(this, Constant.NOTIFICATION_CHANNEL_ID)
@@ -88,17 +123,22 @@ class MessagingService : FirebaseMessagingService() {
             .setContentTitle(user.name)
             .setContentText(message)
             .setStyle(NotificationCompat.BigTextStyle().bigText(message))
-            .setPriority(NotificationCompat.PRIORITY_DEFAULT)
+            .setPriority(NotificationCompat.PRIORITY_HIGH)
             .setContentIntent(contentIntent)
             .setAutoCancel(true)
+            .setDefaults(NotificationCompat.DEFAULT_ALL)
 
         val notificationManager = getSystemService(NOTIFICATION_SERVICE) as NotificationManager
 
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(notificationManager)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                createNotificationChannel(notificationManager)
+            }
+            
+            notificationManager.notify(notificationId, notificationBuilder.build())
+        } catch (e: Exception) {
+            Log.e("MessagingService", "Error showing notification: ${e.message}")
         }
-
-        notificationManager.notify(notificationId,notificationBuilder.build())
     }
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -106,8 +146,13 @@ class MessagingService : FirebaseMessagingService() {
         val channel = NotificationChannel(
             Constant.NOTIFICATION_CHANNEL_ID,
             Constant.NOTIFICATION_CHANNEL_NAME,
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
+            NotificationManager.IMPORTANCE_HIGH
+        ).apply {
+            description = "Message notifications"
+            enableLights(true)
+            enableVibration(true)
+            setShowBadge(true)
+        }
         notificationManager.createNotificationChannel(channel)
     }
 }

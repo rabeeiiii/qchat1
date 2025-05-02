@@ -3,19 +3,22 @@ package com.example.qchat.model
 import com.google.gson.annotations.SerializedName
 
 data class MessageBody(
-    @SerializedName("data")
-    val data: Data,
-    @SerializedName("registration_ids")
-    val regIs:List<String>
+    @SerializedName("message")
+    val message: Message
 )
 
-data class Data(
-    @SerializedName("userId")
-    val userId:String,
-    @SerializedName("name")
-    val name:String,
-    @SerializedName("fcmToken")
-    val fcmToken:String,
-    @SerializedName("message")
-    val message:String
+data class Message(
+    @SerializedName("token")
+    val token: String,
+    @SerializedName("notification")
+    val notification: Notification,
+    @SerializedName("data")
+    val data: Map<String, String>? = null
+)
+
+data class Notification(
+    @SerializedName("title")
+    val title: String,
+    @SerializedName("body")
+    val body: String
 )
