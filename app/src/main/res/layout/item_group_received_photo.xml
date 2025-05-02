@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:padding="2dp">
+    <TextView
+        android:id="@+id/textViewSenderName"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:textColor="@android:color/darker_gray"
+        android:textSize="12sp"
+        android:layout_marginBottom="4dp"
+        app:layout_constraintTop_toTopOf="parent"
+        app:layout_constraintStart_toStartOf="parent" />
+    
+
+    <!-- Profile Image -->
+    <com.makeramen.roundedimageview.RoundedImageView
+        android:id="@+id/ivProfile"
+        android:layout_width="35dp"
+        android:layout_height="35dp"
+        android:background="@drawable/background_image"
+        android:scaleType="centerCrop"
+        app:layout_constraintBottom_toBottomOf="@+id/backgroundLayer"
+        app:layout_constraintStart_toStartOf="parent"
+        app:riv_oval="true" />
+
+    <!-- Background Layer -->
+    <androidx.cardview.widget.CardView
+        android:id="@+id/backgroundLayer"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="4dp"
+        android:layout_marginStart="4dp"
+        android:layout_marginEnd="60dp"
+        android:background="@drawable/bg_received_message"
+        app:cardCornerRadius="12dp"
+        app:cardElevation="0dp"
+        app:layout_constraintStart_toEndOf="@+id/ivProfile"
+        app:layout_constraintTop_toTopOf="parent">
+
+        <!-- Image View -->
+        <ImageView
+            android:id="@+id/ivMessageImage"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:adjustViewBounds="true"
+            android:maxWidth="250dp"
+            android:maxHeight="400dp"
+            android:scaleType="fitCenter"
+            android:src="@drawable/ashraf" />
+
+    </androidx.cardview.widget.CardView>
+
+    <!-- Date and Time -->
+    <TextView
+        android:id="@+id/tvDateTime"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="5dp"
+        android:textColor="@color/secondary_text"
+        android:textSize="7sp"
+        app:layout_constraintTop_toBottomOf="@+id/backgroundLayer"
+        app:layout_constraintStart_toStartOf="@+id/backgroundLayer"
+        tools:text="05:45 PM" />
+
+</androidx.constraintlayout.widget.ConstraintLayout>

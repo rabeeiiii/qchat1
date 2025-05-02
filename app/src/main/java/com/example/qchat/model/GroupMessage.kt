@@ -15,5 +15,8 @@ data class GroupMessage(
     val mentions: List<String> = listOf(),
     val replyTo: String? = null,
     val edited: Boolean = false,
-    val editedAt: Date? = null
+    val editedAt: Date? = null,
+    val thumbnailUrl: String? = null,
+    val videoDuration: String? = null,
+    val documentName: String? = null,
 ) 

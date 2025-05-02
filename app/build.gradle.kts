@@ -153,14 +153,12 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.3.1")
     implementation("androidx.media3:media3-ui:1.3.1")
 
-<<<<<<< Updated upstream
     implementation("com.github.bumptech.glide:glide:4.12.0")
     annotationProcessor("com.github.bumptech.glide:compiler:4.12.0")
     implementation("de.hdodenhof:circleimageview:3.1.0")
     implementation ("com.mesibo.api:webrtc:1.0.5")
 
-=======
+
     // Google Auth
     implementation("com.google.auth:google-auth-library-oauth2-http:1.17.0")
->>>>>>> Stashed changes
 }

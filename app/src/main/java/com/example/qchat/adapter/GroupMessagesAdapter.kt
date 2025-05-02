@@ -1,6 +1,11 @@
 package com.example.qchat.adapter
 
+import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -15,10 +20,35 @@ import java.text.SimpleDateFormat
 import java.util.*
 import javax.inject.Inject
 import android.util.Log
+import android.widget.ImageView
+import com.example.qchat.databinding.ItemGroupReceivedDocumentBinding
+import com.example.qchat.databinding.ItemGroupReceivedPhotoBinding
+import com.example.qchat.databinding.ItemGroupReceivedVideoBinding
+import com.example.qchat.databinding.ItemGroupSendDocumentBinding
+import com.example.qchat.databinding.ItemGroupSendPhotoBinding
+import com.example.qchat.databinding.ItemGroupSendVideoBinding
+import com.example.qchat.ui.chat.PdfRendererActivity
+import com.example.qchat.ui.chat.PhotoViewerActivity
+import com.example.qchat.ui.chat.VideoPlayerActivity
+import com.example.qchat.utils.Constant.VIEW_TYPE_BLOCKED
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_AUDIO
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_DOCUMENT
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_LOCATION
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_PHOTO
+import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_VIDEO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_AUDIO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_DOCUMENT
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_LOCATION
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_PHOTO
+import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_VIDEO
 
 class GroupMessagesAdapter @Inject constructor(
     private val preferences: SharedPreferences
 ) : ListAdapter<GroupMessage, RecyclerView.ViewHolder>(GroupMessageDiffCallback()) {
+
+    private var profileImage: Bitmap? = null
 
     private val currentUserId: String? 
         get() = preferences.getString(Constant.KEY_USER_ID, null)
@@ -174,32 +204,116 @@ class GroupMessagesAdapter @Inject constructor(
         Log.d("GroupMessagesAdapter", "GetItemViewType for message ${message.id}: " +
                 "sender=${message.senderId}, currentUser=$currentId, " +
                 "isMine=${message.senderId == currentId}")
-        
-        return if (message.senderId == currentId) {
-            VIEW_TYPE_SENT
-        } else {
-            VIEW_TYPE_RECEIVED
+
+        return when {
+            message.senderId == currentUserId -> {
+                when (message.messageType) {
+                    Constant.MESSAGE_TYPE_PHOTO -> VIEW_TYPE_SEND_PHOTO
+                    Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_SEND_LOCATION
+                    Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_SEND_DOCUMENT
+                    Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_SEND_VIDEO
+                    Constant.MESSAGE_TYPE_AUDIO -> VIEW_TYPE_SEND_AUDIO
+                    else -> VIEW_TYPE_SEND
+                }
+            }
+            else -> {
+                when (message.messageType) {
+                    Constant.MESSAGE_TYPE_PHOTO -> VIEW_TYPE_RECEIVED_PHOTO
+                    Constant.MESSAGE_TYPE_LOCATION -> VIEW_TYPE_RECEIVED_LOCATION
+                    Constant.MESSAGE_TYPE_DOCUMENT -> VIEW_TYPE_RECEIVED_DOCUMENT
+                    Constant.MESSAGE_TYPE_VIDEO -> VIEW_TYPE_RECEIVED_VIDEO
+                    Constant.MESSAGE_TYPE_AUDIO -> VIEW_TYPE_RECEIVED_AUDIO
+                    else -> VIEW_TYPE_RECEIVED
+                }
+            }
+
         }
     }
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): RecyclerView.ViewHolder {
         return when (viewType) {
-            VIEW_TYPE_SENT -> {
-                val binding = ItemGroupMessageSentBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
+
+            VIEW_TYPE_SEND -> {
+                SentMessageViewHolder(
+                    ItemGroupMessageSentBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
                 )
-                SentMessageViewHolder(binding)
             }
-            else -> {
-                val binding = ItemGroupMessageReceivedBinding.inflate(
-                    LayoutInflater.from(parent.context),
-                    parent,
-                    false
+
+            VIEW_TYPE_RECEIVED -> {
+                ReceivedMessageViewHolder(
+                    ItemGroupMessageReceivedBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
                 )
-                ReceivedMessageViewHolder(binding)
             }
+
+            VIEW_TYPE_SEND_PHOTO -> {
+                SendPhotoViewHolder(
+                    ItemGroupSendPhotoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_PHOTO -> {
+                ReceivedPhotoViewHolder(
+                    ItemGroupReceivedPhotoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_SEND_DOCUMENT -> {
+                SendDocumentViewHolder(
+                    ItemGroupSendDocumentBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_DOCUMENT -> {
+                ReceivedDocumentViewHolder(
+                    ItemGroupReceivedDocumentBinding.inflate(
+                        LayoutInflater.from(
+                            parent.context
+                        ), parent, false
+                    )
+                )
+            }
+
+            VIEW_TYPE_SEND_VIDEO -> {
+                SendVideoViewHolder(
+                    ItemGroupSendVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_VIDEO -> {
+                ReceivedVideoViewHolder(
+                    ItemGroupReceivedVideoBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            else -> throw IllegalArgumentException("Invalid view type")
         }
     }
 
@@ -208,6 +322,12 @@ class GroupMessagesAdapter @Inject constructor(
         when (holder) {
             is SentMessageViewHolder -> holder.bind(message)
             is ReceivedMessageViewHolder -> holder.bind(message)
+            is SendPhotoViewHolder -> holder.setData(messagesList[position])
+            is ReceivedPhotoViewHolder -> holder.setData(messagesList[position], profileImage)
+            is SendDocumentViewHolder -> holder.setData(messagesList[position])
+            is ReceivedDocumentViewHolder -> holder.setData(messagesList[position], profileImage, holder.itemView.context)
+            is SendVideoViewHolder -> holder.setData(messagesList[position])
+            is ReceivedVideoViewHolder -> holder.setData(messagesList[position], profileImage)
         }
     }
 
@@ -236,6 +356,169 @@ class GroupMessagesAdapter @Inject constructor(
             }
         }
     }
+    class SendPhotoViewHolder(val binding: ItemGroupSendPhotoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: GroupMessage) {
+            try {
+                val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                if (bitmap != null) {
+                    binding.ivMessageImage.apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds = true
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
+                    binding.ivMessageImage.setOnClickListener {
+                        openPhoto(message.message)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        private fun openPhoto(photoBase64: String) {
+            val intent = Intent(itemView.context, PhotoViewerActivity::class.java).apply {
+                putExtra("photoBase64", photoBase64)
+            }
+            itemView.context.startActivity(intent)
+        }
+    }
+
+    class ReceivedPhotoViewHolder(val binding: ItemGroupReceivedPhotoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: GroupMessage, profileImage: Bitmap?) {
+            try {
+                val decodedBytes = Base64.decode(message.message, Base64.DEFAULT)
+                val bitmap = BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+
+                if (bitmap != null) {
+                    binding.ivMessageImage.apply {
+                        setImageBitmap(bitmap)
+                        adjustViewBounds = true
+                        scaleType = ImageView.ScaleType.FIT_CENTER
+                    }
+                    profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+                    binding.ivMessageImage.setOnClickListener {
+                        openPhoto(message.message)
+                    }
+                }
+            } catch (e: Exception) {
+                e.printStackTrace()
+            }
+        }
+        private fun openPhoto(photoBase64: String) {
+            val intent = Intent(itemView.context, PhotoViewerActivity::class.java).apply {
+                putExtra("photoBase64", photoBase64)
+            }
+            itemView.context.startActivity(intent)
+        }
+    }
+
+
+    class SendVideoViewHolder(val binding: ItemGroupSendVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: GroupMessage) {
+            binding.apply {
+                Glide.with(itemView.context)
+                    .load(message.thumbnailUrl)
+                    .into(binding.ivThumbnail)
+
+                binding.tvDuration.text = message.videoDuration
+
+                binding.root.setOnClickListener {
+                    openVideo(message.message)
+                }
+            }
+        }
+
+        private fun openVideo(videoUrl: String) {
+            val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
+                putExtra("videoUrl", videoUrl)
+            }
+            itemView.context.startActivity(intent)
+        }
+
+    }
+
+    class ReceivedVideoViewHolder(val binding: ItemGroupReceivedVideoBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: GroupMessage, profileImage: Bitmap?) {
+            binding.apply {
+                profileImage?.let {
+                    ivProfile.setImageBitmap(it)
+                }
+
+                Glide.with(itemView.context)
+                    .load(message.thumbnailUrl)
+                    .into(binding.ivThumbnail)
+
+                binding.tvDuration.text = message.videoDuration
+                binding.root.setOnClickListener {
+                    openVideo(message.message)
+                }
+            }
+        }
+
+        private fun openVideo(videoUrl: String) {
+            val intent = Intent(itemView.context, VideoPlayerActivity::class.java).apply {
+                putExtra("videoUrl", videoUrl)
+            }
+            itemView.context.startActivity(intent)
+        }
+
+    }
+
+    class SendDocumentViewHolder(val binding: ItemGroupSendDocumentBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+        fun setData(message: GroupMessage) {
+            binding.apply {
+                tvDocumentName.text = message.documentName ?: "Unnamed"
+                root.setOnClickListener {
+                    openDocument(message.message, message.documentName ?: "document.pdf")
+                }
+            }
+        }
+
+        private fun openDocument(documentUrl: String, documentName: String) {
+            val intent = Intent(itemView.context, PdfRendererActivity::class.java).apply {
+                putExtra("documentUrl", documentUrl)
+                putExtra("documentName", documentName)
+            }
+            itemView.context.startActivity(intent)
+        }
+    }
+
+    class ReceivedDocumentViewHolder(val binding: ItemGroupReceivedDocumentBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: GroupMessage, profileImage: Bitmap?, context: Context) {
+            binding.apply {
+                profileImage?.let {
+                    ivProfile.setImageBitmap(it)
+                }
+                tvDocumentName.text = message.documentName ?: "Document"
+                root.setOnClickListener {
+                    openDocument(message.message, message.documentName ?: "document.pdf", context)
+                }
+            }
+        }
+        private fun openDocument(documentUrl: String, documentName: String, context: Context) {
+            val intent = Intent(context, PdfRendererActivity::class.java).apply {
+                putExtra("documentUrl", documentUrl)
+                putExtra("documentName", documentName)
+            }
+            context.startActivity(intent)
+        }
+    }
+
+    fun setProfileImage(profileImage: Bitmap) {
+        this.profileImage = profileImage
+        notifyDataSetChanged()
+    }
+
 
     private fun formatTime(date: Date): String {
         val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
@@ -252,10 +535,7 @@ class GroupMessagesAdapter @Inject constructor(
         }
     }
 
-    companion object {
-        private const val VIEW_TYPE_SENT = 1
-        private const val VIEW_TYPE_RECEIVED = 2
-    }
+
 
     // Call this method when the fragment is destroyed to prevent duplicates when returning
     fun clearMessages() {

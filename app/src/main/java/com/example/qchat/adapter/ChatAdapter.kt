@@ -9,12 +9,13 @@ import android.net.Uri
 import android.util.Base64
 import android.util.Log
 import android.view.LayoutInflater
-import android.view.View
 import android.view.ViewGroup
 import android.widget.ImageView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.example.qchat.R
+import com.example.qchat.databinding.ItemGroupReceivedDocumentBinding
+import com.example.qchat.databinding.ItemGroupSendDocumentBinding
 import com.example.qchat.databinding.ItemReceivedAudioBinding
 import com.example.qchat.databinding.ItemReceivedDocumentBinding
 import com.example.qchat.databinding.ItemReceivedLocationBinding
@@ -45,7 +46,6 @@ import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_DOCUMENT
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_VIDEO
 import com.example.qchat.utils.Constant.VIEW_TYPE_RECEIVED_VIDEO
 import com.example.qchat.utils.Constant.VIEW_TYPE_SEND_AUDIO
-import java.util.*
 
 class ChatAdapter(
     private val senderId: String,
