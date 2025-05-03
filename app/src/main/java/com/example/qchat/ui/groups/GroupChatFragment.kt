@@ -47,7 +47,7 @@ class GroupChatFragment : Fragment() {
     private val binding get() = _binding!!
 
     private val viewModel: GroupViewModel by viewModels()
-    private lateinit var group: Group
+    private var group = null?: Group()
 
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
     private lateinit var documentLauncher: ActivityResultLauncher<String>
@@ -73,18 +73,33 @@ class GroupChatFragment : Fragment() {
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        group = arguments?.getSerializable("group") as Group
 
-        // ✅ Clear old messages from both adapter and ViewModel
+        val groupId = arguments?.getString("groupId")
+        if (groupId != null) {
+            viewModel.loadGroup(groupId)
+
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.currentGroup.collectLatest { loadedGroup ->
+                        if (loadedGroup != null) {
+                            group = loadedGroup
+                        }
+                        updateGroupInfo()
+                        loadGroupMessages()
+                        setupClickListeners()
+
+                }
+            }
+        } else {
+            Log.e("GroupChatFragment", "No groupId found in arguments")
+            requireActivity().onBackPressed()
+            return
+        }
+
         messagesAdapter.clearMessages()
         viewModel.clearGroupMessages()
-
         setupRecyclerView()
-        setupClickListeners()
         observeViewModel()
-        updateGroupInfo()
         hideUnnecessaryComponents()
-        loadGroupMessages()
 
         galleryLauncher = registerForActivityResult(ActivityResultContracts.GetContent()) { uri: Uri? ->
             uri?.let {
@@ -109,12 +124,9 @@ class GroupChatFragment : Fragment() {
             }
         }
 
-
         binding.imageViewAttachment.setOnClickListener {
             togglePopMenuVisibility()
         }
-
-
     }
 
 
@@ -149,6 +161,8 @@ class GroupChatFragment : Fragment() {
     }
 
     private fun togglePopMenuVisibility() {
+        Log.d("GroupChatFragment", "popMenuLayout visibility: ${binding.popMenuLayout.visibility}")
+
         if (binding.popMenuLayout.visibility == View.VISIBLE) {
             binding.popMenuLayout.visibility = View.GONE
         } else {
@@ -339,9 +353,7 @@ class GroupChatFragment : Fragment() {
                 }
             }
 
-            imageViewAttachment.setOnClickListener {
-               
-            }
+
         }
     }
 

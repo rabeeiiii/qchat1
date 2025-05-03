@@ -3,6 +3,7 @@ package com.example.qchat.ui.users
 import android.content.Context
 import android.os.Bundle
 import android.view.View
+import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.EditText
 import androidx.appcompat.widget.SearchView
@@ -31,6 +32,7 @@ class UsersFragment : Fragment(R.layout.users_fragment) {
     lateinit var userAdapter: UsersAdapter
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
+        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN)
         super.onViewCreated(view, savedInstanceState)
         binding = UsersFragmentBinding.bind(view)
 
@@ -118,6 +120,12 @@ class UsersFragment : Fragment(R.layout.users_fragment) {
 
     private fun setUpRecyclerview() = binding.rvUsers.apply {
         adapter = userAdapter
+    }
+
+    override fun onDestroyView() {
+        super.onDestroyView()
+        // Reset soft input mode to default behavior (adjustResize)
+        requireActivity().window.setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_RESIZE)
     }
 
 }

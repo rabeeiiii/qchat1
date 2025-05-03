@@ -74,9 +74,10 @@ class GroupsFragment : Fragment() {
             // Navigate to group chat using fragment transaction
             val groupChatFragment = GroupChatFragment().apply {
                 arguments = Bundle().apply {
-                    putSerializable("group", group)
+                    putString("groupId", group.id)
                 }
             }
+
             parentFragmentManager.beginTransaction()
                 .replace(android.R.id.content, groupChatFragment)
                 .addToBackStack(null)
@@ -96,12 +97,14 @@ class GroupsFragment : Fragment() {
     }
 
     private fun observeViewModel() {
-        viewLifecycleOwner.lifecycleScope.launch {
-            viewModel.groups.collectLatest { groups ->
-                groupsAdapter.submitList(null) // clear the old list (optional but safe)
-                groupsAdapter.submitList(groups) // this should now include decrypted messages
-            }
-        }
+            viewLifecycleOwner.lifecycleScope.launch {
+                viewModel.groups.collectLatest { groups ->
+                    val sortedGroups = groups.sortedByDescending { it.lastMessageTime }
+                    groupsAdapter.submitList(null)
+                    groupsAdapter.submitList(sortedGroups)
+                    }
+
+                }
 
 
         viewLifecycleOwner.lifecycleScope.launch {
