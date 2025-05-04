@@ -5,6 +5,8 @@ import android.content.Intent
 import android.content.SharedPreferences
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
+import android.media.MediaPlayer
+import android.net.Uri
 import android.util.Base64
 import android.view.LayoutInflater
 import android.view.ViewGroup
@@ -21,12 +23,24 @@ import java.util.*
 import javax.inject.Inject
 import android.util.Log
 import android.widget.ImageView
+import com.example.qchat.R
+import com.example.qchat.adapter.ChatAdapter.ReceivedLocationViewHolder
+import com.example.qchat.adapter.ChatAdapter.SendLocationViewHolder
+import com.example.qchat.databinding.ItemGroupReceivedAudioBinding
 import com.example.qchat.databinding.ItemGroupReceivedDocumentBinding
+import com.example.qchat.databinding.ItemGroupReceivedLocationBinding
 import com.example.qchat.databinding.ItemGroupReceivedPhotoBinding
 import com.example.qchat.databinding.ItemGroupReceivedVideoBinding
+import com.example.qchat.databinding.ItemGroupSendAudioBinding
 import com.example.qchat.databinding.ItemGroupSendDocumentBinding
+import com.example.qchat.databinding.ItemGroupSendLocationBinding
 import com.example.qchat.databinding.ItemGroupSendPhotoBinding
 import com.example.qchat.databinding.ItemGroupSendVideoBinding
+import com.example.qchat.databinding.ItemReceivedAudioBinding
+import com.example.qchat.databinding.ItemReceivedLocationBinding
+import com.example.qchat.databinding.ItemSendAudioBinding
+import com.example.qchat.databinding.ItemSendLocationBinding
+import com.example.qchat.model.ChatMessage
 import com.example.qchat.ui.chat.PdfRendererActivity
 import com.example.qchat.ui.chat.PhotoViewerActivity
 import com.example.qchat.ui.chat.VideoPlayerActivity
@@ -313,6 +327,38 @@ class GroupMessagesAdapter @Inject constructor(
                 )
             }
 
+            VIEW_TYPE_SEND_LOCATION -> {
+                SendLocationViewHolder(
+                    ItemGroupSendLocationBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_LOCATION -> {
+                ReceivedLocationViewHolder(
+                    ItemGroupReceivedLocationBinding.inflate(
+                        LayoutInflater.from(parent.context),
+                        parent,
+                        false
+                    )
+                )
+            }
+
+            VIEW_TYPE_SEND_AUDIO -> {
+                SendAudioViewHolder(
+                    ItemGroupSendAudioBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                )
+            }
+
+            VIEW_TYPE_RECEIVED_AUDIO -> {
+                ReceivedAudioViewHolder(
+                    ItemGroupReceivedAudioBinding.inflate(LayoutInflater.from(parent.context), parent, false)
+                )
+            }
+
             else -> throw IllegalArgumentException("Invalid view type")
         }
     }
@@ -321,13 +367,17 @@ class GroupMessagesAdapter @Inject constructor(
         val message = getItem(position)
         when (holder) {
             is SentMessageViewHolder -> holder.bind(message)
-            is ReceivedMessageViewHolder -> holder.bind(message)
+            is ReceivedMessageViewHolder -> holder.bind(message,profileImage )
             is SendPhotoViewHolder -> holder.setData(messagesList[position])
             is ReceivedPhotoViewHolder -> holder.setData(messagesList[position], profileImage)
             is SendDocumentViewHolder -> holder.setData(messagesList[position])
             is ReceivedDocumentViewHolder -> holder.setData(messagesList[position], profileImage, holder.itemView.context)
             is SendVideoViewHolder -> holder.setData(messagesList[position])
             is ReceivedVideoViewHolder -> holder.setData(messagesList[position], profileImage)
+            is SendLocationViewHolder -> holder.setData(messagesList[position])
+            is ReceivedLocationViewHolder -> holder.setData(messagesList[position], profileImage)
+            is SendAudioViewHolder -> holder.setData(messagesList[position])
+            is ReceivedAudioViewHolder -> holder.setData(messagesList[position], profileImage)
         }
     }
 
@@ -348,13 +398,15 @@ class GroupMessagesAdapter @Inject constructor(
         private val binding: ItemGroupMessageReceivedBinding
     ) : RecyclerView.ViewHolder(binding.root) {
 
-        fun bind(message: GroupMessage) {
+        fun bind(message: GroupMessage, profileImage: Bitmap?) {
             binding.apply {
                 textViewMessage.text = message.message
                 textViewTime.text = formatTime(message.timestamp)
                 textViewSenderName.text = message.senderName
+                profileImage?.let { ivProfile.setImageBitmap(it) }
             }
         }
+
     }
     class SendPhotoViewHolder(val binding: ItemGroupSendPhotoBinding) :
         RecyclerView.ViewHolder(binding.root) {
@@ -513,11 +565,242 @@ class GroupMessagesAdapter @Inject constructor(
             context.startActivity(intent)
         }
     }
+    class SendAudioViewHolder(val binding: ItemGroupSendAudioBinding) :
+        RecyclerView.ViewHolder(binding.root) {
 
-    fun setProfileImage(profileImage: Bitmap) {
-        this.profileImage = profileImage
-        notifyDataSetChanged()
+        private var mediaPlayer: MediaPlayer? = null
+        private var isPlaying = false
+        private var updateProgressRunnable: Runnable? = null
+        private var audioDuration: Long = 0L
+
+        fun setData(message: GroupMessage) {
+            // Display the pre-fetched duration
+            audioDuration = message.audioDurationInMillis ?: 0L
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+            binding.btnPlayAudio.setOnClickListener {
+                if (!isPlaying) {
+                    startPlaying(message.message)
+                } else {
+                    stopPlaying()
+                }
+            }
+        }
+
+        private fun startPlaying(audioUrl: String) {
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioUrl)
+                    prepare()
+                    start()
+                    setOnCompletionListener { stopPlaying() }
+                }
+
+                isPlaying = true
+                binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
+                startUpdatingProgress()
+            } catch (e: Exception) {
+                Log.e("SendAudioViewHolder", "Playback failed: ${e.message}")
+            }
+        }
+
+        private fun stopPlaying() {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+
+            isPlaying = false
+            binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
+            stopUpdatingProgress()
+
+            binding.progressDot.translationX = 0f
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+        }
+
+        private fun startUpdatingProgress() {
+            updateProgressRunnable = object : Runnable {
+                override fun run() {
+                    mediaPlayer?.let { player ->
+                        val currentPosition = player.currentPosition
+                        val progress = (currentPosition.toFloat() / audioDuration.toFloat())
+                        binding.progressDot.translationX = binding.audioWaveform.width * progress
+
+                        val minutes = currentPosition / 1000 / 60
+                        val seconds = (currentPosition / 1000) % 60
+                        binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+                        binding.root.postDelayed(this, 500)
+                    }
+                }
+            }
+            binding.root.post(updateProgressRunnable!!)
+        }
+
+        private fun stopUpdatingProgress() {
+            updateProgressRunnable?.let { binding.root.removeCallbacks(it) }
+        }
     }
+
+    class ReceivedAudioViewHolder(val binding: ItemGroupReceivedAudioBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        private var mediaPlayer: MediaPlayer? = null
+        private var isPlaying = false
+        private var updateProgressRunnable: Runnable? = null
+        private var audioDuration: Long = 0L
+
+        fun setData(message: GroupMessage, profileImage: Bitmap?) {
+            profileImage?.let { binding.ivProfile.setImageBitmap(it) }
+
+            // Display the pre-fetched duration
+            audioDuration = message.audioDurationInMillis ?: 0L
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+            binding.btnPlayAudio.setOnClickListener {
+                if (!isPlaying) {
+                    startPlaying(message.message)
+                } else {
+                    stopPlaying()
+                }
+            }
+        }
+
+        private fun startPlaying(audioUrl: String) {
+            try {
+                mediaPlayer = MediaPlayer().apply {
+                    setDataSource(audioUrl)
+                    prepare()
+                    start()
+                    setOnCompletionListener { stopPlaying() }
+                }
+
+                isPlaying = true
+                binding.btnPlayAudio.setImageResource(R.drawable.ic_pause)
+                startUpdatingProgress()
+            } catch (e: Exception) {
+                Log.e("ReceivedAudioViewHolder", "Playback failed: ${e.message}")
+            }
+        }
+
+        private fun stopPlaying() {
+            mediaPlayer?.stop()
+            mediaPlayer?.release()
+            mediaPlayer = null
+
+            isPlaying = false
+            binding.btnPlayAudio.setImageResource(R.drawable.ic_play)
+            stopUpdatingProgress()
+
+            binding.progressDot.translationX = 0f
+
+            val minutes = audioDuration / 1000 / 60
+            val seconds = (audioDuration / 1000) % 60
+            binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+        }
+
+        private fun startUpdatingProgress() {
+            updateProgressRunnable = object : Runnable {
+                override fun run() {
+                    mediaPlayer?.let { player ->
+                        val currentPosition = player.currentPosition
+                        val progress = (currentPosition.toFloat() / audioDuration.toFloat())
+                        binding.progressDot.translationX = binding.audioWaveform.width * progress
+
+                        val minutes = currentPosition / 1000 / 60
+                        val seconds = (currentPosition / 1000) % 60
+                        binding.tvAudioDuration.text = String.format("%02d:%02d", minutes, seconds)
+
+                        binding.root.postDelayed(this, 500)
+                    }
+                }
+            }
+            binding.root.post(updateProgressRunnable!!)
+        }
+
+        private fun stopUpdatingProgress() {
+            updateProgressRunnable?.let { binding.root.removeCallbacks(it) }
+        }
+    }
+
+    class SendLocationViewHolder(val binding: ItemGroupSendLocationBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: GroupMessage) {
+            val locationUrl = getStaticMapUrl(message.message)
+            Glide.with(binding.root.context)
+                .load(locationUrl)
+                .placeholder(R.drawable.placeholder_map)
+                .into(binding.ivMapPreview)
+
+            binding.ivMapPreview.setOnClickListener {
+                openLocationInMap(message.message)
+            }
+        }
+
+        private fun openLocationInMap(location: String) {
+            val locationParts = location.split(",")
+            if (locationParts.size == 2) {
+                val uri =
+                    Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                binding.root.context.startActivity(intent)
+            }
+        }
+
+        private fun getStaticMapUrl(location: String): String {
+            val locationParts = location.split(",")
+            return "https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${locationParts[1]},${locationParts[0]}&z=15&l=map&size=400,400"
+        }
+
+    }
+
+    class ReceivedLocationViewHolder(val binding: ItemGroupReceivedLocationBinding) :
+        RecyclerView.ViewHolder(binding.root) {
+
+        fun setData(message: GroupMessage, profileImage: Bitmap?) {
+            val locationUrl = getStaticMapUrl(message.message)
+            Glide.with(binding.root.context)
+                .load(locationUrl)
+                .placeholder(R.drawable.placeholder_map)
+                .into(binding.ivMapPreview)
+
+            profileImage?.let {
+                binding.ivProfile.setImageBitmap(profileImage)
+            }
+            binding.ivMapPreview.setOnClickListener {
+                openLocationInMap(message.message)
+            }
+        }
+
+        private fun openLocationInMap(location: String) {
+            val locationParts = location.split(",")
+            if (locationParts.size == 2) {
+                val uri =
+                    Uri.parse("geo:${locationParts[0]},${locationParts[1]}?q=${locationParts[0]},${locationParts[1]}")
+                val intent = Intent(Intent.ACTION_VIEW, uri)
+                intent.setPackage("com.google.android.apps.maps")
+                binding.root.context.startActivity(intent)
+            }
+        }
+
+        private fun getStaticMapUrl(location: String): String {
+            val locationParts = location.split(",")
+            return "https://static-maps.yandex.ru/1.x/?lang=en_US&ll=${locationParts[1]},${locationParts[0]}&z=15&l=map&size=400,400"
+        }
+    }
+
+
+
+
 
 
     private fun formatTime(date: Date): String {

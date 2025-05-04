@@ -17,6 +17,7 @@ import javax.inject.Inject
 import android.util.Log
 import com.example.qchat.utils.AesUtils
 import com.example.qchat.network.NotificationService
+import com.google.firebase.firestore.FieldValue
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -470,6 +471,62 @@ class GroupViewModel @Inject constructor(
                             groupMessage,
                             AesUtils.keyToBase64(aesKey)
                         )
+                    }
+                }
+            }
+        }
+    }
+
+    fun sendGroupLocation(latitude: Double, longitude: Double, groupId: String) {
+        viewModelScope.launch {
+            val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
+            val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+
+            val locationString = "$latitude,$longitude"
+            val encryptedLocation = AesUtils.encryptGroupMessage(locationString, aesKey)
+
+            val groupMessage = GroupMessage(
+                groupId = groupId,
+                senderId = userId,
+                senderName = userName,
+                message = encryptedLocation,
+                messageType = Constant.MESSAGE_TYPE_LOCATION,
+                timestamp = Date()
+            )
+
+            groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                .onFailure { e -> Log.e("GroupViewModel", "Failed to send location: ${e.message}") }
+        }
+    }
+
+
+    fun sendGroupAudio(audioBytes: ByteArray, groupId: String , durationInMillis: Long) {
+        viewModelScope.launch {
+            val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
+            val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+
+            val audioName = "group_audio/audio_${System.currentTimeMillis()}.3gp"
+            val audioRef = FirebaseStorage.getInstance().reference.child(audioName)
+
+            audioRef.putBytes(audioBytes).addOnSuccessListener {
+                audioRef.downloadUrl.addOnSuccessListener { uri ->
+                    val message = "AUDIO||$uri"
+                    val encrypted = AesUtils.encryptGroupMessage(message, aesKey)
+
+                    val groupMessage = GroupMessage(
+                        groupId = groupId,
+                        senderId = userId,
+                        senderName = userName,
+                        message = encrypted,
+                        messageType = Constant.MESSAGE_TYPE_AUDIO,
+                        audioDurationInMillis = durationInMillis,
+                        timestamp = Date()
+                    )
+
+                    viewModelScope.launch {
+                        groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
                     }
                 }
             }

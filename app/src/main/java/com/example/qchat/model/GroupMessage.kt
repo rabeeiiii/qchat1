@@ -19,4 +19,5 @@ data class GroupMessage(
     val thumbnailUrl: String? = null,
     val videoDuration: String? = null,
     val documentName: String? = null,
+    val audioDurationInMillis: Long? = null,
 ) 

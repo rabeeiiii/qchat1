@@ -155,12 +155,11 @@ class SettingsFragment : Fragment() {
 
                 val intent = Intent(requireContext(), EditProfileActivity::class.java).apply {
                     putExtra("USER_ID", userId)
-                    putExtra("USER_NAME", userName)
-                    putExtra("USER_EMAIL", userEmail)
-                    putExtra("USER_IMAGE", userImage)
                 }
+
                 startActivity(intent)
             }
+
             "Chat" -> {
                 startActivity(Intent(requireContext(), ChatSettingsActivity::class.java))
             }
