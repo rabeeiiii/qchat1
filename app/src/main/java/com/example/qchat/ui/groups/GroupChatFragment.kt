@@ -1,10 +1,17 @@
 package com.example.qchat.ui.groups
 
+import android.Manifest
+import android.content.Intent
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.graphics.ImageDecoder
+import android.location.Location
 import android.media.MediaMetadataRetriever
+import android.media.MediaPlayer
+import android.media.MediaRecorder
 import android.net.Uri
 import android.os.Bundle
+import android.os.Looper
 import android.provider.MediaStore
 import android.util.Base64
 import android.view.LayoutInflater
@@ -34,11 +41,18 @@ import androidx.activity.result.ActivityResultLauncher
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.core.content.ContentProviderCompat.requireContext
 import com.example.qchat.adapter.AttachmentAdapter
+import com.example.qchat.ui.groups.GroupChatFragment.RecordingState
 import com.example.qchat.utils.decodeToBitmap
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationCallback
+import com.google.android.gms.location.LocationRequest
+import com.google.android.gms.location.LocationResult
+import com.google.android.gms.location.LocationServices
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.withContext
 import java.io.ByteArrayOutputStream
+import java.io.File
 
 @AndroidEntryPoint
 class GroupChatFragment : Fragment() {
@@ -52,7 +66,63 @@ class GroupChatFragment : Fragment() {
     private lateinit var galleryLauncher: ActivityResultLauncher<String>
     private lateinit var documentLauncher: ActivityResultLauncher<String>
     private lateinit var videoLauncher: ActivityResultLauncher<String>
-    
+
+    private var audioBytes: ByteArray? = null
+    private var audioStartTime: Long = 0
+    private var recorder: MediaRecorder? = null
+
+    private lateinit var fusedLocationClient: FusedLocationProviderClient
+    private val locationRequest = LocationRequest.create().apply {
+        priority = LocationRequest.PRIORITY_HIGH_ACCURACY
+        interval = 5000
+        fastestInterval = 2000
+    }
+
+    private val locationCallback = object : LocationCallback() {
+        override fun onLocationResult(locationResult: LocationResult) {
+            locationResult.lastLocation?.let { location ->
+                sendCurrentLocation(location)
+            }
+        }
+    }
+
+    private val requestAudioPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            startRecording()
+        } else {
+            Toast.makeText(requireContext(), "Microphone permission denied", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private val requestLocationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { isGranted ->
+        if (isGranted) {
+            getCurrentLocation()
+        } else {
+            Log.e("GroupChatFragment", "Location permission denied")
+        }
+    }
+
+    private var isReceiverAvailable = false
+    private var isRecording = false
+    private var mediaRecorder: MediaRecorder? = null
+    private var audioFile: File? = null
+    private var audioPlayer: MediaPlayer? = null
+    private var isPlaying = false
+    private var currentPlayingPosition = -1
+    private var videoUri: Uri? = null
+    private var videoDuration: Long = 0
+    private var recordingState: RecordingState = RecordingState.IDLE
+
+    private enum class RecordingState {
+        IDLE, RECORDING, RECORDED
+    }
+
+
+
     // Set to keep track of message IDs we've already processed
     private val processedMessageIds = mutableSetOf<String>()
 
@@ -127,6 +197,12 @@ class GroupChatFragment : Fragment() {
         binding.imageViewAttachment.setOnClickListener {
             togglePopMenuVisibility()
         }
+        binding.imageViewMic.setOnClickListener {
+            if (recorder == null) startRecording()
+            else stopRecording()
+        }
+
+
     }
 
 
@@ -151,9 +227,9 @@ class GroupChatFragment : Fragment() {
         binding.gridView.setOnItemClickListener { _, _, position, _ ->
             when (position) {
                 0 -> openGallery()
-                1 -> {}
+                1 -> openCamera()
                 2 -> openVideoPicker()
-                3 -> {}
+                3 -> openLocationPicker()
                 4 -> openDocumentPicker()
             }
             togglePopMenuVisibility()
@@ -171,6 +247,10 @@ class GroupChatFragment : Fragment() {
         }
     }
 
+    private fun openCamera() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        startActivity(intent)
+    }
 
     private fun openDocumentPicker() {
         documentLauncher.launch("application/*")
@@ -182,6 +262,37 @@ class GroupChatFragment : Fragment() {
     private fun openGallery() {
         galleryLauncher.launch("image/*")
     }
+
+    private fun openLocationPicker() {
+        if (requireContext().checkSelfPermission(Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED) {
+            getCurrentLocation()
+        } else {
+            requestLocationPermission.launch(Manifest.permission.ACCESS_FINE_LOCATION)
+        }
+    }
+
+    private fun getCurrentLocation() {
+        fusedLocationClient = LocationServices.getFusedLocationProviderClient(requireActivity())
+
+        try {
+            fusedLocationClient.lastLocation.addOnSuccessListener { location: Location? ->
+                if (location != null) {
+                    sendCurrentLocation(location)
+                } else {
+                    fusedLocationClient.requestLocationUpdates(locationRequest, locationCallback, Looper.getMainLooper())
+                }
+            }
+        } catch (e: SecurityException) {
+            Log.e("ChatFragment", "Location access error: ${e.message}")
+        }
+    }
+
+    private fun sendCurrentLocation(location: Location) {
+        val latitude = location.latitude
+        val longitude = location.longitude
+        viewModel.sendGroupLocation(latitude, longitude, group.id)
+    }
+
 
     private fun handleDocumentSelection(uri: Uri) {
         val contentResolver = requireContext().contentResolver
@@ -321,6 +432,8 @@ class GroupChatFragment : Fragment() {
                 stackFromEnd = true
             }
         }
+
+
     }
 
     private fun setupClickListeners() {
@@ -333,29 +446,115 @@ class GroupChatFragment : Fragment() {
                 showGroupOptionsMenu()
             }
 
-            imageViewSend.setOnClickListener {
-                val message = editTextMessage.text?.toString()?.trim()
+            binding.imageViewSend.setOnClickListener {
+                val message = binding.editTextMessage.text?.toString()?.trim()
                 if (!message.isNullOrEmpty()) {
-                    
+
                     val tempId = "temp_${System.currentTimeMillis()}"
 
-
                     viewModel.sendMessage(message, group.id) { newMessage ->
-                        val localMessage = newMessage.copy(
-                            id = tempId,
-                            message = message // show decrypted plain text immediately
-                        )
-                        messagesAdapter.addMessage(localMessage, binding.recyclerViewMessages)
+                        if (view != null && isAdded) {
+                            val localMessage = newMessage.copy(
+                                id = tempId,
+                                message = message // show decrypted plain text immediately
+                            )
+                            messagesAdapter.addMessage(localMessage, binding.recyclerViewMessages)
+                            binding.editTextMessage.text?.clear()
+                        }
                     }
-
-
-                    editTextMessage.text?.clear()
                 }
             }
 
 
+
+        }
+        binding.imageViewMic.setOnClickListener {
+            when (recordingState) {
+                RecordingState.IDLE -> startRecording()
+                RecordingState.RECORDING -> stopRecording()
+                RecordingState.RECORDED -> sendAudioRecording()
+            }
+        }
+
+    }
+
+    private fun startRecording() {
+        if (requireContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestAudioPermission.launch(Manifest.permission.RECORD_AUDIO)
+            return
+        }
+
+        try {
+            mediaRecorder?.release()
+            mediaRecorder = null
+
+            audioFile =
+                File(requireContext().cacheDir, "audio_message_${System.currentTimeMillis()}.3gp")
+            mediaRecorder = MediaRecorder().apply {
+                setAudioSource(MediaRecorder.AudioSource.MIC)
+                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setOutputFile(audioFile?.absolutePath)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                prepare()
+                start()
+            }
+
+            isRecording = true
+            recordingState = RecordingState.RECORDING
+            binding.imageViewMic.setImageResource(R.drawable.stop)
+
+        } catch (e: Exception) {
+            Log.e("ChatFragment", "Recording failed: ${e.message}", e)
+            Toast.makeText(context, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }
+
+    private fun stopRecording() {
+        try {
+            mediaRecorder?.apply {
+                stop()
+                release()
+            }
+            mediaRecorder = null
+            isRecording = false
+            recordingState = RecordingState.RECORDED
+
+
+            binding.imageViewMic.setImageResource(R.drawable.send_voice)
+
+        } catch (e: Exception) {
+            e.printStackTrace()
+            Toast.makeText(context, "Failed to stop recording: ${e.message}", Toast.LENGTH_SHORT).show()
+        }
+    }
+
+    private fun sendAudioRecording() {
+        if (audioFile != null && audioFile!!.exists()) {
+            val audioBytes = audioFile!!.readBytes()
+            val durationMillis = getAudioDuration(audioFile!!)
+            viewModel.sendGroupAudio(audioBytes, group.id , durationMillis)        }
+
+        // After sending, reset UI
+        binding.editTextMessage.visibility = View.VISIBLE
+        binding.imageViewSend.visibility = View.VISIBLE
+        binding.imageViewAttachment.visibility = View.VISIBLE
+
+        binding.imageViewMic.setImageResource(R.drawable.ic_mic)
+        recordingState = RecordingState.IDLE
+    }
+
+    private fun getAudioDuration(file: File): Long {
+        return try {
+            val retriever = MediaMetadataRetriever()
+            retriever.setDataSource(file.absolutePath)
+            val duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION)?.toLong() ?: 0L
+            retriever.release()
+            duration
+        } catch (e: Exception) {
+            0L
+        }
+    }
+
 
     private fun observeViewModel() {
         viewLifecycleOwner.lifecycleScope.launch {

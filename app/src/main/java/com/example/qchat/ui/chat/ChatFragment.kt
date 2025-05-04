@@ -322,8 +322,17 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
         }
     }
     private fun startRecording() {
+        if (requireContext().checkSelfPermission(Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED) {
+            requestAudioPermission.launch(Manifest.permission.RECORD_AUDIO)
+            return
+        }
+
         try {
-            audioFile = File(requireContext().cacheDir, "audio_message_${System.currentTimeMillis()}.3gp")
+            mediaRecorder?.release()
+            mediaRecorder = null
+
+            audioFile =
+                File(requireContext().cacheDir, "audio_message_${System.currentTimeMillis()}.3gp")
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
@@ -332,14 +341,13 @@ class ChatFragment : Fragment(R.layout.chat_fragment) {
                 prepare()
                 start()
             }
+
             isRecording = true
             recordingState = RecordingState.RECORDING
-
-            // Change UI to stop button (recording)
             binding.ivVoiceMessage.setImageResource(R.drawable.stop)
 
         } catch (e: Exception) {
-            e.printStackTrace()
+            Log.e("ChatFragment", "Recording failed: ${e.message}", e)
             Toast.makeText(context, "Recording failed: ${e.message}", Toast.LENGTH_SHORT).show()
         }
     }

@@ -119,25 +119,21 @@
         android:background="@color/white"
         android:orientation="horizontal"
         android:padding="8dp"
+        android:gravity="center_vertical"
         app:layout_constraintBottom_toBottomOf="parent">
 
-        <androidx.appcompat.widget.AppCompatImageView
+        <ImageView
             android:id="@+id/imageViewAttachment"
-            android:layout_width="30dp"
+            android:layout_width="25dp"
             android:layout_height="30dp"
-            android:layout_gravity="center_vertical"
+            android:layout_marginStart="10dp"
             android:layout_marginEnd="5dp"
-            android:src="@drawable/add"
-            app:layout_constraintBottom_toBottomOf="@+id/etMessage"
-            app:layout_constraintEnd_toStartOf="@+id/etMessage"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintTop_toTopOf="@+id/etMessage"
-            app:layout_constraintVertical_bias="0.5" />
+            android:src="@drawable/add" />
 
         <EditText
             android:id="@+id/editTextMessage"
             android:layout_width="0dp"
-            android:layout_height="48dp"
+            android:layout_height="43dp"
             android:layout_weight="1"
             android:background="@drawable/input_background"
             android:gravity="center_vertical"
@@ -146,26 +142,23 @@
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
             android:textColor="@android:color/black"
-            android:textSize="14sp"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toStartOf="@+id/ivSend"
-            app:layout_constraintStart_toEndOf="@+id/ivAdd"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintVertical_bias="0.976" />
+            android:textSize="14sp" />
 
         <ImageView
             android:id="@+id/imageViewSend"
-            android:layout_width="35dp"
-            android:layout_height="35dp"
-            android:layout_marginTop="5dp"
-            android:layout_marginEnd="12dp"
-            android:layout_marginStart="4dp"
-            android:src="@drawable/send"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintVertical_bias="0.214"
-            app:layout_constraintTop_toTopOf="@+id/editTextMessage" />
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="7dp"
+            android:src="@drawable/send" />
+
+        <ImageView
+            android:id="@+id/imageViewMic"
+            android:layout_width="30dp"
+            android:layout_height="30dp"
+            android:layout_marginEnd="10dp"
+            android:src="@drawable/ic_mic" />
     </LinearLayout>
+
 
     <!-- Loading Overlay (Centered ProgressBar) -->
     <androidx.constraintlayout.widget.ConstraintLayout
