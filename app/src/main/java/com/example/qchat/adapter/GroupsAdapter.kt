@@ -1,5 +1,6 @@
 package com.example.qchat.adapter
 
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.ViewGroup
 import androidx.recyclerview.widget.DiffUtil
@@ -13,6 +14,7 @@ import com.example.qchat.utils.decodeToBitmap
 import com.example.qchat.utils.getReadableDate
 import java.text.SimpleDateFormat
 import java.util.*
+import android.util.Base64
 
 class GroupsAdapter(
     private val onGroupClick: (Group) -> Unit
@@ -48,22 +50,38 @@ class GroupsAdapter(
             binding.apply {
                 textViewGroupName.text = group.name
 
-                textViewLastMessage.text = try {
-                    if (!group.lastMessage.isNullOrEmpty() && group.aesKey != null) {
-                        val secretKey = com.example.qchat.utils.AesUtils.base64ToKey(group.aesKey!!)
-                        com.example.qchat.utils.AesUtils.decryptGroupMessage(
-                            group.lastMessage,
-                            secretKey
-                        )
-                    } else {
-                        "No messages yet"
+                textViewLastMessage.text = when (group.lastMessageType) {
+                    "text" -> {
+                        try {
+                            if (!group.lastMessage.isNullOrEmpty() && !group.aesKey.isNullOrEmpty()) {
+                                // Check if it's a valid encrypted string (base64, long enough to contain IV)
+                                if (group.lastMessage.length > 24 && Base64.DEFAULT != -1)
+                                {
+                                    val secretKey = com.example.qchat.utils.AesUtils.base64ToKey(group.aesKey)
+                                    val decrypted = com.example.qchat.utils.AesUtils.decryptGroupMessage(group.lastMessage, secretKey)
+                                    if (decrypted.isNullOrBlank()) "Text message" else decrypted
+                                } else {
+                                    group.lastMessage // assume it's plain text
+                                }
+                            } else {
+                                "Text message"
+                            }
+                        } catch (e: Exception) {
+                            Log.e("GroupsAdapter", "Decryption failed", e)
+                            "Text message"
+                        }
                     }
-                } catch (e: Exception) {
-                    "Encrypted message"
+
+
+
+                    "photo" -> "📷 Photo"
+                    "location" -> "📍 Location"
+                    "document" -> "📄 Document"
+                    "video" -> "\uD83D\uDCF9 Video"
+                    "audio" -> "\uD83C\uDF99\uFE0F Audio"
+                    else -> "New message"
                 }
 
-
-                // Format the last message time
                 val timeFormat = SimpleDateFormat("hh:mm a", Locale.getDefault())
                 textViewLastMessageTime.text = if (group.lastMessageTime > 0) {
                     timeFormat.format(Date(group.lastMessageTime))
@@ -73,17 +91,18 @@ class GroupsAdapter(
 
                 if (!group.image.isNullOrEmpty()) {
                     try {
-                        val bitmap =
-                            group.image.decodeToBitmap() // uses your existing extension function
+                        val bitmap = group.image.decodeToBitmap()
                         imageViewGroup.setImageBitmap(bitmap)
                     } catch (e: Exception) {
-                        imageViewGroup.setImageResource(R.drawable.group) // fallback
+                        imageViewGroup.setImageResource(R.drawable.group)
                     }
                 } else {
                     imageViewGroup.setImageResource(R.drawable.group)
                 }
             }
         }
+
+
 
 //                // Load group image using Glide
 //                Glide.with(imageViewGroup)

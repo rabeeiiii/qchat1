@@ -228,10 +228,7 @@ class GroupViewModel @Inject constructor(
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
-            val aesKey = groupRepository.getGroupAesKey(groupId) ?: run {
-                Log.e("GroupViewModel", "Failed to get AES key for group $groupId")
-                return@launch
-            }
+            val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
             val encryptedMessage = AesUtils.encryptGroupMessage(message, aesKey)
 
             val groupMessage = GroupMessage(
@@ -241,18 +238,23 @@ class GroupViewModel @Inject constructor(
                 message = encryptedMessage,
                 timestamp = Date()
             )
+
             groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
-                .onSuccess { messageId ->
-                    Log.d("GroupViewModel", "Message sent successfully, preparing to send notifications")
-                    // Send notifications to all group members except the sender
-                    sendNotificationsToGroupMembers(groupId, message, userName)
+                .onSuccess {
+                    updateGroup(groupId, mapOf(
+                        "lastMessage" to encryptedMessage,
+                        "lastMessageTime" to groupMessage.timestamp.time,
+                        "lastMessageSender" to userName,
+                        "lastMessageType" to Constant.MESSAGE_TYPE_TEXT
+                    ))
                     onMessageSent?.invoke(groupMessage)
                 }
-                .onFailure { e ->
-                    _error.emit(e.message ?: "Error sending group message")
+                .onFailure {
+                    _error.emit(it.message ?: "Error sending group message")
                 }
         }
     }
+
 
     private suspend fun sendNotificationsToGroupMembers(groupId: String, message: String, senderName: String) {
         try {
@@ -396,9 +398,16 @@ class GroupViewModel @Inject constructor(
             )
 
             groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                .onSuccess {
+                    updateGroup(groupId, mapOf(
+                        "lastMessage" to encrypted,
+                        "lastMessageTime" to groupMessage.timestamp.time,
+                        "lastMessageSender" to userName,
+                        "lastMessageType" to Constant.MESSAGE_TYPE_PHOTO
+                    ))
+                }
         }
     }
-
     fun sendGroupVideo(videoBytes: ByteArray, thumbnailBytes: ByteArray, groupId: String, duration: String) {
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
@@ -430,11 +439,17 @@ class GroupViewModel @Inject constructor(
                                 videoDuration = duration,
                                 timestamp = Date()
                             )
+
                             viewModelScope.launch {
-                                groupRepository.sendGroupMessage(
-                                    groupMessage,
-                                    AesUtils.keyToBase64(aesKey)
-                                )
+                                groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                                    .onSuccess {
+                                        updateGroup(groupId, mapOf(
+                                            "lastMessage" to encrypted,
+                                            "lastMessageTime" to groupMessage.timestamp.time,
+                                            "lastMessageSender" to userName,
+                                            "lastMessageType" to Constant.MESSAGE_TYPE_VIDEO
+                                        ))
+                                    }
                             }
                         }
                     }
@@ -442,6 +457,7 @@ class GroupViewModel @Inject constructor(
             }
         }
     }
+
 
     fun sendGroupDocument(fileBytes: ByteArray, fileName: String, groupId: String) {
         viewModelScope.launch {
@@ -454,7 +470,7 @@ class GroupViewModel @Inject constructor(
 
             docRef.putBytes(fileBytes).addOnSuccessListener {
                 docRef.downloadUrl.addOnSuccessListener { uri ->
-                    val message = "DOCUMENT||${uri}||$fileName"
+                    val message = "DOCUMENT||$uri||$fileName"
                     val encrypted = AesUtils.encryptGroupMessage(message, aesKey)
 
                     val groupMessage = GroupMessage(
@@ -466,16 +482,23 @@ class GroupViewModel @Inject constructor(
                         documentName = fileName,
                         timestamp = Date()
                     )
+
                     viewModelScope.launch {
-                        groupRepository.sendGroupMessage(
-                            groupMessage,
-                            AesUtils.keyToBase64(aesKey)
-                        )
+                        groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                            .onSuccess {
+                                updateGroup(groupId, mapOf(
+                                    "lastMessage" to encrypted,
+                                    "lastMessageTime" to groupMessage.timestamp.time,
+                                    "lastMessageSender" to userName,
+                                    "lastMessageType" to Constant.MESSAGE_TYPE_DOCUMENT
+                                ))
+                            }
                     }
                 }
             }
         }
     }
+
 
     fun sendGroupLocation(latitude: Double, longitude: Double, groupId: String) {
         viewModelScope.launch {
@@ -496,12 +519,20 @@ class GroupViewModel @Inject constructor(
             )
 
             groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                .onSuccess {
+                    updateGroup(groupId, mapOf(
+                        "lastMessage" to encryptedLocation,
+                        "lastMessageTime" to groupMessage.timestamp.time,
+                        "lastMessageSender" to userName,
+                        "lastMessageType" to Constant.MESSAGE_TYPE_LOCATION
+                    ))
+                }
                 .onFailure { e -> Log.e("GroupViewModel", "Failed to send location: ${e.message}") }
         }
     }
 
 
-    fun sendGroupAudio(audioBytes: ByteArray, groupId: String , durationInMillis: Long) {
+    fun sendGroupAudio(audioBytes: ByteArray, groupId: String, durationInMillis: Long) {
         viewModelScope.launch {
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
@@ -527,11 +558,20 @@ class GroupViewModel @Inject constructor(
 
                     viewModelScope.launch {
                         groupRepository.sendGroupMessage(groupMessage, AesUtils.keyToBase64(aesKey))
+                            .onSuccess {
+                                updateGroup(groupId, mapOf(
+                                    "lastMessage" to encrypted,
+                                    "lastMessageTime" to groupMessage.timestamp.time,
+                                    "lastMessageSender" to userName,
+                                    "lastMessageType" to Constant.MESSAGE_TYPE_AUDIO
+                                ))
+                            }
                     }
                 }
             }
         }
     }
+
 
 
 
