@@ -8,6 +8,7 @@ data class GroupMessage(
     val groupId: String = "",
     val senderId: String = "",
     val senderName: String = "",
+    val senderImage: String? = null,
     val message: String = "",
     val messageType: String = Constant.MESSAGE_TYPE_TEXT,
     val timestamp: Date = Date(),

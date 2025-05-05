@@ -70,7 +70,7 @@ class GroupMessagesAdapter @Inject constructor(
     private val messagesList = mutableListOf<GroupMessage>()
     private val messageIds = mutableSetOf<String>()
     private val tempMessageSignatures = mutableSetOf<String>()
-    
+    var senderImage: String? = null
     init {
         // Log the current user ID on adapter initialization
         Log.d("GroupMessagesAdapter", "Adapter initialized with user ID: $currentUserId")
@@ -363,23 +363,39 @@ class GroupMessagesAdapter @Inject constructor(
         }
     }
 
-    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
-        val message = getItem(position)
-        when (holder) {
-            is SentMessageViewHolder -> holder.bind(message)
-            is ReceivedMessageViewHolder -> holder.bind(message,profileImage )
-            is SendPhotoViewHolder -> holder.setData(messagesList[position])
-            is ReceivedPhotoViewHolder -> holder.setData(messagesList[position], profileImage)
-            is SendDocumentViewHolder -> holder.setData(messagesList[position])
-            is ReceivedDocumentViewHolder -> holder.setData(messagesList[position], profileImage, holder.itemView.context)
-            is SendVideoViewHolder -> holder.setData(messagesList[position])
-            is ReceivedVideoViewHolder -> holder.setData(messagesList[position], profileImage)
-            is SendLocationViewHolder -> holder.setData(messagesList[position])
-            is ReceivedLocationViewHolder -> holder.setData(messagesList[position], profileImage)
-            is SendAudioViewHolder -> holder.setData(messagesList[position])
-            is ReceivedAudioViewHolder -> holder.setData(messagesList[position], profileImage)
+    private fun decodeBase64ToBitmap(base64Str: String): Bitmap? {
+        return try {
+            val decodedBytes = Base64.decode(base64Str, Base64.DEFAULT)
+            BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.size)
+        } catch (e: Exception) {
+            null
         }
     }
+    override fun onBindViewHolder(holder: RecyclerView.ViewHolder, position: Int) {
+        val message = getItem(position)
+        val senderBitmap = message.senderImage?.let { decodeBase64ToBitmap(it) }
+
+        when (holder) {
+            is SentMessageViewHolder -> holder.bind(message)
+            is ReceivedMessageViewHolder -> holder.bind(message, senderBitmap)
+
+            is SendPhotoViewHolder -> holder.setData(message)
+            is ReceivedPhotoViewHolder -> holder.setData(message, senderBitmap)
+
+            is SendDocumentViewHolder -> holder.setData(message)
+            is ReceivedDocumentViewHolder -> holder.setData(message, senderBitmap, holder.itemView.context)
+
+            is SendVideoViewHolder -> holder.setData(message)
+            is ReceivedVideoViewHolder -> holder.setData(message, senderBitmap)
+
+            is SendLocationViewHolder -> holder.setData(message)
+            is ReceivedLocationViewHolder -> holder.setData(message, senderBitmap)
+
+            is SendAudioViewHolder -> holder.setData(message)
+            is ReceivedAudioViewHolder -> holder.setData(message, senderBitmap)
+        }
+    }
+
 
     inner class SentMessageViewHolder(
         private val binding: ItemGroupMessageSentBinding

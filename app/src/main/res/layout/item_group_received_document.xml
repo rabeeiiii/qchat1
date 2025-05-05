@@ -37,7 +37,7 @@
         android:padding="10dp"
         android:minWidth="220dp"
         android:minHeight="60dp"
-        android:layout_marginStart="3dp"
+        android:layout_marginStart="6dp"
         app:layout_constraintStart_toEndOf="@id/ivProfile"
         app:layout_constraintTop_toTopOf="parent">
 

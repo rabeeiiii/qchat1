@@ -230,11 +230,13 @@ class GroupViewModel @Inject constructor(
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
             val encryptedMessage = AesUtils.encryptGroupMessage(message, aesKey)
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val groupMessage = GroupMessage(
                 groupId = groupId,
                 senderId = userId,
                 senderName = userName,
+                senderImage = senderImage,
                 message = encryptedMessage,
                 timestamp = Date()
             )
@@ -385,6 +387,7 @@ class GroupViewModel @Inject constructor(
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val encrypted = AesUtils.encryptGroupMessage(encodedImage, aesKey)
 
@@ -393,6 +396,7 @@ class GroupViewModel @Inject constructor(
                 senderId = userId,
                 senderName = userName,
                 message = encrypted,
+                senderImage = senderImage,
                 messageType = Constant.MESSAGE_TYPE_PHOTO,
                 timestamp = Date()
             )
@@ -413,6 +417,7 @@ class GroupViewModel @Inject constructor(
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val timestamp = System.currentTimeMillis()
             val videoPath = "group_videos/video_$timestamp.mp4"
@@ -434,6 +439,7 @@ class GroupViewModel @Inject constructor(
                                 senderId = userId,
                                 senderName = userName,
                                 message = encrypted,
+                                senderImage = senderImage,
                                 messageType = Constant.MESSAGE_TYPE_VIDEO,
                                 thumbnailUrl = thumbUri.toString(),
                                 videoDuration = duration,
@@ -464,6 +470,7 @@ class GroupViewModel @Inject constructor(
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val docPath = "group_documents/${System.currentTimeMillis()}_$fileName"
             val docRef = FirebaseStorage.getInstance().reference.child(docPath)
@@ -478,6 +485,7 @@ class GroupViewModel @Inject constructor(
                         senderId = userId,
                         senderName = userName,
                         message = encrypted,
+                        senderImage = senderImage,
                         messageType = Constant.MESSAGE_TYPE_DOCUMENT,
                         documentName = fileName,
                         timestamp = Date()
@@ -505,6 +513,7 @@ class GroupViewModel @Inject constructor(
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val locationString = "$latitude,$longitude"
             val encryptedLocation = AesUtils.encryptGroupMessage(locationString, aesKey)
@@ -513,6 +522,7 @@ class GroupViewModel @Inject constructor(
                 groupId = groupId,
                 senderId = userId,
                 senderName = userName,
+                senderImage = senderImage,
                 message = encryptedLocation,
                 messageType = Constant.MESSAGE_TYPE_LOCATION,
                 timestamp = Date()
@@ -537,6 +547,7 @@ class GroupViewModel @Inject constructor(
             val userId = pref.getString(Constant.KEY_USER_ID, null) ?: return@launch
             val userName = pref.getString(Constant.KEY_NAME, null) ?: return@launch
             val aesKey = groupRepository.getGroupAesKey(groupId) ?: return@launch
+            val senderImage = pref.getString(Constant.KEY_IMAGE, null)
 
             val audioName = "group_audio/audio_${System.currentTimeMillis()}.3gp"
             val audioRef = FirebaseStorage.getInstance().reference.child(audioName)
@@ -550,6 +561,7 @@ class GroupViewModel @Inject constructor(
                         groupId = groupId,
                         senderId = userId,
                         senderName = userName,
+                        senderImage = senderImage,
                         message = encrypted,
                         messageType = Constant.MESSAGE_TYPE_AUDIO,
                         audioDurationInMillis = durationInMillis,
